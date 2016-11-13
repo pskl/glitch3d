@@ -1,8 +1,12 @@
 # Glitch3d
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/glitch3d`. To experiment with that code, run `bin/console` for an interactive prompt.
+By altering .obj file data you can get something like this :
+![alt tag](https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png)
 
-TODO: Delete this and the text above, and describe your gem
+Usage
+---
+- `3dglitch source_file_name` (a .obj file)
+- then render the generated `source_file_name_glitched.obj` file with your favorite rendering tool (Photshop, Blender)
 
 ## Installation
 
@@ -38,4 +42,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/[USERN
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
