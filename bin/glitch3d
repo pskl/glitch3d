@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'glitch3d'
+
+::Glitch3d.process_model(ARGV[0] + '.obj')
