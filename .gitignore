@@ -7,5 +7,5 @@
 /pkg/
 /spec/reports/
 /tmp/
-/lib/test_models/*
-/lib/*_glitched.obj
+/fixtures/models/*
+/fixtures/*_glitched.obj
