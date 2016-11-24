@@ -1,34 +1,51 @@
 require "glitch3d/version"
 
 module Glitch3d
-
   attr_accessor :target_file
   attr_accessor :source_file
 
+  attr_accessor :vertices_lines
+  attr_accessor :faces_lines
+
   def process_model(source_file)
-    @source_file = source_file
+    @source_file = source_file.end_with?('.obj') ? source_file : (source_file + '.obj')
     @target_file = source_file + '_glitched.obj'
-    create_glitched_file(alter_vertices(read_source(source_file)))
+    create_glitched_file(glitch(read_source(@source_file)))
   end
 
   # @param path String
-  # @return vertice_lines Array
+  # @return Hash
   def read_source(path)
     File.open(path, 'r') do |f|
       source_file_content = f.readlines
-      puts source_file_content.size
-      vertice_lines = source_file_content.select { |s| s[0] == 'v' }
-      return vertice_lines
+      puts 'Source file linecount: ' + source_file_content.size.to_s
+      vertices_lines = source_file_content.select { |s| s[0] == 'v' }
+      faces_lines = source_file_content.select { |s| s[0] == 'f' }
+      {
+        vertices: vertices_lines,
+        faces: faces_lines
+      }
     end
+  end
+
+  def glitch(file_hash_content)
+    {
+      vertices: alter_vertices(file_hash_content[:vertices]),
+      faces: alter_faces(file_hash_content[:faces])
+    }
   end
 
   # @param data Array
   # @return Array
-  def alter_vertices(vertice_lines)
-    random_index = rand(0..vertice_lines.size - 1)
-    row = vertice_lines[random_index].split(' ')
-    vertice_lines[random_index] = alter_row(row)
-    vertice_lines
+  def alter_vertices(vertices_lines)
+    random_index = rand(0..vertices_lines.size - 1)
+    row = vertices_lines[random_index].split(' ')
+    vertices_lines[random_index] = alter_row(row)
+    vertices_lines
+  end
+
+  def alter_faces(faces_lines)
+    faces_lines
   end
 
   # @param row Array
@@ -40,15 +57,18 @@ module Glitch3d
       z: row[3].to_f
     }
     new_row[[:x, :y, :z].sample] += 0.5
-    new_row
+    "v #{new_row[:x]} #{new_row[:y]} #{new_row[:z]}"
   end
 
-  # @param data Array
+  # @param data Hash
   # @return file_path String
-  def create_glitched_file(content)
+  def create_glitched_file(content_hash)
     File.open(target_file, 'w') do |f|
-      content.unshift('# Data corrupted with 3dglitch script')
-      f.write content
+      f.puts '# Data corrupted with 3dglitch script'
+      f.puts ''
+      f.puts content_hash[:vertices]
+      f.puts ''
+      f.puts content_hash[:faces]
     end
   end
 end
