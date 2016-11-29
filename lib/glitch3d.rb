@@ -7,20 +7,29 @@ module Glitch3d
   attr_accessor :vertices_lines
   attr_accessor :faces_lines
 
+  VERTEX_GLITCH_ITERATION_RATIO = 0.3
+  VERTEX_GLITCH_OFFSET = 0.6
+
+  FACE_GLITCH_ITERATION_RATIO = 0.3
+  FACE_GLITCH_OFFSET = 0.6
+
   def process_model(source_file)
-    @source_file = source_file.end_with?('.obj') ? source_file : (source_file + '.obj')
-    @target_file = source_file + '_glitched.obj'
+    @source_file = source_file
+    base_file_name = source_file.gsub(/.obj/, '')
+    @target_file = base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(@source_file)))
   end
 
   # @param path String
   # @return Hash
   def read_source(path)
-    File.open(path, 'r') do |f|
+    File.open(@source_file, 'r') do |f|
       source_file_content = f.readlines
-      puts 'Source file linecount: ' + source_file_content.size.to_s
-      vertices_lines = source_file_content.select { |s| s[0] == 'v' }
-      faces_lines = source_file_content.select { |s| s[0] == 'f' }
+      vertices_lines = source_file_content.select { |s| s[0..1] == 'v ' }
+      faces_lines = source_file_content.select { |s| s[0..1] == 'f ' }
+      @vertex_count = vertices_lines.length
+      @face_count = faces_lines.length
+      puts " V : #{@vertex_count} / F : #{@face_count}"
       {
         vertices: vertices_lines,
         faces: faces_lines
@@ -38,26 +47,62 @@ module Glitch3d
   # @param data Array
   # @return Array
   def alter_vertices(vertices_lines)
-    random_index = rand(0..vertices_lines.size - 1)
-    row = vertices_lines[random_index].split(' ')
-    vertices_lines[random_index] = alter_row(row)
+    (VERTEX_GLITCH_ITERATION_RATIO * @vertex_count).to_i.times do |_|
+      random_index = rand(0..vertices_lines.size - 1)
+      row = vertices_lines[random_index].split(' ')
+      vertices_lines[random_index] = alter_vertice_row(row)
+    end
+    50.times do
+      vertices_lines[rand(0..vertices_lines.size - 1)] = vertices_lines[rand(0..vertices_lines.size - 1)]
+    end
     vertices_lines
   end
 
   def alter_faces(faces_lines)
+    (FACE_GLITCH_ITERATION_RATIO * @face_count).to_i.times do |_|
+      random_index = rand(0..faces_lines.size - 1)
+      row = faces_lines[random_index].split(' ')
+      next if row.length <= 3
+      faces_lines[random_index] = alter_face_row(row)
+    end
     faces_lines
   end
 
   # @param row Array
   # @return new_row Array
-  def alter_row(row)
+  def alter_vertice_row(row)
+    rand_offset = rand(-VERTEX_GLITCH_OFFSET..VERTEX_GLITCH_OFFSET)
     new_row = {
-      x: row[1] .to_f,
+      x: row[1].to_f,
       y: row[2].to_f,
       z: row[3].to_f
     }
-    new_row[[:x, :y, :z].sample] += 0.5
+    new_row[[:x, :y, :z].sample] += rand_offset
     "v #{new_row[:x]} #{new_row[:y]} #{new_row[:z]}"
+  end
+
+  # @param row Array
+  # @return new_row Array
+  def alter_face_row(row)
+    new_row = {
+      v1: row[1]&.split('/')&.first&.to_i,
+      v2: row[2]&.split('/')&.first&.to_i,
+      v3: row[3]&.split('/')&.first&.to_i,
+      v4: row[4]&.split('/')&.first&.to_i,
+      v5: row[5]&.split('/')&.first&.to_i,
+      v6: row[6]&.split('/')&.first&.to_i
+    }.select { |_, v| !v.nil? }
+    target_edge = new_row.keys.sample
+    vertice_reference = new_row[target_edge]
+    new_vertice_reference = rand(1..vertice_reference - 1) until vertice_reference_exists?(new_vertice_reference)
+    new_row[target_edge] = new_vertice_reference
+    "f #{new_row.values.join(' ').squeeze(' ')}"
+  end
+
+  # @param vertice
+  # @return Boolean
+  def vertice_reference_exists?(v)
+    true
   end
 
   # @param data Hash

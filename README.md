@@ -8,6 +8,13 @@ Usage
 - `3dglitch source_file_name` (a .obj file)
 - then render the generated `source_file_name_glitched.obj` file with your favorite rendering tool (Photshop, Blender)
 
+## A quick note on the .obj file format
+
+- v -> represents a vertice position
+- f -> represents a face (contains references to vertices, can be triangle, quad...)
+- vt -> texture UV map
+- vn -> vertex normal
+
 ## Installation
 
 Add this line to your application's Gemfile:
