@@ -8,4 +8,5 @@
 /spec/reports/
 /tmp/
 /fixtures/models/*
+/renders/*
 /fixtures/*_glitched.obj

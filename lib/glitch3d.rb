@@ -10,14 +10,18 @@ module Glitch3d
   VERTEX_GLITCH_ITERATION_RATIO = 0.3
   VERTEX_GLITCH_OFFSET = 0.6
 
-  FACE_GLITCH_ITERATION_RATIO = 0.3
+  FACE_GLITCH_ITERATION_RATIO = 0.15
   FACE_GLITCH_OFFSET = 0.6
+
+  BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender"
+  RENDERING_SCRIPT_PATH = "lib/glitch3d/rendering_script.py"
 
   def process_model(source_file)
     @source_file = source_file
-    base_file_name = source_file.gsub(/.obj/, '')
-    @target_file = base_file_name + '_glitched.obj'
+    @base_file_name = source_file.gsub(/.obj/, '')
+    @target_file = @base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(@source_file)))
+    render(@target_file)
   end
 
   # @param path String
@@ -114,6 +118,24 @@ module Glitch3d
       f.puts content_hash[:vertices]
       f.puts ''
       f.puts content_hash[:faces]
+    end
+  end
+
+  # @param uri file_path
+  def render(file_path)
+    args = [
+      BLENDER_EXECUTABLE_PATH,
+      '-b',
+      '-P',
+      RENDERING_SCRIPT_PATH,
+      '--',
+      '-f',
+      file_path,
+      '-o',
+      "renders/#{@base_file_name}.png"
+    ]
+    unless system(*args)
+      fail 'Make sure Blender is correctly installed'
     end
   end
 end

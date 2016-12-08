@@ -3,6 +3,9 @@
 By altering .obj file data you can get something like this :
 ![alt tag](https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png)
 
+## Disclaimer
+Work in progress
+
 Usage
 ---
 - `3dglitch source_file_name` (a .obj file)
