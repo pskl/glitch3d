@@ -1,7 +1,7 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 
-# bpy.data.objects -> is where the good shit is at
+# bpy.data.objects ->
 
 import bpy
 import os
@@ -17,7 +17,6 @@ def get_args():
 
   # add parser rules
   parser.add_argument('-f', '--file', help="obj file to render")
-  parser.add_argument('-o', '--output', help="output png file")
   parsed_script_args, _ = parser.parse_known_args(script_args)
   return parsed_script_args
 
@@ -27,28 +26,27 @@ context = bpy.context
 
 models = [args.file]
 
-first_camera_position = (-16.31218147277832, -15.556914329528809, 3.6613118648529053)
-first_camera_rotation = (1.4517742395401, 0.0034271334297955036, 0.8768782019615173)
-second_camera_position = (17.437292098999023, -14.494770050048828, 2.7116341590881348)
-lamp_position_1 = (7.474725723266602, -7.22759485244751, 0.9717955589294434)
-lamp_position_2 = (-7.632413864135742, -7.22759485244751, 0.9717955589294434)
+lamps =[(7.47, -7.22, 0.97), (-7.63, -7.22, 0.97)]
+cams = [[(-16.31, -15.55, 3.66), (1.45, 0.00, 0.87)], [(17.43, -14.49, 2.71), (1.45, 0.00, 0.87)]]
+scene = bpy.data.scenes.new("Automated Render Scene")
 
-scene = bpy.data.scenes.new("AutomatedRenderScene")
+# Add cameras
+for cam in cams:
+    camera_data = bpy.data.cameras.new("Camera")
+    camera = bpy.data.objects.new("Camera", camera_data)
+    camera.location = cam[0]
+    camera.rotation_euler = cam[1]
+    scene.objects.link(camera)
 
-# camera
-camera_data = bpy.data.cameras.new("Camera")
-camera = bpy.data.objects.new("Camera", camera_data)
-camera.location = first_camera_position
-camera.rotation_euler = first_camera_rotation
-scene.objects.link(camera)
-
-# light
-lamp_data = bpy.data.lamps.new(name="New Lamp", type='POINT')
-lamp_object = bpy.data.objects.new(name="New Lamp", object_data=lamp_data)
-scene.objects.link(lamp_object)
-lamp_object.location = lamp_position_1
-lamp_object.select = True
-scene.objects.active = lamp_object
+# Add lamps
+for lamp in lamps:
+    lamp_data = bpy.data.lamps.new(name="New Lamp", type='POINT')
+    lamp_data.energy = 5.0
+    lamp_object = bpy.data.objects.new(name="New Lamp", object_data=lamp_data)
+    scene.objects.link(lamp_object)
+    lamp_object.location = lamp
+    lamp_object.select = True
+    scene.objects.active = lamp_object
 
 scene.update()
 
@@ -56,17 +54,17 @@ for model_path in models:
     scene.camera = camera
     path = os.path.join(model_path)
 
-    # make a new scene with cam and lights linked
+    # Create new scene
     context.screen.scene = scene
     bpy.ops.scene.new(type='LINK_OBJECTS')
     context.scene.name = model_path
     cams = [c for c in context.scene.objects if c.type == 'CAMERA']
 
-    #import model
+    # Load model
     bpy.ops.import_scene.obj(filepath=path, axis_forward='-Z', axis_up='Y', filter_glob="*.obj;*.mtl")
 
-    for c in cams:
-        context.scene.camera = c
-        print("Render ", model_path, context.scene.name, c.name)
-        context.scene.render.filepath = args.output
-        bpy.ops.render.render(write_still=True)
+    for index, cam in enumerate(cams):
+        context.scene.render.filepath = 'renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '.png'
+        context.scene.camera = cam
+        scene.update()
+        bpy.ops.render.render(write_still=True, use_viewport=True)

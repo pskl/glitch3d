@@ -106,7 +106,7 @@ module Glitch3d
   # @param vertice
   # @return Boolean
   def vertice_reference_exists?(v)
-    true
+    v <= @vertex_count
   end
 
   # @param data Hash
@@ -130,9 +130,7 @@ module Glitch3d
       RENDERING_SCRIPT_PATH,
       '--',
       '-f',
-      file_path,
-      '-o',
-      "renders/#{@base_file_name}.png"
+      file_path
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'
