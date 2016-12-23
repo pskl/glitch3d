@@ -7,10 +7,10 @@ module Glitch3d
   attr_accessor :vertices_lines
   attr_accessor :faces_lines
 
-  VERTEX_GLITCH_ITERATION_RATIO = 0.3
+  VERTEX_GLITCH_ITERATION_RATIO = 0.2
   VERTEX_GLITCH_OFFSET = 0.6
 
-  FACE_GLITCH_ITERATION_RATIO = 0.15
+  FACE_GLITCH_ITERATION_RATIO = 0.2
   FACE_GLITCH_OFFSET = 0.6
 
   BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender"
@@ -98,15 +98,9 @@ module Glitch3d
     }.select { |_, v| !v.nil? }
     target_edge = new_row.keys.sample
     vertice_reference = new_row[target_edge]
-    new_vertice_reference = rand(1..vertice_reference - 1) until vertice_reference_exists?(new_vertice_reference)
+    new_vertice_reference = rand(1..@vertex_count - 1)
     new_row[target_edge] = new_vertice_reference
     "f #{new_row.values.join(' ').squeeze(' ')}"
-  end
-
-  # @param vertice
-  # @return Boolean
-  def vertice_reference_exists?(v)
-    true
   end
 
   # @param data Hash

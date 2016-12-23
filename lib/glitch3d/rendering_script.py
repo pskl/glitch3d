@@ -5,9 +5,9 @@ import bpy
 import os
 import argparse
 
-LIGHT_INTENSITY = 4.0
+LIGHT_INTENSITY = 2.0
 lamps =[(7.47, -7.22, 0.97), (-7.63, -7.22, 0.97)]
-cams = [[(-16.31, -15.55, 3.66), (1.45, 0.00, 0.87)], [(17.43, -14.49, 5.0), (1.45, 0.00, 0.87)]]
+cams = [[(-16.31, -15.55, 10), (1.26, 0.009, -0.81)], [(17.43, -14.49, 5.0), (1.45, 0.00, 0.87)]]
 
 def camera_location_string(camera):
     return str(camera.rotation_euler.x) + ' ' + str(camera.rotation_euler.y) + ' ' + str(camera.rotation_euler.z)
@@ -29,13 +29,9 @@ def get_args():
   return parsed_script_args
 
 args = get_args()
-
 context = bpy.context
-
 models = [args.file]
-
 scene = bpy.data.scenes.new("Automated Render Scene")
-
 camera_objects = []
 
 # Add cameras
@@ -62,8 +58,6 @@ context.scene.name = 'Automated Render Scene'
 
 for model_path in models:
     path = os.path.join(model_path)
-
-    # cams = [c for c in context.scene.objects if c.type == 'CAMERA']
 
     # Load model
     bpy.ops.import_scene.obj(filepath=path, use_edges=True)
