@@ -106,7 +106,7 @@ module Glitch3d
   # @param vertice
   # @return Boolean
   def vertice_reference_exists?(v)
-    v <= @vertex_count
+    true
   end
 
   # @param data Hash
