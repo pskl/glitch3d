@@ -4,9 +4,6 @@ module Glitch3d
   attr_accessor :target_file
   attr_accessor :source_file
 
-  attr_accessor :vertices_lines
-  attr_accessor :faces_lines
-
   VERTEX_GLITCH_ITERATION_RATIO = 0.2
   VERTEX_GLITCH_OFFSET = 0.6
 
@@ -17,6 +14,8 @@ module Glitch3d
   RENDERING_SCRIPT_PATH = "lib/glitch3d/rendering_script.py"
 
   def process_model(source_file)
+    @vertices_list = []
+    @faces_list = []
     @source_file = source_file
     @base_file_name = source_file.gsub(/.obj/, '')
     @target_file = @base_file_name + '_glitched.obj'
@@ -29,16 +28,47 @@ module Glitch3d
   def read_source(path)
     File.open(@source_file, 'r') do |f|
       source_file_content = f.readlines
-      vertices_lines = source_file_content.select { |s| s[0..1] == 'v ' }
-      faces_lines = source_file_content.select { |s| s[0..1] == 'f ' }
-      @vertex_count = vertices_lines.length
-      @face_count = faces_lines.length
-      puts " V : #{@vertex_count} / F : #{@face_count}"
       {
-        vertices: vertices_lines,
-        faces: faces_lines
+        vertices: build_vertices(source_file_content.select { |s| s[0..1] == 'v ' }),
+        faces: build_faces(source_file_content.select { |s| s[0..1] == 'f ' })
       }
     end
+  end
+
+  # @param Array<String>
+  def build_vertices(vertices_string_array)
+    vertices_list = []
+    vertices_string_array.map do |sv|
+      v = sv.split(' ')
+      vertices_list<< Vertex.new(x: v[1], y: v[2], z: v[3])
+    end
+    vertices_list
+  end
+
+  def build_faces(faces_string_array)
+    faces_list = []
+    faces_string_array.map do |sf|
+      f = sf.split(' ')
+      faces_list<< Face.new(v1: f[1], v2: f[2], v3: f[3])
+    end
+    faces_list
+  end
+
+  # @param
+  #
+  # @return Vertex
+  def furthest_vertex(vertices_list)
+    furthest_vertices = [
+      vertices_list.max_by { |v| v.x },
+      vertices_list.max_by { |v| v.y },
+      vertices_list.max_by { |v| v.z }
+    ]
+    max_coord = [
+      furthest_vertices[0].x,
+      furthest_vertices[1].y,
+      furthest_vertices[2].z
+    ].max
+    furthest_vertices.find { |v| v.x == max_coord || v.y == max_coord || v.z == max_coord }
   end
 
   def glitch(file_hash_content)
@@ -50,26 +80,26 @@ module Glitch3d
 
   # @param data Array
   # @return Array
-  def alter_vertices(vertices_lines)
+  def alter_vertices(vertices_list)
     (VERTEX_GLITCH_ITERATION_RATIO * @vertex_count).to_i.times do |_|
-      random_index = rand(0..vertices_lines.size - 1)
-      row = vertices_lines[random_index].split(' ')
-      vertices_lines[random_index] = alter_vertice_row(row)
+      random_index = rand(0..vertices_list.size - 1)
+      row = vertices_list[random_index]
+      vertices_list[random_index] = alter_vertice_row(row)
     end
     50.times do
-      vertices_lines[rand(0..vertices_lines.size - 1)] = vertices_lines[rand(0..vertices_lines.size - 1)]
+      vertices_list[rand(0..vertices_lines.size - 1)] = vertices_list[rand(0..vertices_list.size - 1)]
     end
-    vertices_lines
+    vertices_list
   end
 
-  def alter_faces(faces_lines)
+  def alter_faces(faces_list)
     (FACE_GLITCH_ITERATION_RATIO * @face_count).to_i.times do |_|
-      random_index = rand(0..faces_lines.size - 1)
-      row = faces_lines[random_index].split(' ')
+      random_index = rand(0..faces_list.size - 1)
+      row = faces_list[random_index].split(' ')
       next if row.length <= 3
-      faces_lines[random_index] = alter_face_row(row)
+      faces_list[random_index] = alter_face_row(row)
     end
-    faces_lines
+    faces_list
   end
 
   # @param row Array
@@ -82,7 +112,7 @@ module Glitch3d
       z: row[3].to_f
     }
     new_row[[:x, :y, :z].sample] += rand_offset
-    "v #{new_row[:x]} #{new_row[:y]} #{new_row[:z]}"
+    Vertex.new(x: new_row[:x], y: new_row[:y], z: new_row[:z])
   end
 
   # @param row Array
@@ -108,6 +138,8 @@ module Glitch3d
   def create_glitched_file(content_hash)
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with 3dglitch script'
+      f.puts ''
+      f.puts "g #{@source_file}"
       f.puts ''
       f.puts content_hash[:vertices]
       f.puts ''
