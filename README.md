@@ -1,7 +1,7 @@
 # Glitch3d
 
 By altering .obj file data you can get something like this :
-![alt tag](https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png)
+<img style="width:50%;height:50%;display:block;margin: 0 auto;" src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png">
 
 ## Disclaimer
 Work in progress
