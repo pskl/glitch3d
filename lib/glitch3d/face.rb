@@ -1,19 +1,19 @@
 class Face
   attr_accessor :v1, :v2, :v3
 
-  def initialize
+  def initialize(v1, v2, v3)
     @v1 = v1
     @v2 = v2
     @v3 = v3
   end
 
   def to_s
-    "v #{x} #{y} #{z}"
+    "f #{v1} #{v2} #{v3}"
   end
 
-  def alter(face_object)
-    f = face_object.dup
-    f.send("#{[:v1, :v2, :v3].sample}=", rand_vertex_reference)
+  def fuck(new_reference)
+    f = dup
+    f.send("#{[:v1, :v2, :v3].sample}=", new_reference)
     f
   end
 end

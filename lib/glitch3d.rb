@@ -1,4 +1,6 @@
 require "glitch3d/version"
+require "glitch3d/vertex"
+require "glitch3d/face"
 
 module Glitch3d
   VERTEX_GLITCH_ITERATION_RATIO = 0.2
@@ -14,8 +16,14 @@ module Glitch3d
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
-    create_glitched_file(glitch(read_source(source_file)))
-    render(target_file)
+    furthest = create_glitched_file(glitch(read_source(source_file)), target_file)
+    render(target_file, furthest)
+  end
+
+  class << self
+    def rand_vertex_glitch_offset
+      rand(-VERTEX_GLITCH_OFFSET..VERTEX_GLITCH_OFFSET)
+    end
   end
 
   private
@@ -34,9 +42,9 @@ module Glitch3d
     vertices_list = []
     vertices_string_array.map do |sv|
       v = sv.split(' ')
-      vertices_list << Vertex.new(x: v[1], y: v[2], z: v[3])
+      vertices_list << Vertex.new(v[1].to_f, v[2].to_f, v[3].to_f)
     end
-    puts 'Furthest point'
+    puts 'Furthest point: ' + Vertex.furthest(vertices_list).to_s
     vertices_list
   end
 
@@ -45,7 +53,7 @@ module Glitch3d
     faces_string_array.map do |sf|
       f = sf.split(' ')
       next if f.length <= 3
-      faces_list << Face.new(v1: f[1].to_i, v2: f[2].to_i, v3: f[3].to_i)
+      faces_list << Face.new(f[1].to_i, f[2].to_i, f[3].to_i)
     end
     faces_list
   end
@@ -53,13 +61,13 @@ module Glitch3d
   def glitch(file_hash_content)
     {
       vertices: alter_vertices(file_hash_content[:vertices]),
-      faces: alter_faces(file_hash_content[:faces])
+      faces: alter_faces(file_hash_content[:faces], file_hash_content[:vertices])
     }
   end
 
   def alter_vertices(vertices_objects_array)
-    (VERTEX_GLITCH_ITERATION_RATIO * @vertex_count).to_i.times do |_|
-      alter_vertice_row(random_element(vertices_objects_array))
+    (VERTEX_GLITCH_ITERATION_RATIO * vertices_objects_array.size).to_i.times do |_|
+      random_element(vertices_objects_array).fuck
     end
     vertices_objects_array
   end
@@ -68,22 +76,14 @@ module Glitch3d
     array[rand(0..array.size - 1)]
   end
 
-  def alter_faces(faces_objects_array)
-    (FACE_GLITCH_ITERATION_RATIO * @face_count).to_i.times do |_|
-      alter_face_row(random_element(faces_objects_array))
+  def alter_faces(faces_objects_array, vertex_objects_array)
+    (FACE_GLITCH_ITERATION_RATIO * vertex_objects_array.count).to_i.times do |_|
+      random_element(faces_objects_array).fuck(vertex_objects_array)
     end
-    faces_list
+    faces_objects_array
   end
 
-  def rand_vertex_glitch_offset
-    rand(-VERTEX_GLITCH_OFFSET..VERTEX_GLITCH_OFFSET)
-  end
-
-  def rand_vertex_reference
-    rand(1..@vertex_count - 1)
-  end
-
-  def create_glitched_file(content_hash)
+  def create_glitched_file(content_hash, target_file)
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
       f.puts ''
@@ -93,9 +93,10 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:faces].map(&:to_s)
     end
+    Vertex.furthest(content_hash[:vertices])
   end
 
-  def render(file_path)
+  def render(file_path, furthest)
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
@@ -103,7 +104,11 @@ module Glitch3d
       RENDERING_SCRIPT_PATH,
       '--',
       '-f',
-      file_path
+      file_path,
+      '-u',
+      furthest.max.to_s,
+      '-n',
+      4.to_s
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'

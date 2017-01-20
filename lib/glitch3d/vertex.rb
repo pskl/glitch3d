@@ -1,7 +1,7 @@
 class Vertex
   attr_accessor :x, :y, :z
 
-  def initialize
+  def initialize(x, y, z)
     @x = x
     @y = y
     @z = z
@@ -11,10 +11,15 @@ class Vertex
     "v #{x} #{y} #{z}"
   end
 
-  def alter(vertex)
-    v = vertex.dup
-    v.send("#{[:x, :y, :z].sample}+=", rand_vertex_glitch_offset)
+  def fuck
+    v = dup
+    attr = [:x, :y, :z].sample
+    v.send("#{attr}=", v.send(attr) + Glitch3d.rand_vertex_glitch_offset)
     v
+  end
+
+  def max
+    [x, y].max
   end
 
   def self.furthest(vertices_list)
