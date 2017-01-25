@@ -1,21 +1,24 @@
 class Vertex
-  attr_accessor :x, :y, :z
+  attr_accessor :x, :y, :z, :index
 
-  def initialize(x, y, z)
+  def initialize(x, y, z, index)
     @x = x
     @y = y
     @z = z
+    @index = index
   end
 
   def to_s
     "v #{x} #{y} #{z}"
   end
 
+  def rand_attr
+    [:x, :y, :z].sample
+  end
+
   def fuck
-    v = dup
-    attr = [:x, :y, :z].sample
-    v.send("#{attr}=", v.send(attr) + Glitch3d.rand_vertex_glitch_offset)
-    v
+    attr = rand_attr
+    send("#{attr}=", send(attr) + Glitch3d.rand_vertex_glitch_offset)
   end
 
   def max

@@ -1,10 +1,12 @@
 # Glitch3d
 
 By altering .obj file data you can get something like this :
-<img style="width:50%;height:50%;display:block;margin: 0 auto;" src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png">
+
+<img style="width:70%;height:70%;display:block;margin: 0 auto;" src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png">
 
 ## Disclaimer
-Work in progress
+
+Work in progress. The gem is not usable at the moment.
 
 Usage
 ---

@@ -1,6 +1,7 @@
 require "glitch3d/version"
 require "glitch3d/vertex"
 require "glitch3d/face"
+require "pry"
 
 module Glitch3d
   VERTEX_GLITCH_ITERATION_RATIO = 0.2
@@ -31,29 +32,35 @@ module Glitch3d
   def read_source(path)
     File.open(path, 'r') do |f|
       source_file_content = f.readlines
+      vertices_list = build_vertices(source_file_content.select { |s| s[0..1] == 'v ' })
+      faces_list = build_faces(source_file_content.select { |s| s[0..1] == 'f ' }, vertices_list)
       {
-        vertices: build_vertices(source_file_content.select { |s| s[0..1] == 'v ' }),
-        faces: build_faces(source_file_content.select { |s| s[0..1] == 'f ' })
+        vertices: vertices_list,
+        faces: faces_list
       }
     end
   end
 
   def build_vertices(vertices_string_array)
     vertices_list = []
-    vertices_string_array.map do |sv|
+    vertices_string_array.each_with_index.map do |sv, i|
       v = sv.split(' ')
-      vertices_list << Vertex.new(v[1].to_f, v[2].to_f, v[3].to_f)
+      vertices_list << Vertex.new(v[1].to_f, v[2].to_f, v[3].to_f, i)
     end
     puts 'Furthest point: ' + Vertex.furthest(vertices_list).to_s
     vertices_list
   end
 
-  def build_faces(faces_string_array)
+  def build_faces(faces_string_array, vertices_list)
     faces_list = []
     faces_string_array.map do |sf|
       f = sf.split(' ')
       next if f.length <= 3
-      faces_list << Face.new(f[1].to_i, f[2].to_i, f[3].to_i)
+      faces_list << Face.new(
+                      vertices_list[f[1].to_i],
+                      vertices_list[f[2].to_i],
+                      vertices_list[f[3].to_i]
+                    )
     end
     faces_list
   end
@@ -72,15 +79,15 @@ module Glitch3d
     vertices_objects_array
   end
 
-  def random_element(array)
-    array[rand(0..array.size - 1)]
-  end
-
   def alter_faces(faces_objects_array, vertex_objects_array)
-    (FACE_GLITCH_ITERATION_RATIO * vertex_objects_array.count).to_i.times do |_|
-      random_element(faces_objects_array).fuck(vertex_objects_array)
+    (FACE_GLITCH_ITERATION_RATIO * faces_objects_array.count).to_i.times do |_|
+      random_element(faces_objects_array).fuck(random_element(vertex_objects_array))
     end
     faces_objects_array
+  end
+
+  def random_element(array)
+    array[rand(0..array.size - 1)]
   end
 
   def create_glitched_file(content_hash, target_file)
@@ -91,7 +98,8 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
-      f.puts content_hash[:faces].map(&:to_s)
+      binding.pry
+      f.puts content_hash[:faces].map(&:to_s).compact
     end
     Vertex.furthest(content_hash[:vertices])
   end

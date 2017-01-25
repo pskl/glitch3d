@@ -6,12 +6,12 @@ require 'glitch3d/version'
 Gem::Specification.new do |spec|
   spec.name          = "glitch3d"
   spec.version       = Glitch3d::VERSION
-  spec.authors       = ["Pascal Lamouric"]
-  spec.email         = ["pascal.lamouric@gmail.com"]
+  spec.authors       = ["pskl"]
+  spec.email         = ["hello@pascal.cc"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Alter 3D models and renders pictures.}
+  spec.description   = %q{Glitch3D is a library designed to transform a 3D model randomly and render screenshots.}
+  spec.homepage      = "http://pascal.cc"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -24,10 +24,11 @@ Gem::Specification.new do |spec|
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = "exe"
-  spec.executables   = ["gltich3d"]
+  spec.executables   = ["glitch3d"]
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.12"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "byebug"
 end

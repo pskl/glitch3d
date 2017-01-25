@@ -8,12 +8,15 @@ class Face
   end
 
   def to_s
-    "f #{v1} #{v2} #{v3}"
+    return nil unless !v1.nil? && !v2.nil? && !v3.nil?
+    "f #{v1.index} #{v2.index} #{v3.index}"
   end
 
-  def fuck(new_reference)
-    f = dup
-    f.send("#{[:v1, :v2, :v3].sample}=", new_reference)
-    f
+  def rand_attr
+    [:v1, :v2, :v3].sample
+  end
+
+  def fuck(new_vertex)
+    send("#{rand_attr}=", new_vertex)
   end
 end
