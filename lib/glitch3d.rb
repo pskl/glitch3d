@@ -98,7 +98,6 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
-      binding.pry
       f.puts content_hash[:faces].map(&:to_s).compact
     end
     Vertex.furthest(content_hash[:vertices])
@@ -116,7 +115,7 @@ module Glitch3d
       '-u',
       furthest.max.to_s,
       '-n',
-      4.to_s
+      1.to_s
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'
