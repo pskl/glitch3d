@@ -22,7 +22,7 @@ class Vertex
   end
 
   def max
-    [x, y].max
+    [@x.abs, @y.abs].max.round
   end
 
   def self.furthest(vertices_list)

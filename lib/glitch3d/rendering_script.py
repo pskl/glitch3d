@@ -13,6 +13,12 @@ import argparse
 from random import randint
 
 # Helper methods
+def look_at(obj_camera, point):
+    loc_camera = obj_camera.matrix_world.to_translation()
+    direction = point - loc_camera
+    rot_quat = direction.to_track_quat('-Z', 'Y')
+    obj_camera.rotation_euler = rot_quat.to_euler()
+
 def get_args():
   parser = argparse.ArgumentParser()
 
@@ -34,21 +40,29 @@ def camera_location_string(camera):
 def camera_rotation_string(camera):
     return str(camera.location.x) + ' ' + str(camera.location.y) + ' ' + str(camera.location.z)
 
+# Arguments parsing
+args = get_args()
+file = args.file
+shots_number = args.shots_number
+furthest_vertex = int(args.furthest_vertex)
+
+context = bpy.context
+
+# Live debugging (uncomment and paste in blender console for easier debugging)
+# shots_number = 4
+# furthest_vertex = 9
+# context.scene.render.filepath = '/Users/pascal/dev/glitch3d/renders/test.png'
+# file = '/Users/pascal/dev/glitch3d/fixtures/skull_glitched.obj'
+
 LIGHT_INTENSITY = 1.5
 LAMP_NUMBER = 2
 SHOTS_NUMBER = 4
 FURTHEST_VERTEX_OFFSET = 4
 
-# Arguments parsing
-args = get_args()
-file = args.file
-shots_number = args.shots_number
-furthest_vertex = float(args.furthest_vertex)
-
 # Scene
-context = bpy.context
 new_scene = bpy.data.scenes.new("Automated Render Scene")
-context.screen.scene = new_scene
+bpy.ops.scene.delete() # Delete old scene
+context.screen.scene = new_scene # selects the new scene as the current one
 
 # Render settings
 context.scene.render.engine = 'CYCLES'
@@ -58,22 +72,25 @@ context.scene.render.resolution_y = 1080
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath=model_path, use_edges=True)
+model_object = bpy.data.objects['Glitch3D']
 
 # -----------------------------------------
 # Create camera with constraint on rotation
 # -----------------------------------------
-camera_data = bpy.data.cameras.new('Camera')
+camera_data = bpy.data.cameras.new('Render Camera')
 camera_data.type = 'PANO'
 camera_data.cycles.fisheye_lens = 2.7
 camera_data.cycles.fisheye_fov = 3.14159
 camera_data.sensor_width = 8.8
 camera_data.sensor_height = 6.6
-camera_object = bpy.data.objects.new('Camera', object_data=camera_data)
+bpy.data.objects.new('Render Camera', object_data=camera_data)
+camera_object = bpy.data.objects['Render Camera']
 camera_constraint = camera_object.constraints.new(type='TRACK_TO')
-camera_constraint.target = bpy.data.objects['Glitch3D']
+camera_constraint.target = model_object
 new_scene.objects.link(camera_object)
 context.scene.camera = camera_object
 context.scene.camera.location = (furthest_vertex + FURTHEST_VERTEX_OFFSET, furthest_vertex + FURTHEST_VERTEX_OFFSET, 1.5)
+look_at(camera_object, model_object.matrix_world.to_translation())
 
 # ---------
 # Add lamps
@@ -97,4 +114,4 @@ for index in range(0, int(shots_number)):
 
     bpy.context.scene.update()
     print('Rendering image with resolution : ' + str(bpy.context.scene.render.resolution_x) + ' x ' + str(bpy.context.scene.render.resolution_y))
-    bpy.ops.render.render(write_still=True, use_viewport=True)
+    bpy.ops.render.render(write_still=True)

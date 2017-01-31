@@ -91,8 +91,11 @@ module Glitch3d
   end
 
   def create_glitched_file(content_hash, target_file)
+    furthest = Vertex.furthest(content_hash[:vertices])
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
+      f.puts 'furthest vertex: ' +  furthest.to_s
+      f.puts 'furthest point: ' + furthest.max.to_s
       f.puts ''
       f.puts 'g Glitch3D'
       f.puts ''
@@ -100,7 +103,7 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:faces].map(&:to_s).compact
     end
-    Vertex.furthest(content_hash[:vertices])
+    furthest
   end
 
   def render(file_path, furthest)
