@@ -4,8 +4,8 @@
 # process:
 # 1) Load model given as a parameter
 # 2) Create lamps
-# 3) Create camera with constraint on rotation
-# 4) Move camera around object and render shot at each step
+# 3) Create camera
+# 4) Rotate model and shoot image at each step
 
 import bpy
 import os
@@ -13,11 +13,29 @@ import argparse
 from random import randint
 
 # Helper methods
-def look_at(obj_camera, point):
-    loc_camera = obj_camera.matrix_world.to_translation()
-    direction = point - loc_camera
+def look_at(camera_object, point):
+    location_camera = camera_object.matrix_world.to_translation()
+    location_point = point.matrix_world.to_translation()
+    direction = location_point - location_camera
     rot_quat = direction.to_track_quat('-Z', 'Y')
-    obj_camera.rotation_euler = rot_quat.to_euler()
+    camera_object.rotation_euler = rot_quat.to_euler()
+
+def shoot(camera, object, filepath):
+    look_at(camera, object.matrix_world.to_translation())
+    print('Camera now at position: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera_object))
+    bpy.context.scene.render.filepath = filepath
+    bpy.ops.render.render(write_still=True)
+
+def output_name(index, model_path):
+    return str('renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '.png')
+
+def randomize_material(model_object):
+    model_material = bpy.data.materials.new('Model Material')
+    model_material.use_shadeless = True
+    model_material.emit = 1
+    model_material.diffuse_color = (randint(0,1), randint(0,1), randint(0,1))
+    model_material.diffuse_shader = 'TOON'
+    model_object.data.materials.append(model_material)
 
 def get_args():
   parser = argparse.ArgumentParser()
@@ -48,16 +66,15 @@ furthest_vertex = int(args.furthest_vertex)
 
 context = bpy.context
 
-# Live debugging (uncomment and paste in blender console for easier debugging)
 # shots_number = 4
 # furthest_vertex = 9
 # context.scene.render.filepath = '/Users/pascal/dev/glitch3d/renders/test.png'
 # file = '/Users/pascal/dev/glitch3d/fixtures/skull_glitched.obj'
 
 LIGHT_INTENSITY = 1.5
-LAMP_NUMBER = 2
+LAMP_NUMBER = 5
 SHOTS_NUMBER = 4
-FURTHEST_VERTEX_OFFSET = 4
+FURTHEST_VERTEX_OFFSET = 1
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -68,50 +85,48 @@ context.screen.scene = new_scene # selects the new scene as the current one
 context.scene.render.engine = 'CYCLES'
 context.scene.render.resolution_x = 1920
 context.scene.render.resolution_y = 1080
+context.scene.render.resolution_percentage = 100
 
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath=model_path, use_edges=True)
 model_object = bpy.data.objects['Glitch3D']
 
-# -----------------------------------------
-# Create camera with constraint on rotation
-# -----------------------------------------
+# --------------
+# Create camera
+# --------------
 camera_data = bpy.data.cameras.new('Render Camera')
-camera_data.type = 'PANO'
-camera_data.cycles.fisheye_lens = 2.7
-camera_data.cycles.fisheye_fov = 3.14159
-camera_data.sensor_width = 8.8
-camera_data.sensor_height = 6.6
 bpy.data.objects.new('Render Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Render Camera']
-camera_constraint = camera_object.constraints.new(type='TRACK_TO')
-camera_constraint.target = model_object
 new_scene.objects.link(camera_object)
 context.scene.camera = camera_object
-context.scene.camera.location = (furthest_vertex + FURTHEST_VERTEX_OFFSET, furthest_vertex + FURTHEST_VERTEX_OFFSET, 1.5)
-look_at(camera_object, model_object.matrix_world.to_translation())
+context.scene.camera.location = (model_object.location.x + 3, model_object.location.y + 3, model_object.location.z + 1)
+look_at(camera_object, model_object)
 
 # ---------
 # Add lamps
 # ---------
+lamp_data = bpy.data.lamps.new(name="Lamp", type='SUN')
+lamp_data.energy = LIGHT_INTENSITY
+lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
+new_scene.objects.link(lamp_object)
+
 for index in range(0, int(LAMP_NUMBER)):
     lamp_data = bpy.data.lamps.new(name="Lamp", type='POINT')
     lamp_data.energy = LIGHT_INTENSITY
     lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
-    lamp_object.location = (furthest_vertex + 1, furthest_vertex + 1, randint(0,3))
+    lamp_object.location = (furthest_vertex + randint(-10,2), furthest_vertex + randint(-10,2), randint(0,3))
     lamp_object.select = True
     new_scene.objects.link(lamp_object)
 
 # ------
 # Shoot
 # ------
+print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
+for index in range(0, int(SHOTS_NUMBER)):
+    rotate(model_object)
+    randomize_material(model_object)
+    model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
+    shoot(camera_object, model_object, output_name(index, model_path))
 
-for index in range(0, int(shots_number)):
-    # context.scene.camera.position =
-    print('Camera now at position: ' + camera_location_string(camera_object) + ' / rotation: ' + camera_rotation_string(camera_object))
-    context.scene.render.filepath = 'renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '.png'
-
-    bpy.context.scene.update()
-    print('Rendering image with resolution : ' + str(bpy.context.scene.render.resolution_x) + ' x ' + str(bpy.context.scene.render.resolution_y))
-    bpy.ops.render.render(write_still=True)
+print('FINISHED ¯\_(ツ)_/¯')
