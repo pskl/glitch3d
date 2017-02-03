@@ -20,14 +20,17 @@ def look_at(camera_object, point):
     rot_quat = direction.to_track_quat('-Z', 'Y')
     camera_object.rotation_euler = rot_quat.to_euler()
 
-def shoot(camera, object, filepath):
-    look_at(camera, object.matrix_world.to_translation())
+def shoot(camera, model_object, filepath):
+    look_at(camera, model_object)
     print('Camera now at position: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera_object))
     bpy.context.scene.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
     return str('renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '.png')
+
+def rotate(model_object):
+    model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
 
 def randomize_material(model_object):
     model_material = bpy.data.materials.new('Model Material')
@@ -126,7 +129,6 @@ print('Rendering images with resolution: ' + str(context.scene.render.resolution
 for index in range(0, int(SHOTS_NUMBER)):
     rotate(model_object)
     randomize_material(model_object)
-    model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
     shoot(camera_object, model_object, output_name(index, model_path))
 
 print('FINISHED ¯\_(ツ)_/¯')
