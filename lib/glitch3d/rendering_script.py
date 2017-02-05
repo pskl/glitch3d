@@ -21,13 +21,12 @@ exec(open("lib/glitch3d/helpers.py").read())
 # Arguments parsing
 args = get_args()
 file = args.file
+mode = args.mode
 shots_number = args.shots_number
 furthest_vertex = int(args.furthest_vertex)
 
 context = bpy.context
 
-# shots_number = 4
-# furthest_vertex = 9
 # context.scene.render.filepath = '/Users/pascal/dev/glitch3d/renders/test.png'
 # file = '/Users/pascal/dev/glitch3d/fixtures/skull_glitched.obj'
 
@@ -42,10 +41,11 @@ bpy.ops.scene.delete() # Delete old scene
 context.screen.scene = new_scene # selects the new scene as the current one
 
 # Render settings
-# context.scene.render.engine = 'CYCLES'
 context.scene.render.resolution_x = 1920
 context.scene.render.resolution_y = 1080
-context.scene.render.resolution_percentage = 50
+if mode == 'high':
+    context.scene.render.resolution_percentage = 100
+    context.scene.render.engine = 'CYCLES'
 
 # Load model
 model_path = os.path.join(file)
@@ -79,12 +79,16 @@ camera_data = bpy.data.cameras.new('Render Camera')
 bpy.data.objects.new('Render Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Render Camera']
 new_scene.objects.link(camera_object)
-camera_object.location = (0, model_object.location.y, model_object.location.z)
-reposition(camera_object, model_object)
-camera_object.rotation_euler = (1, 0, 0)
+camera_object.location = (0, 15, 0)
+
+bpy.context.scene.objects.active = model_object
+bpy.ops.object.mode_set(mode = 'EDIT')
+
+# reposition(camera_object, model_object)
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
 shoot(camera_object, model_object, 'renders/dump.png')
+assign_material(model_object, create_cycles_material())
 
 # ------
 # Shoot
@@ -92,7 +96,7 @@ shoot(camera_object, model_object, 'renders/dump.png')
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
 for index in range(0, int(SHOTS_NUMBER)):
     print("-------------------------- " + str(index) + " --------------------------")
-    randomize_material(model_object)
+    # randomize_material(model_object)
     shoot(camera_object, model_object, output_name(index, model_path))
     rotate(model_object)
 

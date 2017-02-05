@@ -118,7 +118,9 @@ module Glitch3d
       '-u',
       furthest.max.to_s,
       '-n',
-      6.to_s
+      6.to_s,
+      '-m',
+      'low'
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'

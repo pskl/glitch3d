@@ -6,6 +6,11 @@ def look_at(camera_object, point):
     rot_quat = direction.to_track_quat('-Z', 'Y')
     camera_object.rotation_euler = rot_quat.to_euler()
 
+def empty_materials():
+    mats = bpy.data.materials
+    for mat in mats.keys():
+        mats.remove(mats[mat])
+
 def shoot(camera, model_object, filepath):
     look_at(camera, model_object)
     print('Camera now at location: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera))
@@ -15,8 +20,9 @@ def shoot(camera, model_object, filepath):
 def output_name(index, model_path):
     return 'renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
 
-def rotate(model_object):
-    model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
+def rotate(model_object, index):
+    # model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
+    model_object.rotation_euler[2] = radians(index * (360.0 / SHOTS_NUMBER))
 
 def rand_color_value():
     return randint(0, 1)
@@ -27,11 +33,18 @@ def randomize_material(model_object):
     model_material.emit = 0.8
     model_material.diffuse_color = (rand_color_value(), rand_color_value(), rand_color_value())
     model_material.diffuse_shader = 'TOON'
-    model_object.data.materials.append(model_material)
+    assign_material(model_object, model_material)
 
 # Reposition camera until the model object is within the frustum
 def reposition(camera_object, model_object):
-    ""
+    boolean = check_object_within_frustum(camera_object, model_object)
+    while boolean is not True:
+        camera_object.location.y = camera_object.location.y - 1
+        print(camera_location_string(camera_object))
+        look_at(camera_object, model_object)
+        boolean = check_object_within_frustum(camera_object, model_object)
+        print(str(boolean))
+
 def get_args():
   parser = argparse.ArgumentParser()
 
@@ -44,6 +57,8 @@ def get_args():
   parser.add_argument('-f', '--file', help="obj file to render")
   parser.add_argument('-u', '--furthest_vertex', help="furthest vertice")
   parser.add_argument('-n', '--shots_number', help="number of shots")
+  parser.add_argument('-m', '--mode', help="quality mode: low | high")
+
   parsed_script_args, _ = parser.parse_known_args(script_args)
   return parsed_script_args
 
@@ -53,13 +68,12 @@ def camera_rotation_string(camera):
 def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
-def check_object_within_frustum(scene, model_object, camera):
-    bpy.context.scene.objects.active = model_object
-    bpy.ops.object.mode_set(mode = 'EDIT')
+def check_object_within_frustum(camera, model_object):
     mesh = model_object.data
     mat_world = model_object.matrix_world
-    cs, ce = camera.data.clip_start, camera.data.clip_end
-    # assert model_object.mode == "EDIT"
+    cs = camera.data.clip_start
+    ce = camera.data.clip_end
+    assert model_object.mode == "EDIT"
     bm = bmesh.from_edit_mesh(mesh)
     for v in bm.verts:
         co_ndc = world_to_camera_view(scene, camera, mat_world * v.co)
@@ -70,4 +84,57 @@ def check_object_within_frustum(scene, model_object, camera):
         else:
             v.select = False
     bmesh.update_edit_mesh(mesh, False, False)
-    return v.select
+    return bool(v.select)
+
+def assign_material(model_object, material):
+    model_object.data.materials.append(material)
+
+
+def create_cycles_material():
+    empty_materials()
+
+    mat = bpy.data.materials.new('zheight')
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+
+    # node = nodes['Diffuse BSDF']
+    # node.location = 600, 120
+    # 
+    # node = nodes['Material Output']
+    # node.location = 800, 120
+
+    node = nodes.new('ShaderNodeNewGeometry')
+    node.name = 'Geometry_0'
+    node.location = -300, 120
+
+    node = nodes.new('ShaderNodeVectorMath')
+    node.operation = 'ADD'
+    node.label = 'ADD'
+    node.name = 'ADD_0'
+    node.location = -100, 120
+
+    node = nodes.new('ShaderNodeVectorMath')
+    node.operation = 'DOT_PRODUCT'
+    node.label = 'DOT'
+    node.name = 'DOT_0'
+    node.location = 100, 120
+
+    node = nodes.new('ShaderNodeValToRGB')
+    node.location = 300, 120
+
+    output = nodes['Geometry_0'].outputs['Position']
+    input = nodes['ADD_0'].inputs[0]
+    mat.node_tree.links.new(output, input)
+
+    output = nodes['ADD_0'].outputs['Vector']
+    input = nodes['DOT_0'].inputs[0]
+    mat.node_tree.links.new(output, input)
+
+    output = nodes['DOT_0'].outputs['Value']
+    input = nodes['ColorRamp'].inputs['Fac']
+    mat.node_tree.links.new(output, input)
+
+    output = nodes['ColorRamp'].outputs['Color']
+    input = nodes['Diffuse BSDF'].inputs['Color']
+    mat.node_tree.links.new(output, input)
+    return mat
