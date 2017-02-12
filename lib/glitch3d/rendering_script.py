@@ -6,12 +6,16 @@
 # 2) Create lamps
 # 3) Create camera
 # 4) Rotate model and shoot image at each step
+#
+# Use `code.interact(local=dict(globals(), **locals()))` to pry into the script
 
 import bpy
 import os
 import argparse
 import datetime
 import bmesh
+import code
+import math
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 from random import randint
@@ -30,10 +34,11 @@ context = bpy.context
 # context.scene.render.filepath = '/Users/pascal/dev/glitch3d/renders/test.png'
 # file = '/Users/pascal/dev/glitch3d/fixtures/skull_glitched.obj'
 
-LIGHT_INTENSITY = 1.0
+LIGHT_INTENSITY = 0.8
 LAMP_NUMBER = 10
-SHOTS_NUMBER = 10
+SHOTS_NUMBER = 2
 FURTHEST_VERTEX_OFFSET = 1
+REFLECTOR_SCALE = 3
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -60,17 +65,35 @@ model_object.location = (0, 0, 0)
 # ---------
 # Add lamps
 # ---------
-lamp_data = bpy.data.lamps.new(name="Lamp", type='SUN')
-lamp_data.energy = LIGHT_INTENSITY
-lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
-new_scene.objects.link(lamp_object)
+# lamp_data = bpy.data.lamps.new(name="Lamp", type='SUN')
+# lamp_data.energy = LIGHT_INTENSITY
+# lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
+# new_scene.objects.link(lamp_object)
 
-for index in range(0, int(LAMP_NUMBER)):
-    lamp_data = bpy.data.lamps.new(name="Lamp", type='POINT')
-    lamp_data.energy = LIGHT_INTENSITY
-    lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
-    lamp_object.location = (furthest_vertex + randint(-10,2), furthest_vertex + randint(-10,2), randint(0,3))
-    new_scene.objects.link(lamp_object)
+# for index in range(0, int(LAMP_NUMBER)):
+#     lamp_data = bpy.data.lamps.new(name="Lamp", type='POINT')
+#     lamp_data.energy = LIGHT_INTENSITY
+#     lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
+#     lamp_object.location = (randint(-furthest_vertex, furthest_vertex), randint(-furthest_vertex, furthest_vertex), randint(-furthest_vertex, furthest_vertex))
+#     new_scene.objects.link(lamp_object)
+
+# Add reflectors
+bpy.ops.mesh.primitive_plane_add(location=(furthest_vertex + 3, furthest_vertex + 3, model_object.location.z))
+bpy.ops.mesh.primitive_plane_add(location=(- furthest_vertex - 3, - furthest_vertex - 3, model_object.location.z))
+
+# Rotate reflectors
+plane1 = bpy.data.objects['Plane']
+plane1.rotation_euler.x += 30
+plane2 = bpy.data.objects['Plane.001']
+plane2.rotation_euler.x -= 30
+plane1.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
+plane2.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
+emissive_material = bpy.data.materials.new('Emissive Material')
+emissive_material.use_nodes = True
+new_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
+assign_node_to_output(emissive_material, new_node)
+assign_material(plane1, emissive_material)
+assign_material(plane2, emissive_material)
 
 # --------------
 # Create camera
@@ -87,7 +110,6 @@ bpy.ops.object.mode_set(mode = 'EDIT')
 # reposition(camera_object, model_object)
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
-shoot(camera_object, model_object, 'renders/dump.png')
 assign_material(model_object, create_cycles_material())
 
 # ------
@@ -96,8 +118,7 @@ assign_material(model_object, create_cycles_material())
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
 for index in range(0, int(SHOTS_NUMBER)):
     print("-------------------------- " + str(index) + " --------------------------")
-    # randomize_material(model_object)
     shoot(camera_object, model_object, output_name(index, model_path))
-    rotate(model_object)
+    rotate(model_object, index)
 
 print('FINISHED ¯\_(ツ)_/¯')

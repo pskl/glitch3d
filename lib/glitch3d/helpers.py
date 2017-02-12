@@ -21,19 +21,13 @@ def output_name(index, model_path):
     return 'renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
 
 def rotate(model_object, index):
-    # model_object.rotation_euler.z = model_object.rotation_euler.z + 0.5
-    model_object.rotation_euler[2] = radians(index * (360.0 / SHOTS_NUMBER))
+    model_object.rotation_euler[2] = math.radians(index * (360.0 / SHOTS_NUMBER))
 
 def rand_color_value():
     return randint(0, 1)
 
-def randomize_material(model_object):
-    model_material = bpy.data.materials.new('Model Material')
-    model_material.use_shadeless = True
-    model_material.emit = 0.8
-    model_material.diffuse_color = (rand_color_value(), rand_color_value(), rand_color_value())
-    model_material.diffuse_shader = 'TOON'
-    assign_material(model_object, model_material)
+def rand_color_vector():
+    return (rand_color_value(), rand_color_value(), rand_color_value())
 
 # Reposition camera until the model object is within the frustum
 def reposition(camera_object, model_object):
@@ -89,52 +83,20 @@ def check_object_within_frustum(camera, model_object):
 def assign_material(model_object, material):
     model_object.data.materials.append(material)
 
+def assign_node_to_output(material, new_node):
+    assert material.use_nodes == True
+    output_node = material.node_tree.nodes['Material Output']
+    # code.interact(local=dict(globals(), **locals()))
+    material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
 
 def create_cycles_material():
-    empty_materials()
+    # empty_materials()
 
-    mat = bpy.data.materials.new('zheight')
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
+    material = bpy.data.materials.new('Object Material')
+    material.use_nodes = True
 
-    # node = nodes['Diffuse BSDF']
-    # node.location = 600, 120
-    # 
-    # node = nodes['Material Output']
-    # node.location = 800, 120
+    nodes = material.node_tree.nodes
+    new_node = nodes.new('ShaderNodeBsdfGlossy')
 
-    node = nodes.new('ShaderNodeNewGeometry')
-    node.name = 'Geometry_0'
-    node.location = -300, 120
-
-    node = nodes.new('ShaderNodeVectorMath')
-    node.operation = 'ADD'
-    node.label = 'ADD'
-    node.name = 'ADD_0'
-    node.location = -100, 120
-
-    node = nodes.new('ShaderNodeVectorMath')
-    node.operation = 'DOT_PRODUCT'
-    node.label = 'DOT'
-    node.name = 'DOT_0'
-    node.location = 100, 120
-
-    node = nodes.new('ShaderNodeValToRGB')
-    node.location = 300, 120
-
-    output = nodes['Geometry_0'].outputs['Position']
-    input = nodes['ADD_0'].inputs[0]
-    mat.node_tree.links.new(output, input)
-
-    output = nodes['ADD_0'].outputs['Vector']
-    input = nodes['DOT_0'].inputs[0]
-    mat.node_tree.links.new(output, input)
-
-    output = nodes['DOT_0'].outputs['Value']
-    input = nodes['ColorRamp'].inputs['Fac']
-    mat.node_tree.links.new(output, input)
-
-    output = nodes['ColorRamp'].outputs['Color']
-    input = nodes['Diffuse BSDF'].inputs['Color']
-    mat.node_tree.links.new(output, input)
-    return mat
+    assign_node_to_output(material, new_node)
+    return material
