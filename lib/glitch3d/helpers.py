@@ -86,7 +86,6 @@ def assign_material(model_object, material):
 def assign_node_to_output(material, new_node):
     assert material.use_nodes == True
     output_node = material.node_tree.nodes['Material Output']
-    # code.interact(local=dict(globals(), **locals()))
     material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
 
 def create_cycles_material():
@@ -96,7 +95,9 @@ def create_cycles_material():
     material.use_nodes = True
 
     nodes = material.node_tree.nodes
-    new_node = nodes.new('ShaderNodeBsdfGlossy')
+    # new_node = nodes.new('ShaderNodeBsdfGlossy')
+    new_node = nodes.new('ShaderNodeBsdfDiffuse')
+    # code.interact(local=dict(globals(), **locals()))
 
     assign_node_to_output(material, new_node)
     return material
