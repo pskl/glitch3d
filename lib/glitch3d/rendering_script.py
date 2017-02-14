@@ -26,18 +26,13 @@ exec(open("lib/glitch3d/helpers.py").read())
 args = get_args()
 file = args.file
 mode = args.mode
-shots_number = args.shots_number
-furthest_vertex = int(args.furthest_vertex)
-
+shots_number = int(args.shots_number)
+x_boundary = int(args.x_boundary)
+y_boundary = int(args.y_boundary)
+z_boundary = int(args.z_boundary)
 context = bpy.context
+max_boundary = max([x_boundary, y_boundary, z_boundary])
 
-# context.scene.render.filepath = '/Users/pascal/dev/glitch3d/renders/test.png'
-# file = '/Users/pascal/dev/glitch3d/fixtures/skull_glitched.obj'
-
-LIGHT_INTENSITY = 0.8
-LAMP_NUMBER = 10
-SHOTS_NUMBER = 5
-FURTHEST_VERTEX_OFFSET = 1
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 8
 PINK = [0.8, 0.2, 0.7, 1.0]
@@ -66,8 +61,8 @@ bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 model_object.location = (0, 0, 0)
 
 # Add reflectors
-bpy.ops.mesh.primitive_plane_add(location=(furthest_vertex + 3, 0, 0))
-bpy.ops.mesh.primitive_plane_add(location=(- furthest_vertex - 3, 0, 0))
+bpy.ops.mesh.primitive_plane_add(location=(max_boundary + 3, 0, 0))
+bpy.ops.mesh.primitive_plane_add(location=(- max_boundary - 3, 0, 0))
 
 plane1 = bpy.data.objects['Plane']
 plane1.rotation_euler.z += 30
@@ -115,7 +110,7 @@ assign_material(model_object, create_cycles_material())
 # Shoot
 # ------
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
-for index in range(0, int(SHOTS_NUMBER)):
+for index in range(0, int(shots_number)):
     print("-------------------------- " + str(index) + " --------------------------")
     rotate(model_object, index)
     shoot(camera_object, model_object, output_name(index, model_path))

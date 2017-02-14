@@ -17,8 +17,8 @@ module Glitch3d
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
-    furthest = create_glitched_file(glitch(read_source(source_file)), target_file)
-    render(target_file, furthest)
+    boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
+    render(target_file, boundaries)
   end
 
   class << self
@@ -47,7 +47,7 @@ module Glitch3d
       v = sv.split(' ')
       vertices_list << Vertex.new(v[1].to_f, v[2].to_f, v[3].to_f, i)
     end
-    puts 'Furthest point: ' + Vertex.furthest(vertices_list).to_s
+    puts 'Boundaries: ' + Vertex.boundaries(vertices_list).to_s
     vertices_list
   end
 
@@ -91,11 +91,10 @@ module Glitch3d
   end
 
   def create_glitched_file(content_hash, target_file)
-    furthest = Vertex.furthest(content_hash[:vertices])
+    boundaries = Vertex.boundaries(content_hash[:vertices])
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
-      f.puts 'furthest vertex: ' +  furthest.to_s
-      f.puts 'furthest point: ' + furthest.max.to_s
+      f.puts 'Boundaries: ' +  boundaries.to_s
       f.puts ''
       f.puts 'g Glitch3D'
       f.puts ''
@@ -103,10 +102,10 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:faces].map(&:to_s).compact
     end
-    furthest
+    boundaries
   end
 
-  def render(file_path, furthest)
+  def render(file_path, boundaries)
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
@@ -115,8 +114,12 @@ module Glitch3d
       '--',
       '-f',
       file_path,
-      '-u',
-      furthest.max.to_s,
+      '-x',
+      boundaries[0].to_s,
+      '-y',
+      boundaries[1].to_s,
+      '-z',
+      boundaries[2].to_s,
       '-n',
       2.to_s,
       '-m',

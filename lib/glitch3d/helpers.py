@@ -21,7 +21,7 @@ def output_name(index, model_path):
     return 'renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
 
 def rotate(model_object, index):
-    model_object.rotation_euler[2] = math.radians(index * (360.0 / SHOTS_NUMBER))
+    model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
 
 def rand_color_value():
     return randint(0, 1)
@@ -49,8 +49,10 @@ def get_args():
 
   # add parser rules
   parser.add_argument('-f', '--file', help="obj file to render")
-  parser.add_argument('-u', '--furthest_vertex', help="furthest vertice")
-  parser.add_argument('-n', '--shots_number', help="number of shots")
+  parser.add_argument('-n', '--shots-number', help="number of shots desired")
+  parser.add_argument('-x', '--x_boundary', help="model outermost point on x")
+  parser.add_argument('-y', '--y_boundary', help="model outermost point on y")
+  parser.add_argument('-z', '--z_boundary', help="model outermost point on z")
   parser.add_argument('-m', '--mode', help="quality mode: low | high")
 
   parsed_script_args, _ = parser.parse_known_args(script_args)
