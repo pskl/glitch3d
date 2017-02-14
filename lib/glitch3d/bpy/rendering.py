@@ -20,7 +20,7 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 from random import randint
 
-exec(open("lib/glitch3d/helpers.py").read())
+exec(open("lib/glitch3d/bpy/helpers.py").read())
 
 # Arguments parsing
 args = get_args()

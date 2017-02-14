@@ -32,4 +32,11 @@ class Vertex
       vertices_list.max_by(&:z).z.ceil
     ]
   end
+
+  # Pass functions like :negative? or :positive?
+  def self.subset(x:, y:, z:, vertex_list:)
+    vertex_list.select do |vertex|
+      vertex.send(x) && vertex.send(y) && vertex.send(z)
+    end
+  end
 end

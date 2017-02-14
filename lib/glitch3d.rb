@@ -1,24 +1,36 @@
 require "glitch3d/version"
-require "glitch3d/vertex"
-require "glitch3d/face"
+require "glitch3d/objects/vertex"
+require "glitch3d/objects/face"
+require "glitch3d/strategies/default"
+require "glitch3d/strategies/localized"
 require "pry"
 
 module Glitch3d
   VERTEX_GLITCH_ITERATION_RATIO = 0.2
-  VERTEX_GLITCH_OFFSET = 0.6
+  VERTEX_GLITCH_OFFSET = 2
 
-  FACE_GLITCH_ITERATION_RATIO = 0.2
+  FACE_GLITCH_ITERATION_RATIO = 0.1
   FACE_GLITCH_OFFSET = 0.6
 
   BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender".freeze
-  RENDERING_SCRIPT_PATH = "lib/glitch3d/rendering_script.py".freeze
+  RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
 
   def process_model(source_file)
+    args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
+    self.class.include infer_strategy(args["mode"])
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
     boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
-    render(target_file, boundaries)
+    # render(target_file, boundaries)
+  end
+
+  def infer_strategy(mode)
+    return Glitch3d::Default if mode.nil?
+    {
+      default: Glitch3d::Default,
+      localized: Glitch3d::Localized
+    }[mode.to_sym]
   end
 
   class << self
@@ -70,24 +82,6 @@ module Glitch3d
       vertices: alter_vertices(file_hash_content[:vertices]),
       faces: alter_faces(file_hash_content[:faces], file_hash_content[:vertices])
     }
-  end
-
-  def alter_vertices(vertices_objects_array)
-    (VERTEX_GLITCH_ITERATION_RATIO * vertices_objects_array.size).to_i.times do |_|
-      random_element(vertices_objects_array).fuck
-    end
-    vertices_objects_array
-  end
-
-  def alter_faces(faces_objects_array, vertex_objects_array)
-    (FACE_GLITCH_ITERATION_RATIO * faces_objects_array.count).to_i.times do |_|
-      random_element(faces_objects_array).fuck(random_element(vertex_objects_array))
-    end
-    faces_objects_array
-  end
-
-  def random_element(array)
-    array[rand(0..array.size - 1)]
   end
 
   def create_glitched_file(content_hash, target_file)
