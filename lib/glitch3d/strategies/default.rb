@@ -13,9 +13,5 @@ module Glitch3d
       end
       faces_objects_array
     end
-
-    def random_element(array)
-      array[rand(0..array.size - 1)]
-    end
   end
 end

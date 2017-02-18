@@ -22,7 +22,7 @@ module Glitch3d
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
     boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
-    # render(target_file, boundaries)
+    render(target_file, boundaries)
   end
 
   def infer_strategy(mode)
@@ -59,7 +59,6 @@ module Glitch3d
       v = sv.split(' ')
       vertices_list << Vertex.new(v[1].to_f, v[2].to_f, v[3].to_f, i)
     end
-    puts 'Boundaries: ' + Vertex.boundaries(vertices_list).to_s
     vertices_list
   end
 
@@ -84,11 +83,15 @@ module Glitch3d
     }
   end
 
+  def random_element(array)
+    array[rand(0..array.size - 1)]
+  end
+
   def create_glitched_file(content_hash, target_file)
     boundaries = Vertex.boundaries(content_hash[:vertices])
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
-      f.puts 'Boundaries: ' +  boundaries.to_s
+      f.puts '# Boundaries: ' +  boundaries.to_s
       f.puts ''
       f.puts 'g Glitch3D'
       f.puts ''
@@ -109,15 +112,15 @@ module Glitch3d
       '-f',
       file_path,
       '-x',
-      boundaries[0].to_s,
+      "#{boundaries[0][0]},#{boundaries[0][1]}",
       '-y',
-      boundaries[1].to_s,
+      "#{boundaries[1][0]},#{boundaries[1][1]}",
       '-z',
-      boundaries[2].to_s,
+      "#{boundaries[2][0]},#{boundaries[2][1]}",
       '-n',
       2.to_s,
       '-m',
-      'high'
+      'low'
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'

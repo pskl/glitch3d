@@ -27,16 +27,16 @@ class Vertex
 
   def self.boundaries(vertices_list)
     [
-      vertices_list.max_by(&:x).x.ceil,
-      vertices_list.max_by(&:y).y.ceil,
-      vertices_list.max_by(&:z).z.ceil
+      [vertices_list.max_by(&:x).x.ceil, vertices_list.min_by(&:x).x.round],
+      [vertices_list.max_by(&:y).y.ceil, vertices_list.min_by(&:y).y.round],
+      [vertices_list.max_by(&:z).z.ceil, vertices_list.min_by(&:z).z.round]
     ]
   end
 
   # Pass functions like :negative? or :positive?
   def self.subset(x:, y:, z:, vertex_list:)
     vertex_list.select do |vertex|
-      vertex.send(x) && vertex.send(y) && vertex.send(z)
+      vertex.x.send(x) && vertex.y.send(y) && vertex.y.send(z)
     end
   end
 end
