@@ -10,3 +10,4 @@
 /fixtures/models/*
 /renders/*
 /fixtures/*_glitched.obj
+.DS_Store
