@@ -10,7 +10,8 @@ module Glitch3d
   VERTEX_GLITCH_OFFSET = 2
 
   FACE_GLITCH_ITERATION_RATIO = 0.1
-  FACE_GLITCH_OFFSET = 0.6
+  FACE_GLITCH_OFFSET = 0.5
+  BOUNDARY_LIMIT = 2 # Contain model within 2x2x2 cube
 
   BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender".freeze
   RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
@@ -18,11 +19,12 @@ module Glitch3d
   def process_model(source_file)
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
     self.class.include infer_strategy(args["mode"])
+    @quality = args["quality"]
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
     boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
-    render(target_file, boundaries)
+    render(target_file, boundaries, args["shots-number"]) unless args["no-render"]
   end
 
   def infer_strategy(mode)
@@ -89,6 +91,13 @@ module Glitch3d
 
   def create_glitched_file(content_hash, target_file)
     boundaries = Vertex.boundaries(content_hash[:vertices])
+    puts boundaries.to_s
+    while rescale_needed?(boundaries)
+      content_hash[:vertices] = Vertex.rescale(content_hash[:vertices], (boundaries.flatten.map(&:abs).max.abs - BOUNDARY_LIMIT).abs)
+      boundaries = Vertex.boundaries(content_hash[:vertices])
+    end
+    boundaries = Vertex.boundaries(content_hash[:vertices])
+    puts boundaries.to_s
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
       f.puts '# Boundaries: ' +  boundaries.to_s
@@ -102,7 +111,11 @@ module Glitch3d
     boundaries
   end
 
-  def render(file_path, boundaries)
+  def rescale_needed?(boundaries)
+    boundaries.flatten.map(&:abs).max.abs > BOUNDARY_LIMIT
+  end
+
+  def render(file_path, boundaries, shots_number)
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
@@ -118,9 +131,9 @@ module Glitch3d
       '-z',
       "#{boundaries[2][0]},#{boundaries[2][1]}",
       '-n',
-      2.to_s,
+      shots_number.to_s,
       '-m',
-      'low'
+      @quality
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'

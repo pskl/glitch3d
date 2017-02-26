@@ -64,44 +64,21 @@ def camera_rotation_string(camera):
 def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
-def check_object_within_frustum(camera, model_object):
-    mesh = model_object.data
-    mat_world = model_object.matrix_world
-    cs = camera.data.clip_start
-    ce = camera.data.clip_end
-    assert model_object.mode == "EDIT"
-    bm = bmesh.from_edit_mesh(mesh)
-    for v in bm.verts:
-        co_ndc = world_to_camera_view(scene, camera, mat_world * v.co)
-        if (0.0 < co_ndc.x < 1.0 and
-            0.0 < co_ndc.y < 1.0 and
-             cs < co_ndc.z <  ce):
-            v.select = True
-        else:
-            v.select = False
-    bmesh.update_edit_mesh(mesh, False, False)
-    return bool(v.select)
-
 def assign_material(model_object, material):
     model_object.data.materials.append(material)
 
 def assign_node_to_output(material, new_node):
     assert material.use_nodes == True
     output_node = material.node_tree.nodes['Material Output']
-    # code.interact(local=dict(globals(), **locals()))
-
     material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
 
 def create_cycles_material():
-    # empty_materials()
-
     material = bpy.data.materials.new('Object Material')
     material.use_nodes = True
 
     nodes = material.node_tree.nodes
-    # new_node = nodes.new('ShaderNodeBsdfGlossy')
-    new_node = nodes.new('ShaderNodeBsdfDiffuse')
-    # code.interact(local=dict(globals(), **locals()))
+    new_node = nodes.new('ShaderNodeBsdfGlossy')
+    # new_node = nodes.new('ShaderNodeBsdfDiffuse')
 
     assign_node_to_output(material, new_node)
     return material

@@ -7,11 +7,10 @@ By altering .obj file data you can get something like this :
 ## Disclaimer
 
 Work in progress. The gem is not usable at the moment.
-
+Rationale: Model data manipulation is done in ruby, while anything related to the rendering process is done in Python using the Blender API.
 Usage
 ---
 - `3dglitch source_file_name` (a .obj file)
-- then render the generated `source_file_name_glitched.obj` file with your favorite rendering tool (Photshop, Blender)
 
 ## A quick note on the .obj file format
 

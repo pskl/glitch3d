@@ -16,6 +16,13 @@ class Vertex
     [:x, :y, :z].sample
   end
 
+  def rescale(offset)
+    [:x, :y, :z].each do |attr|
+      value = send(attr)
+      send("#{attr}=", value * 0.8)
+    end
+  end
+
   def fuck
     attr = rand_attr
     send("#{attr}=", send(attr) + Glitch3d.rand_vertex_glitch_offset)
@@ -31,6 +38,12 @@ class Vertex
       [vertices_list.max_by(&:y).y.ceil, vertices_list.min_by(&:y).y.round],
       [vertices_list.max_by(&:z).z.ceil, vertices_list.min_by(&:z).z.round]
     ]
+  end
+
+  def self.rescale(vertices, offset)
+    vertices.each do |v|
+      v.rescale(offset)
+    end
   end
 
   # Pass functions like :negative? or :positive?

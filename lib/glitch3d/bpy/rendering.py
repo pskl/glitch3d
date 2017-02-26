@@ -45,11 +45,13 @@ min_boundary = min([x_min_boundary, y_min_boundary, z_min_boundary])
 context = bpy.context
 
 REFLECTOR_SCALE = 5
-REFLECTOR_STRENGTH = 8
+REFLECTOR_STRENGTH = 12
+REFLECTOR_LOCATION_PADDING = 10
 PINK = [0.8, 0.2, 0.7, 1.0]
 BLUE = [0.1, 0.4, 0.8, 1.0]
+GREEN = [0.2, 0.8, 0.7, 1.0]
 WHITE = [1, 1, 1, 1]
-COLORS = [PINK, BLUE, WHITE]
+COLORS = { 0: PINK, 1: BLUE, 2: WHITE, 3: GREEN }
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -61,7 +63,15 @@ context.scene.render.resolution_x = 1920
 context.scene.render.resolution_y = 1080
 context.scene.render.engine = 'CYCLES'
 context.scene.render.resolution_percentage = 25
+# bpy.context.scene.cycles.device = 'GPU'
+context.scene.render.image_settings.compression = 0
+context.scene.cycles.samples = 25
+context.scene.render.image_settings.color_mode ='RGBA'
+context.scene.render.image_settings.file_format='PNG'
+
 if mode == 'high':
+    context.scene.render.image_settings.compression = 90
+    context.scene.cycles.samples = 500
     context.scene.render.resolution_percentage = 100
 
 # Load model
@@ -74,28 +84,6 @@ model_object.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 model_object.location = (0, 0, 0)
 
-# Add reflectors
-bpy.ops.mesh.primitive_plane_add(location=(max_boundary + 3, 0, 0))
-bpy.ops.mesh.primitive_plane_add(location=(- max_boundary - 3, 0, 0))
-bpy.ops.mesh.primitive_plane_add(location=(0, 18, 0))
-plane1 = bpy.data.objects['Plane']
-plane2 = bpy.data.objects['Plane.001']
-plane3 = bpy.data.objects['Plane.002']
-
-for index, plane in enumerate([plane1, plane2, plane3]):
-    plane.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
-    plane.rotation_euler.z += 30
-    emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
-    emissive_material.use_nodes = True
-    emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
-    # Set color
-    emission_node.inputs[0].default_value = random.choice(COLORS)
-    # Set strength
-    emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
-
-    assign_node_to_output(emissive_material, emission_node)
-    assign_material(plane, emissive_material)
-
 # --------------
 # Create camera
 # --------------
@@ -103,15 +91,34 @@ camera_data = bpy.data.cameras.new('Render Camera')
 bpy.data.objects.new('Render Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Render Camera']
 new_scene.objects.link(camera_object)
-camera_object.location = (0, 15, 0)
+camera_object.location = (8, 8, 0)
 
-bpy.context.scene.objects.active = model_object
-bpy.ops.object.mode_set(mode = 'EDIT')
+# Add reflectors
+bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
+bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
 
-# reposition(camera_object, model_object)
+plane1 = bpy.data.objects['Plane']
+plane2 = bpy.data.objects['Plane.001']
+
+# Adjust camera
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
 assign_material(model_object, create_cycles_material())
+
+for index, plane in enumerate([plane1, plane2]):
+    plane.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
+    plane.rotation_euler.x += math.radians(90)
+    emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
+    emissive_material.use_nodes = True
+    emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
+    # Set color
+    emission_node.inputs[0].default_value = COLORS[index]
+    # Set strength
+    emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
+    assign_node_to_output(emissive_material, emission_node)
+    assign_material(plane, emissive_material)
+
+plane2.rotation_euler.z += math.radians(90)
 
 # ------
 # Shoot
