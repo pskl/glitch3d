@@ -20,7 +20,7 @@ import code
 import math
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
-from random import randint
+import random
 
 exec(open("lib/glitch3d/bpy/helpers.py").read())
 
@@ -30,28 +30,13 @@ file = args.file
 mode = args.mode
 shots_number = int(args.shots_number)
 
-x_max_boundary = int(args.x_boundary.split(',')[0])
-x_min_boundary = int(args.x_boundary.split(',')[1])
-
-y_max_boundary = int(args.y_boundary.split(',')[0])
-y_min_boundary = int(args.y_boundary.split(',')[1])
-
-z_max_boundary = int(args.z_boundary.split(',')[0])
-z_min_boundary = int(args.z_boundary.split(',')[1])
-
-max_boundary = max([x_max_boundary, y_max_boundary, z_max_boundary])
-min_boundary = min([x_min_boundary, y_min_boundary, z_min_boundary])
-
 context = bpy.context
 
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
 REFLECTOR_LOCATION_PADDING = 10
-PINK = [0.8, 0.2, 0.7, 1.0]
-BLUE = [0.1, 0.4, 0.8, 1.0]
-GREEN = [0.2, 0.8, 0.7, 1.0]
-WHITE = [1, 1, 1, 1]
-COLORS = { 0: PINK, 1: BLUE, 2: WHITE, 3: GREEN }
+PROPS_NUMBER = 100
+SHADERS = ['ShaderNodeBsdfGlossy', 'ShaderNodeBsdfDiffuse', 'ShaderNodeBsdfVelvet']
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -112,13 +97,30 @@ for index, plane in enumerate([plane1, plane2]):
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
     # Set color
-    emission_node.inputs[0].default_value = COLORS[index]
+    emission_node.inputs[0].default_value = rand_color_vector()
     # Set strength
     emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
     assign_node_to_output(emissive_material, emission_node)
     assign_material(plane, emissive_material)
 
+# Tilt one of the reflectors
 plane2.rotation_euler.z += math.radians(90)
+
+# Add other elements
+for index in range(0, int(PROPS_NUMBER)):
+    bpy.ops.mesh.primitive_cube_add(location=rand_location(),radius=rand_scale(), rotation=rand_rotation())
+    if index == 0:
+        object_name = 'Cube'
+    elif index > 9:
+        object_name = 'Cube.0' + str(index)
+    elif index > 99:
+        object_name = 'Cube.' + str(index)
+    else:
+        object_name = 'Cube.00' + str(index)
+    object = bpy.data.objects[object_name]
+    new_material = create_cycles_material()
+    assign_random_texture_to_material(new_material)
+    assign_material(object, new_material)
 
 # ------
 # Shoot

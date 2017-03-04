@@ -6,25 +6,25 @@ require "glitch3d/strategies/localized"
 require "pry"
 
 module Glitch3d
-  VERTEX_GLITCH_ITERATION_RATIO = 0.2
-  VERTEX_GLITCH_OFFSET = 2
+  VERTEX_GLITCH_ITERATION_RATIO = 0.001
+  VERTEX_GLITCH_OFFSET = 1
 
-  FACE_GLITCH_ITERATION_RATIO = 0.1
+  FACE_GLITCH_ITERATION_RATIO = 0.0
   FACE_GLITCH_OFFSET = 0.5
-  BOUNDARY_LIMIT = 2 # Contain model within 2x2x2 cube
+  BOUNDARY_LIMIT = 4 # Contain model within 2x2x2 cube
 
   BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender".freeze
   RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
 
   def process_model(source_file)
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
-    self.class.include infer_strategy(args["mode"])
-    @quality = args["quality"]
+    self.class.include infer_strategy(args["mode"] || 'default')
+    @quality = args["quality"] || 'low'
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
     boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
-    render(target_file, boundaries, args["shots-number"]) unless args["no-render"]
+    render(target_file, boundaries, args["shots-number"] || 6) unless args["no-render"]
   end
 
   def infer_strategy(mode)
@@ -124,12 +124,6 @@ module Glitch3d
       '--',
       '-f',
       file_path,
-      '-x',
-      "#{boundaries[0][0]},#{boundaries[0][1]}",
-      '-y',
-      "#{boundaries[1][0]},#{boundaries[1][1]}",
-      '-z',
-      "#{boundaries[2][0]},#{boundaries[2][1]}",
       '-n',
       shots_number.to_s,
       '-m',
