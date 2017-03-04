@@ -15,7 +15,7 @@ module Glitch3d
     end
 
     def selected_area(vertices_objects_array)
-      Vertex.subset(x: :positive?, y: :positive?, z: :positive?, vertex_list: vertices_objects_array)
+      Vertex.subset(x: :negative?, y: :positive?, z: :zero?, vertex_list: vertices_objects_array)
     end
 
     def target(vertices_objects_array)

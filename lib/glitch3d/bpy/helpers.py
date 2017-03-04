@@ -24,20 +24,25 @@ def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
 
 def rand_color_value():
-    return randint(0, 1)
+    return round(random.uniform(0.1, 1.0), 10)
+
+def rand_location():
+    return (rand_location_value(), rand_location_value(), rand_location_value())
+
+def rand_rotation():
+    return (rand_rotation_value(), rand_rotation_value(), rand_rotation_value())
+
+def rand_rotation_value():
+    return round(random.uniform(0, 1), 10)
+
+def rand_location_value():
+    return round(random.uniform(-8, 8), 10)
 
 def rand_color_vector():
-    return (rand_color_value(), rand_color_value(), rand_color_value())
+    return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
 
-# Reposition camera until the model object is within the frustum
-def reposition(camera_object, model_object):
-    boolean = check_object_within_frustum(camera_object, model_object)
-    while boolean is not True:
-        camera_object.location.y = camera_object.location.y - 1
-        print(camera_location_string(camera_object))
-        look_at(camera_object, model_object)
-        boolean = check_object_within_frustum(camera_object, model_object)
-        print(str(boolean))
+def rand_scale():
+    return round(random.uniform(0, 0.3), 10)
 
 def get_args():
   parser = argparse.ArgumentParser()
@@ -50,9 +55,6 @@ def get_args():
   # add parser rules
   parser.add_argument('-f', '--file', help="obj file to render")
   parser.add_argument('-n', '--shots-number', help="number of shots desired")
-  parser.add_argument('-x', '--x_boundary', help="model outermost point on x")
-  parser.add_argument('-y', '--y_boundary', help="model outermost point on y")
-  parser.add_argument('-z', '--z_boundary', help="model outermost point on z")
   parser.add_argument('-m', '--mode', help="quality mode: low | high")
 
   parsed_script_args, _ = parser.parse_known_args(script_args)
@@ -77,8 +79,19 @@ def create_cycles_material():
     material.use_nodes = True
 
     nodes = material.node_tree.nodes
-    new_node = nodes.new('ShaderNodeBsdfGlossy')
-    # new_node = nodes.new('ShaderNodeBsdfDiffuse')
+    new_node = nodes.new(random.choice(SHADERS))
 
     assign_node_to_output(material, new_node)
     return material
+
+def assign_random_texture_to_material(material):
+    assert material.use_nodes == True
+    bsdf_node = material.node_tree.nodes['Diffuse BSDF']
+    assign_node_to_output(material, bsdf_node)
+    texture_node = material.node_tree.nodes.new('ShaderNodeTexture')
+    material.node_tree.links.new(texture_node.outputs[0], bsdf_node.inputs[0])
+    # code.interact(local=dict(globals(), **locals()))
+    texture_path = os.path.expanduser('fixtures/textures/25.jpg')
+    new_texture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
+    new_texture.image = bpy.data.images.load(texture_path)
+    texture_node.texture = new_texture
