@@ -9,5 +9,7 @@
 /tmp/
 /fixtures/models/*
 /renders/*
-/fixtures/*_glitched.obj
+/fixtures/*
+!/fixtures/skull.obj
+!/fixtures/textures/25.jpg
 .DS_Store
