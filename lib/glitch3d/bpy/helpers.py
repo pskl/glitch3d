@@ -75,7 +75,7 @@ def assign_node_to_output(material, new_node):
     material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
 
 def create_cycles_material():
-    material = bpy.data.materials.new('Object Material')
+    material = bpy.data.materials.new('Object Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
 
     nodes = material.node_tree.nodes

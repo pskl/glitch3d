@@ -18,9 +18,9 @@ import bmesh
 import random
 import code
 import math
-from mathutils import Vector
-from bpy_extras.object_utils import world_to_camera_view
+import mathutils
 import random
+import uuid
 
 exec(open("lib/glitch3d/bpy/helpers.py").read())
 
@@ -121,6 +121,31 @@ for index in range(0, int(PROPS_NUMBER)):
     new_material = create_cycles_material()
     assign_random_texture_to_material(new_material)
     assign_material(object, new_material)
+
+for index in range(0, int(PROPS_NUMBER)):
+    bpy.ops.mesh.primitive_circle_add(location=rand_location(),radius=rand_scale(), rotation=rand_rotation())
+    if index == 0:
+        object_name = 'Circle'
+    elif index > 9:
+        object_name = 'Circle.0' + str(index)
+    elif index > 99:
+        object_name = 'Circle.' + str(index)
+    else:
+        object_name = 'Circle.00' + str(index)
+    object = bpy.data.objects[object_name]
+    new_material = create_cycles_material()
+    assign_random_texture_to_material(new_material)
+    assign_material(object, new_material)
+
+# Add background to world
+world = bpy.data.worlds[0]
+world.use_nodes = True
+world_node_tree = world.node_tree
+# code.interact(local=dict(globals(), **locals()))
+gradient_node = world_node_tree.nodes.new(type="ShaderNodeTexGradient")
+background_node = world_node_tree.nodes['Background']
+world_node_tree.links.new(gradient_node.outputs['Color'], background_node.inputs['Color'])
+gradient_node.gradient_type = 'EASING'
 
 # ------
 # Shoot
