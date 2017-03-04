@@ -13,10 +13,11 @@ module Glitch3d
   FACE_GLITCH_OFFSET = 0.5
   BOUNDARY_LIMIT = 4 # Contain model within 2x2x2 cube
 
-  BLENDER_EXECUTABLE_PATH = "/Applications/blender-2.78-OSX_10.6-x86_64/blender.app/Contents/MacOS/blender".freeze
+  BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
 
   def process_model(source_file)
+    raise 'Set Blender executable path in your env variables before using glitch3d' unless BLENDER_EXECUTABLE_PATH.present?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
     self.class.include infer_strategy(args["mode"] || 'default')
     @quality = args["quality"] || 'low'
