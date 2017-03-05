@@ -42,7 +42,10 @@ def rand_color_vector():
     return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
 
 def rand_scale():
-    return round(random.uniform(0, 0.3), 10)
+    return round(random.uniform(0, 0.15), 10)
+
+def rand_scale_vector():
+    return(rand_scale(), rand_scale(), rand_scale())
 
 def get_args():
   parser = argparse.ArgumentParser()
