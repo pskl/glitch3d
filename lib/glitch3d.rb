@@ -18,8 +18,9 @@ module Glitch3d
   def clean_model(source_file)
     self.class.include Glitch3d::None
     base_file_name = source_file.gsub(/.obj/, '')
+    model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '.obj'
-    create_glitched_file(glitch(read_source(source_file)), target_file)
+    create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
   end
 
   def process_model(source_file)
@@ -30,8 +31,9 @@ module Glitch3d
     @quality = args["quality"] || 'low'
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
+    model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '_glitched.obj'
-    create_glitched_file(glitch(read_source(source_file)), target_file)
+    create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
     render(target_file, args["shots-number"] || 6) unless args["no-render"]
   end
 
@@ -97,7 +99,7 @@ module Glitch3d
     array[rand(0..array.size - 1)]
   end
 
-  def create_glitched_file(content_hash, target_file)
+  def create_glitched_file(content_hash, target_file, model_name)
     boundaries = Vertex.boundaries(content_hash[:vertices])
     puts boundaries.to_s
     while rescale_needed?(boundaries)
@@ -110,7 +112,7 @@ module Glitch3d
       f.puts '# Data corrupted with glitch3D script'
       f.puts '# Boundaries: ' + boundaries.to_s
       f.puts ''
-      f.puts 'g Glitch3D'
+      f.puts "g #{model_name}"
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
