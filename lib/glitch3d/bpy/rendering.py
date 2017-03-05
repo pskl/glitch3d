@@ -56,13 +56,19 @@ context.scene.render.image_settings.file_format='PNG'
 
 if mode == 'high':
     context.scene.render.image_settings.compression = 90
-    context.scene.cycles.samples = 500
+    context.scene.cycles.samples = 100
     context.scene.render.resolution_percentage = 100
+
+
+# Delete current objects
+for index, object in enumerate(bpy.data.objects):
+    bpy.data.objects.remove(object)
 
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-model_object = bpy.data.objects['Glitch3D']
+# code.interact(local=dict(globals(), **locals()))
+model_object = bpy.data.objects[0]
 
 # Use center of mass to center object
 model_object.select = True
@@ -158,21 +164,21 @@ for index in range(0, int(PROPS_NUMBER)):
     assign_material(object, new_material)
 
 # Import guns
-for index in range(0, 10):
-    model_path_m4a1 = os.path.join('fixtures/m4a1_glitched.obj')
+for index in range(0, 5):
+    model_path_m4a1 = os.path.join('fixtures/m4a1.obj')
     bpy.ops.import_scene.obj(filepath = model_path_m4a1, use_edges=True)
     if index == 0:
-        object_name = 'Glitch3D.001'
+        object_name = 'm4a1'
     elif index > 9:
-        object_name = 'Glitch3D.0' + str(index)
+        object_name = 'm4a1.0' + str(index)
     elif index > 99:
-        object_name = 'Glitch3D.' + str(index)
+        object_name = 'm4a1.' + str(index)
     else:
-        object_name = 'Glitch3D.00' + str(index)
+        object_name = 'm4a1.00' + str(index)
+    # code.interact(local=dict(globals(), **locals()))
     object = bpy.data.objects[object_name]
     props.append(object)
     object.location = rand_location()
-    # code.interact(local=dict(globals(), **locals()))
     object.scale = rand_scale_vector()
     object.rotation_euler = rand_rotation()
     new_material = create_cycles_material()
