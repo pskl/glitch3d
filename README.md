@@ -2,22 +2,13 @@
 
 By altering .obj file data you can get something like this :
 
-<img style="width:70%;height:70%;display:block;margin: 0 auto;" src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png">
+<img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png" width="400">
 
-## Disclaimer
+This gem uses the Blender Python API to produces renders headlessly.
 
-Work in progress. The gem is not usable at the moment.
-Rationale: Model data manipulation is done in ruby, while anything related to the rendering process is done in Python using the Blender API.
-Usage
----
-- `3dglitch source_file_name` (a .obj file)
+## Warning
 
-## A quick note on the .obj file format
-
-- v -> represents a vertice position
-- f -> represents a face (contains references to vertices, can be triangle, quad...)
-- vt -> texture UV map
-- vn -> vertex normal
+Setting `BLENDER_EXECUTABLE_PATH` in your environment is required.
 
 ## Installation
 
@@ -37,7 +28,12 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+- `glitch3d file.obj`
+
+Options:
+- `mode` : (localized|default|none)
+- `shots-number` : integer representing the number of - images desired
+- `quality` : (high|low)
 
 ## Development
 
@@ -53,3 +49,6 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/[USERN
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+
+## TODO
+- write specs
