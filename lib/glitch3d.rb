@@ -1,31 +1,38 @@
 require "glitch3d/version"
 require "glitch3d/objects/vertex"
 require "glitch3d/objects/face"
-require "glitch3d/strategies/default"
-require "glitch3d/strategies/localized"
-require "pry"
+require 'pry'
+Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each {|file| require file }
 
 module Glitch3d
-  VERTEX_GLITCH_ITERATION_RATIO = 0.001
+  VERTEX_GLITCH_ITERATION_RATIO = 0.1
   VERTEX_GLITCH_OFFSET = 1
 
-  FACE_GLITCH_ITERATION_RATIO = 0.0
+  FACE_GLITCH_ITERATION_RATIO = 0.1
   FACE_GLITCH_OFFSET = 0.5
   BOUNDARY_LIMIT = 4 # Contain model within 2x2x2 cube
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
 
+  def clean_model(source_file)
+    self.class.include Glitch3d::None
+    base_file_name = source_file.gsub(/.obj/, '')
+    target_file = base_file_name + '.obj'
+    create_glitched_file(glitch(read_source(source_file)), target_file)
+  end
+
   def process_model(source_file)
-    raise 'Set Blender executable path in your env variables before using glitch3d' unless BLENDER_EXECUTABLE_PATH.present?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
+    return clean_model(source_file) if args["clean"]
+    raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
     self.class.include infer_strategy(args["mode"] || 'default')
     @quality = args["quality"] || 'low'
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     target_file = base_file_name + '_glitched.obj'
-    boundaries = create_glitched_file(glitch(read_source(source_file)), target_file)
-    render(target_file, boundaries, args["shots-number"] || 6) unless args["no-render"]
+    create_glitched_file(glitch(read_source(source_file)), target_file)
+    render(target_file, args["shots-number"] || 6) unless args["no-render"]
   end
 
   def infer_strategy(mode)
@@ -101,7 +108,7 @@ module Glitch3d
     puts boundaries.to_s
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
-      f.puts '# Boundaries: ' +  boundaries.to_s
+      f.puts '# Boundaries: ' + boundaries.to_s
       f.puts ''
       f.puts 'g Glitch3D'
       f.puts ''
@@ -109,14 +116,13 @@ module Glitch3d
       f.puts ''
       f.puts content_hash[:faces].map(&:to_s).compact
     end
-    boundaries
   end
 
   def rescale_needed?(boundaries)
     boundaries.flatten.map(&:abs).max.abs > BOUNDARY_LIMIT
   end
 
-  def render(file_path, boundaries, shots_number)
+  def render(file_path, shots_number)
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
