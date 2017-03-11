@@ -8,7 +8,7 @@
 # 3) Create camera
 # 4) Rotate model and shoot image at each step
 #
-# Use `code.interact(local=dict(globals(), **locals()))` to pry into the script
+# Use `debug()` to pry into the script
 
 import bpy
 import os
@@ -21,6 +21,7 @@ import math
 import mathutils
 import random
 import uuid
+import sys
 
 exec(open("lib/glitch3d/bpy/helpers.py").read())
 
@@ -67,7 +68,6 @@ for index, object in enumerate(bpy.data.objects):
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-# code.interact(local=dict(globals(), **locals()))
 model_object = bpy.data.objects[0]
 
 # Use center of mass to center object
@@ -82,35 +82,39 @@ camera_data = bpy.data.cameras.new('Render Camera')
 bpy.data.objects.new('Render Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Render Camera']
 new_scene.objects.link(camera_object)
-camera_object.location = (8, 8, 0)
+camera_object.location = (8, 8, 1)
+
+empty_materials()
 
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
+bpy.ops.mesh.primitive_plane_add(location=(0, 0, 8))
 
 plane1 = bpy.data.objects['Plane']
 plane2 = bpy.data.objects['Plane.001']
+plane3 = bpy.data.objects['Plane.002']
 
 # Adjust camera
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
-assign_material(model_object, create_cycles_material())
+make_object_gold(model_object)
 
-for index, plane in enumerate([plane1, plane2]):
-    plane.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
-    plane.rotation_euler.x += math.radians(90)
-    emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
-    emissive_material.use_nodes = True
-    emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
-    # Set color
-    emission_node.inputs[0].default_value = rand_color_vector()
-    # Set strength
-    emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
-    assign_node_to_output(emissive_material, emission_node)
-    assign_material(plane, emissive_material)
-
-# Tilt one of the reflectors
+plane1.rotation_euler.x += math.radians(90)
+plane2.rotation_euler.x += math.radians(90)
 plane2.rotation_euler.z += math.radians(90)
+
+for plane in [plane1, plane2, plane3]:
+    make_object_reflector(plane)
+
+# Make floor
+bpy.ops.mesh.primitive_plane_add(location=(0,0,-2))
+floor = bpy.data.objects['Plane.003']
+floor.scale = (8,8,8)
+floor_material = create_cycles_material()
+assign_texture_to_material(floor_material, random_texture())
+assign_material(floor, floor_material)
+# debug()
 
 # Add props
 props = []
@@ -128,7 +132,7 @@ for index in range(0, int(PROPS_NUMBER)):
     object = bpy.data.objects[object_name]
     props.append(object)
     new_material = create_cycles_material()
-    assign_random_texture_to_material(new_material)
+    assign_texture_to_material(new_material, random_texture())
     assign_material(object, new_material)
 
 for index in range(0, int(PROPS_NUMBER)):
@@ -144,7 +148,7 @@ for index in range(0, int(PROPS_NUMBER)):
     object = bpy.data.objects[object_name]
     props.append(object)
     new_material = create_cycles_material()
-    assign_random_texture_to_material(new_material)
+    assign_texture_to_material(new_material, random_texture())
     assign_material(object, new_material)
 
 for index in range(0, int(PROPS_NUMBER)):
@@ -160,7 +164,7 @@ for index in range(0, int(PROPS_NUMBER)):
     object = bpy.data.objects[object_name]
     props.append(object)
     new_material = create_cycles_material()
-    assign_random_texture_to_material(new_material)
+    assign_texture_to_material(new_material, random_texture())
     assign_material(object, new_material)
 
 # Import guns
@@ -175,14 +179,13 @@ for index in range(0, 5):
         object_name = 'm4a1.' + str(index)
     else:
         object_name = 'm4a1.00' + str(index)
-    # code.interact(local=dict(globals(), **locals()))
     object = bpy.data.objects[object_name]
     props.append(object)
     object.location = rand_location()
     object.scale = rand_scale_vector()
     object.rotation_euler = rand_rotation()
     new_material = create_cycles_material()
-    assign_random_texture_to_material(new_material)
+    assign_texture_to_material(new_material, random_texture())
     assign_material(object, new_material)
 
 # Add background to world
