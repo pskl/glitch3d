@@ -1,3 +1,22 @@
+import bpy
+import os
+import argparse
+import datetime
+import bmesh
+import random
+import code
+import math
+import mathutils
+import random
+import uuid
+import sys
+
+REFLECTOR_SCALE = 5
+REFLECTOR_STRENGTH = 12
+REFLECTOR_LOCATION_PADDING = 10
+PROPS_NUMBER = 100
+SHADERS = ['ShaderNodeBsdfGlossy', 'ShaderNodeBsdfDiffuse', 'ShaderNodeBsdfVelvet', 'ShaderNodeEmission']
+props = []
 YELLOW = (1,0.7,0.1,1)
 
 def debug():
@@ -47,10 +66,19 @@ def rand_color_vector():
     return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
 
 def rand_scale():
-    return round(random.uniform(0, 0.15), 10)
+    return round(random.uniform(0, 0.2), 10)
 
 def rand_scale_vector():
-    return(rand_scale(), rand_scale(), rand_scale())
+    scale = rand_scale()
+    return(scale, scale, scale)
+
+def unwrap_model(obj):
+    if obj == camera_object:
+        return False
+    context.scene.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.uv.unwrap()
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 def get_args():
   parser = argparse.ArgumentParser()
@@ -83,41 +111,32 @@ def assign_node_to_output(material, new_node):
 def create_cycles_material():
     material = bpy.data.materials.new('Object Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
-    # nodes = material.node_tree.nodes
-    # new_node = nodes.new(random.choice(SHADERS))
-    # assign_node_to_output(material, new_node)
     return material
 
 def random_texture():
-    texture_path = os.path.expanduser('fixtures/textures/checkered_texture.jpg')
-    # new_texture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
+    texture_path = os.path.expanduser('fixtures/textures/' + random.choice(os.listdir('fixtures/textures/')))
     return bpy.data.images.load(texture_path)
-    # rand.choice()
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
     # If its a default material
     bsdf_node = material.node_tree.nodes['Diffuse BSDF']
-    assign_node_to_output(material, bsdf_node)
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
-    uv_node = material.node_tree.nodes.new('ShaderNodeUVMap')
-    # uv_node.uv_map = 'UV'
     texture_node.image = texture
-    material.node_tree.links.new(texture_node.outputs[0], bsdf_node.inputs[0])
-    material.node_tree.links.new(texture_node.inputs['Vector'], uv_node.outputs['UV'])
+    material.node_tree.links.new(texture_node.outputs['Color'], bsdf_node.inputs['Color'])
 
-def make_object_gold(object):
+def make_object_gold(obj):
     material = bpy.data.materials.new('Gold Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
     glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     glossy_node.inputs[0].default_value = YELLOW
     # roughness
-    glossy_node.inputs[1].default_value = 0.1
+    glossy_node.inputs[1].default_value = 0.2
     assign_node_to_output(material, glossy_node)
-    assign_material(object, material)
+    assign_material(obj, material)
 
-def make_object_reflector(object):
-    object.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
+def make_object_reflector(obj):
+    obj.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
     emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
@@ -126,4 +145,15 @@ def make_object_reflector(object):
     # Set strength
     emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
     assign_node_to_output(emissive_material, emission_node)
-    assign_material(object, emissive_material)
+    assign_material(obj, emissive_material)
+
+def texture_object(obj):
+    new_material = create_cycles_material()
+    assign_texture_to_material(new_material, random_texture())
+    assign_material(obj, new_material)
+
+def duplicate_object(obj):
+    new_object = obj.copy()
+    new_object.data = obj.data.copy()
+    context.scene.objects.link(new_object)
+    return new_object
