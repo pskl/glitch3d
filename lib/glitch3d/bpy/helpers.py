@@ -101,7 +101,7 @@ def assign_texture_to_material(material, texture):
     assign_node_to_output(material, bsdf_node)
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
     uv_node = material.node_tree.nodes.new('ShaderNodeUVMap')
-    uv_node.uv_map = 'UV'
+    # uv_node.uv_map = 'UV'
     texture_node.image = texture
     material.node_tree.links.new(texture_node.outputs[0], bsdf_node.inputs[0])
     material.node_tree.links.new(texture_node.inputs['Vector'], uv_node.outputs['UV'])
