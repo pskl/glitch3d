@@ -9,20 +9,6 @@
 # 4) Rotate model and shoot image at each step
 #
 # Use `debug()` to pry into the script
-
-import bpy
-import os
-import argparse
-import datetime
-import bmesh
-import random
-import code
-import math
-import mathutils
-import random
-import uuid
-import sys
-
 exec(open("lib/glitch3d/bpy/helpers.py").read())
 
 # Arguments parsing
@@ -32,12 +18,6 @@ mode = args.mode
 shots_number = int(args.shots_number)
 
 context = bpy.context
-
-REFLECTOR_SCALE = 5
-REFLECTOR_STRENGTH = 12
-REFLECTOR_LOCATION_PADDING = 10
-PROPS_NUMBER = 100
-SHADERS = ['ShaderNodeBsdfGlossy', 'ShaderNodeBsdfDiffuse', 'ShaderNodeBsdfVelvet', 'ShaderNodeEmission']
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -60,15 +40,44 @@ if mode == 'high':
     context.scene.cycles.samples = 100
     context.scene.render.resolution_percentage = 100
 
+# Add background to world
+texture_path = os.path.expanduser('fixtures/textures/checkered_texture.jpg')
+world = bpy.data.worlds[0]
+world.use_nodes = True
+world_node_tree = world.node_tree
+output_node = world_node_tree.nodes['Background']
+texture_node = world_node_tree.nodes.new('ShaderNodeTexImage')
+world_node_tree.links.new(texture_node.outputs['Color'], output_node.inputs['Color'])
+texture_node.image = bpy.data.images.load(texture_path)
 
 # Delete current objects
-for index, object in enumerate(bpy.data.objects):
-    bpy.data.objects.remove(object)
+for index, obj in enumerate(bpy.data.objects):
+    bpy.data.objects.remove(obj)
 
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
+
+# Load props
+bpy.ops.import_scene.obj(filepath = os.path.join('fixtures/m4a1.obj'), use_edges=True)
+m4a1 = bpy.data.objects['m4a1']
+texture_object(m4a1)
+m4a1.location = rand_location()
+m4a1.scale = rand_scale_vector()
+m4a1.rotation_euler = rand_rotation()
+
+bpy.ops.mesh.primitive_cube_add(location=rand_location(),radius=rand_scale(), rotation=rand_rotation())
+cube = bpy.data.objects['Cube']
+texture_object(cube)
+
+bpy.ops.mesh.primitive_torus_add(location=rand_location(), rotation=rand_rotation(), major_radius=rand_scale(), minor_radius=rand_scale())
+torus = bpy.data.objects['Torus']
+texture_object(torus)
+
+bpy.ops.mesh.primitive_cone_add(location=rand_location(), depth=1.0, rotation=rand_rotation(), radius1=rand_scale(), radius2=rand_scale())
+cone = bpy.data.objects['Cone']
+texture_object(cone)
 
 # Use center of mass to center object
 model_object.select = True
@@ -83,8 +92,6 @@ bpy.data.objects.new('Render Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Render Camera']
 new_scene.objects.link(camera_object)
 camera_object.location = (8, 8, 1)
-
-empty_materials()
 
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
@@ -108,110 +115,41 @@ for plane in [plane1, plane2, plane3]:
     make_object_reflector(plane)
 
 # Make floor
-bpy.ops.mesh.primitive_plane_add(location=(0,0,-2))
+bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
 floor = bpy.data.objects['Plane.003']
-floor.scale = (8,8,8)
-floor_material = create_cycles_material()
-assign_texture_to_material(floor_material, random_texture())
-assign_material(floor, floor_material)
+floor.scale = (20,20,20)
+texture_object(floor)
 
-# Add props
-props = []
+# Add more props
+for index in range(1, int(PROPS_NUMBER)):
+    new_object = duplicate_object(cube)
+    props.append(new_object)
+    new_object.location = rand_location()
+    texture_object(new_object)
 
-for index in range(0, int(PROPS_NUMBER)):
-    bpy.ops.mesh.primitive_cube_add(location=rand_location(),radius=rand_scale(), rotation=rand_rotation())
-    if index == 0:
-        object_name = 'Cube'
-    elif index > 9:
-        object_name = 'Cube.0' + str(index)
-    elif index > 99:
-        object_name = 'Cube.' + str(index)
-    else:
-        object_name = 'Cube.00' + str(index)
-    object = bpy.data.objects[object_name]
-    props.append(object)
-    new_material = create_cycles_material()
-    assign_texture_to_material(new_material, random_texture())
-    assign_material(object, new_material)
+for index in range(1, int(PROPS_NUMBER)):
+    new_object = duplicate_object(torus)
+    props.append(new_object)
+    new_object.location = rand_location()
+    texture_object(new_object)
 
-for index in range(0, int(PROPS_NUMBER)):
-    bpy.ops.mesh.primitive_torus_add(location=rand_location(), rotation=rand_rotation(), major_radius=rand_scale(), minor_radius=rand_scale())
-    if index == 0:
-        object_name = 'Torus'
-    elif index > 9:
-        object_name = 'Torus.0' + str(index)
-    elif index > 99:
-        object_name = 'Torus.' + str(index)
-    else:
-        object_name = 'Torus.00' + str(index)
-    object = bpy.data.objects[object_name]
-    props.append(object)
-    new_material = create_cycles_material()
-    assign_texture_to_material(new_material, random_texture())
-    assign_material(object, new_material)
-
-for index in range(0, int(PROPS_NUMBER)):
-    bpy.ops.mesh.primitive_cone_add(location=rand_location(), depth=1.0, rotation=rand_rotation(), radius1=rand_scale(), radius2=rand_scale())
-    if index == 0:
-        object_name = 'Cone'
-    elif index > 9:
-        object_name = 'Cone.0' + str(index)
-    elif index > 99:
-        object_name = 'Cone.' + str(index)
-    else:
-        object_name = 'Cone.00' + str(index)
-    object = bpy.data.objects[object_name]
-    props.append(object)
-    new_material = create_cycles_material()
-    assign_texture_to_material(new_material, random_texture())
-    assign_material(object, new_material)
+for index in range(1, int(PROPS_NUMBER)):
+    new_object = duplicate_object(cone)
+    props.append(new_object)
+    new_object.location = rand_location()
+    texture_object(new_object)
 
 # Import guns
-for index in range(0, 5):
-    model_path_m4a1 = os.path.join('fixtures/m4a1.obj')
-    bpy.ops.import_scene.obj(filepath = model_path_m4a1, use_edges=True)
-    if index == 0:
-        object_name = 'm4a1'
-    elif index > 9:
-        object_name = 'm4a1.0' + str(index)
-    elif index > 99:
-        object_name = 'm4a1.' + str(index)
-    else:
-        object_name = 'm4a1.00' + str(index)
-    object = bpy.data.objects[object_name]
-    props.append(object)
-    object.location = rand_location()
-    object.scale = rand_scale_vector()
-    object.rotation_euler = rand_rotation()
-    new_material = create_cycles_material()
-    assign_texture_to_material(new_material, random_texture())
-    assign_material(object, new_material)
+for index in range(1, 5):
+    new_object = duplicate_object(m4a1)
+    props.append(new_object)
+    new_object.location = rand_location()
+    new_object.scale = rand_scale_vector()
+    new_object.rotation_euler = rand_rotation()
+    texture_object(new_object)
 
-# Add background to world
-world = bpy.data.worlds[0]
-world.use_nodes = True
-world_node_tree = world.node_tree
-gradient_node = world_node_tree.nodes.new(type="ShaderNodeTexGradient")
-texture_node = world_node_tree.nodes.new(type="ShaderNodeTexGradient")
-
-output_node = world_node_tree.nodes['Background']
-texture_node = world_node_tree.nodes.new('ShaderNodeTexture')
-world_node_tree.links.new(texture_node.outputs[0], output_node.inputs[0])
-texture_path = os.path.expanduser('fixtures/textures/25.jpg')
-new_texture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
-new_texture.image = bpy.data.images.load(texture_path)
-texture_node.texture = new_texture
-
-background_node = world_node_tree.nodes['Background']
-world_node_tree.links.new(gradient_node.outputs['Color'], background_node.inputs['Color'])
-gradient_node.gradient_type = 'EASING'
-
-bpy.ops.object.mode_set(mode='EDIT')
-# UV unwrap objects
 for model in bpy.data.objects:
-    context.scene.objects.active = model
-    bpy.ops.uv.unwrap()
-bpy.ops.object.mode_set(mode = 'OBJECT')
+    unwrap_model(model)
 
 # ------
 # Shoot
