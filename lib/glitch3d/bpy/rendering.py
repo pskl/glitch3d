@@ -114,7 +114,6 @@ floor.scale = (8,8,8)
 floor_material = create_cycles_material()
 assign_texture_to_material(floor_material, random_texture())
 assign_material(floor, floor_material)
-# debug()
 
 # Add props
 props = []
@@ -206,6 +205,13 @@ texture_node.texture = new_texture
 background_node = world_node_tree.nodes['Background']
 world_node_tree.links.new(gradient_node.outputs['Color'], background_node.inputs['Color'])
 gradient_node.gradient_type = 'EASING'
+
+bpy.ops.object.mode_set(mode='EDIT')
+# UV unwrap objects
+for model in bpy.data.objects:
+    context.scene.objects.active = model
+    bpy.ops.uv.unwrap()
+bpy.ops.object.mode_set(mode = 'OBJECT')
 
 # ------
 # Shoot
