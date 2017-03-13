@@ -13,7 +13,7 @@ module Glitch3d
   BOUNDARY_LIMIT = 4 # Contain model within 2x2x2 cube
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
-  RENDERING_SCRIPT_PATH = "lib/glitch3d/bpy/rendering.py".freeze
+  RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/rendering.py'
 
   def clean_model(source_file)
     self.class.include Glitch3d::None
