@@ -9,7 +9,8 @@
 # 4) Rotate model and shoot image at each step
 #
 # Use `debug()` to pry into the script
-exec(open("lib/glitch3d/bpy/helpers.py").read())
+import os
+exec(open(os.path.join(os.path.dirname(__file__), 'helpers.py')).read())
 
 # Arguments parsing
 args = get_args()

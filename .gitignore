@@ -7,9 +7,9 @@
 /pkg/
 /spec/reports/
 /tmp/
+/renders
 /fixtures/models/*
-/renders/*
 /fixtures/*
+!/fixtures/textures/*
 !/fixtures/skull.obj
-!/fixtures/textures/25.jpg
 .DS_Store
