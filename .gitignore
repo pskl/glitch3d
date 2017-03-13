@@ -7,7 +7,7 @@
 /pkg/
 /spec/reports/
 /tmp/
-/renders
+/renders/*
 /fixtures/models/*
 /fixtures/*
 !/fixtures/textures/*

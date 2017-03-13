@@ -113,7 +113,7 @@ def create_cycles_material():
     return material
 
 def random_texture():
-    texture_folder_path = os.path.join(os.path.dirname(__file__), "./../../../fixtures/textures/")
+    texture_folder_path = os.path.dirname(__file__).replace('lib/glitch3d/bpy', 'fixtures/textures/')
     texture_path = texture_folder_path + random.choice(os.listdir(texture_folder_path))
     return bpy.data.images.load(texture_path)
 
