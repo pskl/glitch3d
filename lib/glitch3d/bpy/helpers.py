@@ -17,6 +17,7 @@ PROPS_NUMBER = 100
 SHADERS = ['ShaderNodeBsdfGlossy', 'ShaderNodeBsdfDiffuse', 'ShaderNodeBsdfVelvet', 'ShaderNodeEmission']
 props = []
 YELLOW = (1,0.7,0.1,1)
+WORDS = ['POWER', 'MONEY', 'SEX', 'BLOOD', 'DOLLARS', 'PSKL', 'SKYNET', 'LOVE']
 
 def debug():
     code.interact(local=dict(globals(), **locals()))
@@ -72,7 +73,7 @@ def rand_scale_vector():
     return(scale, scale, scale)
 
 def unwrap_model(obj):
-    if obj == camera_object:
+    if obj == camera_object or obj.name.startswith('Text'):
         return False
     context.scene.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
@@ -80,17 +81,18 @@ def unwrap_model(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
 
 def get_args():
-  parser = argparse.ArgumentParser()
-  # get all script args
-  _, all_arguments = parser.parse_known_args()
-  double_dash_index = all_arguments.index('--')
-  script_args = all_arguments[double_dash_index + 1: ]
-  # add parser rules
-  parser.add_argument('-f', '--file', help="obj file to render")
-  parser.add_argument('-n', '--shots-number', help="number of shots desired")
-  parser.add_argument('-m', '--mode', help="quality mode: low | high")
-  parsed_script_args, _ = parser.parse_known_args(script_args)
-  return parsed_script_args
+    parser = argparse.ArgumentParser()
+    # get all script args
+    _, all_arguments = parser.parse_known_args()
+    double_dash_index = all_arguments.index('--')
+    script_args = all_arguments[double_dash_index + 1: ]
+    # add parser rules
+    parser.add_argument('-f', '--file', help="obj file to render")
+    parser.add_argument('-n', '--shots-number', help="number of shots desired")
+    parser.add_argument('-m', '--mode', help="quality mode: low | high")
+    parser.add_argument('-p', '--path', help="root path of assets")
+    parsed_script_args, _ = parser.parse_known_args(script_args)
+    return parsed_script_args
 
 def camera_rotation_string(camera):
     return str(int(camera.rotation_euler.x)) + ' ' + str(int(camera.rotation_euler.y)) + ' ' + str(int(camera.rotation_euler.z))
@@ -113,7 +115,7 @@ def create_cycles_material():
     return material
 
 def random_texture():
-    texture_folder_path = os.path.dirname(__file__).replace('lib/glitch3d/bpy', 'fixtures/textures/')
+    texture_folder_path = str(args.path) + '/../fixtures/textures/'
     texture_path = texture_folder_path + random.choice(os.listdir(texture_folder_path))
     return bpy.data.images.load(texture_path)
 
@@ -157,3 +159,20 @@ def duplicate_object(obj):
     new_object.data = obj.data.copy()
     context.scene.objects.link(new_object)
     return new_object
+
+def random_text():
+    return random.choice(WORDS)
+
+def spawn_text():
+    identifier = str(uuid.uuid1())
+    new_curve = bpy.data.curves.new(type="FONT",name="Curve - " + identifier)
+    new_curve.extrude = 0.15
+    new_text = bpy.data.objects.new("Text - " + identifier, new_curve)
+    new_text.data.body = random_text()
+    bpy.context.scene.objects.link(new_text)
+    return new_text
+
+def shuffle(obj):
+    obj.location = rand_location()
+    obj.scale = rand_scale_vector()
+    obj.rotation_euler = rand_rotation()
