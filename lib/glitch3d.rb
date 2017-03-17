@@ -136,7 +136,9 @@ module Glitch3d
       '-n',
       shots_number.to_s,
       '-m',
-      @quality
+      @quality,
+      '-p',
+      File.dirname(__FILE__).to_s
     ]
     unless system(*args)
       fail 'Make sure Blender is correctly installed'

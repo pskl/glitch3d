@@ -13,3 +13,4 @@
 !/fixtures/textures/*
 !/fixtures/skull.obj
 .DS_Store
+*.png

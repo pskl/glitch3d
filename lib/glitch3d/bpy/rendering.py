@@ -38,7 +38,7 @@ context.scene.render.image_settings.file_format='PNG'
 
 if mode == 'high':
     context.scene.render.image_settings.compression = 90
-    context.scene.cycles.samples = 100
+    context.scene.cycles.samples = 400
     context.scene.render.resolution_percentage = 100
 
 # Add background to world
@@ -128,26 +128,19 @@ for index in range(1, int(PROPS_NUMBER)):
     new_object.location = rand_location()
     texture_object(new_object)
 
-for index in range(1, int(PROPS_NUMBER)):
-    new_object = duplicate_object(torus)
-    props.append(new_object)
-    new_object.location = rand_location()
-    texture_object(new_object)
-
-for index in range(1, int(PROPS_NUMBER)):
-    new_object = duplicate_object(cone)
-    props.append(new_object)
-    new_object.location = rand_location()
-    texture_object(new_object)
-
 # Import guns
 for index in range(1, 5):
     new_object = duplicate_object(m4a1)
     props.append(new_object)
-    new_object.location = rand_location()
-    new_object.scale = rand_scale_vector()
-    new_object.rotation_euler = rand_rotation()
+    shuffle(new_object)
     texture_object(new_object)
+
+for index in range(1, len(WORDS)):
+    new_object = spawn_text()
+    props.append(new_object)
+    new_object.scale = (0.75, 0.75, 0.75)
+    new_object.location = rand_location()
+    new_object.rotation_euler = rand_rotation()
 
 for model in bpy.data.objects:
     unwrap_model(model)
