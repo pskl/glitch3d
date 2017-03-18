@@ -9,6 +9,7 @@ import mathutils
 import random
 import uuid
 import sys
+import logging
 
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
@@ -60,7 +61,7 @@ def rand_rotation_value():
     return round(random.uniform(0, 1), 10)
 
 def rand_location_value():
-    return round(random.uniform(-8, 8), 10)
+    return round(random.uniform(-5, 5), 10)
 
 def rand_color_vector():
     return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
@@ -115,8 +116,10 @@ def create_cycles_material():
     return material
 
 def random_texture():
-    texture_folder_path = str(args.path) + '/../fixtures/textures/'
     texture_path = texture_folder_path + random.choice(os.listdir(texture_folder_path))
+    logging.info('---------')
+    logging.info(texture_folder_path)
+    logging.info('---------')
     return bpy.data.images.load(texture_path)
 
 def assign_texture_to_material(material, texture):

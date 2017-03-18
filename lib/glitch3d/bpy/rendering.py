@@ -19,6 +19,7 @@ mode = args.mode
 shots_number = int(args.shots_number)
 
 context = bpy.context
+texture_folder_path = str(args.path) + '/../fixtures/textures/'
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
