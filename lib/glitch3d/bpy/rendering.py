@@ -43,14 +43,10 @@ if mode == 'high':
     context.scene.render.resolution_percentage = 100
 
 # Add background to world
-texture_path = os.path.expanduser('fixtures/textures/checkered_texture.jpg')
 world = bpy.data.worlds[0]
 world.use_nodes = True
 world_node_tree = world.node_tree
-output_node = world_node_tree.nodes['Background']
-texture_node = world_node_tree.nodes.new('ShaderNodeTexImage')
-world_node_tree.links.new(texture_node.outputs['Color'], output_node.inputs['Color'])
-texture_node.image = bpy.data.images.load(texture_path)
+world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
 
 # Delete current objects
 for index, obj in enumerate(bpy.data.objects):
