@@ -61,7 +61,7 @@ def rand_rotation_value():
     return round(random.uniform(0, 1), 10)
 
 def rand_location_value():
-    return round(random.uniform(-5, 5), 10)
+    return round(random.uniform(-4, 4), 10)
 
 def rand_color_vector():
     return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
