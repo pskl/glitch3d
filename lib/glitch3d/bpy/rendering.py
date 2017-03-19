@@ -19,7 +19,8 @@ mode = args.mode
 shots_number = int(args.shots_number)
 
 context = bpy.context
-texture_folder_path = str(args.path) + '/../fixtures/textures/'
+fixtures_folder_path = str(args.path) + '/../fixtures/'
+texture_folder_path = fixtures_folder_path + 'textures/'
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -59,7 +60,7 @@ bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
 
 # Load props
-bpy.ops.import_scene.obj(filepath = os.path.join('fixtures/m4a1.obj'), use_edges=True)
+bpy.ops.import_scene.obj(filepath = os.path.join(fixtures_folder_path + 'm4a1.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
 texture_object(m4a1)
 m4a1.location = rand_location()
