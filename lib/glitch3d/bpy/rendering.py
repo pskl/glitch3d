@@ -43,10 +43,11 @@ if mode == 'high':
     context.scene.render.resolution_percentage = 100
 
 # Add background to world
-world = bpy.data.worlds[0]
+world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
 world_node_tree = world.node_tree
 world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
+context.scene.world = world
 
 # Delete current objects
 for index, obj in enumerate(bpy.data.objects):
