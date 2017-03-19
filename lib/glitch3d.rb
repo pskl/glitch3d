@@ -41,7 +41,8 @@ module Glitch3d
     return Glitch3d::Default if mode.nil?
     {
       default: Glitch3d::Default,
-      localized: Glitch3d::Localized
+      localized: Glitch3d::Localized,
+      none: Glitch3d::None
     }[mode.to_sym]
   end
 
