@@ -71,14 +71,6 @@ bpy.ops.mesh.primitive_cube_add(location=rand_location(),radius=rand_scale(), ro
 cube = bpy.data.objects['Cube']
 texture_object(cube)
 
-bpy.ops.mesh.primitive_torus_add(location=rand_location(), rotation=rand_rotation(), major_radius=rand_scale(), minor_radius=rand_scale())
-torus = bpy.data.objects['Torus']
-texture_object(torus)
-
-bpy.ops.mesh.primitive_cone_add(location=rand_location(), depth=1.0, rotation=rand_rotation(), radius1=rand_scale(), radius2=rand_scale())
-cone = bpy.data.objects['Cone']
-texture_object(cone)
-
 # Use center of mass to center object
 model_object.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
