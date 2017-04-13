@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Face
   attr_accessor :v1, :v2, :v3
 

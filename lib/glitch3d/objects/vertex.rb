@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Vertex
   attr_accessor :x, :y, :z, :index
 
@@ -16,7 +17,7 @@ class Vertex
     [:x, :y, :z].sample
   end
 
-  def rescale(offset)
+  def rescale(_offset)
     [:x, :y, :z].each do |attr|
       value = send(attr)
       send("#{attr}=", value * 0.8)

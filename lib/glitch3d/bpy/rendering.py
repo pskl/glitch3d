@@ -40,14 +40,14 @@ context.scene.render.image_settings.file_format='PNG'
 
 if mode == 'high':
     context.scene.render.image_settings.compression = 90
-    context.scene.cycles.samples = 400
-    context.scene.render.resolution_percentage = 100
+    context.scene.cycles.samples = 500
+    context.scene.render.resolution_percentage = 200
 
 # Add background to world
 world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
 world_node_tree = world.node_tree
-world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
+# world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
 context.scene.world = world
 
 # Delete current objects
@@ -62,19 +62,11 @@ model_object = bpy.data.objects[0]
 # Load props
 bpy.ops.import_scene.obj(filepath = os.path.join(fixtures_folder_path + 'm4a1.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
-texture_object(m4a1)
-m4a1.location = rand_location()
-m4a1.scale = rand_scale_vector()
-m4a1.rotation_euler = rand_rotation()
-
-bpy.ops.mesh.primitive_cube_add(location=rand_location(),radius=rand_scale(), rotation=rand_rotation())
-cube = bpy.data.objects['Cube']
-texture_object(cube)
 
 # Use center of mass to center object
 model_object.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
-model_object.location = (0, 0, 0)
+model_object.location = ORIGIN
 
 # --------------
 # Create camera
@@ -90,21 +82,21 @@ bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, 8))
 
-plane1 = bpy.data.objects['Plane']
-plane2 = bpy.data.objects['Plane.001']
-plane3 = bpy.data.objects['Plane.002']
+floor = bpy.data.objects['Plane']
+reflector1 = bpy.data.objects['Plane.001']
+reflector2 = bpy.data.objects['Plane.002']
 
 # Adjust camera
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
-make_object_gold(model_object)
+make_object_glossy(model_object, YELLOW)
 
-plane1.rotation_euler.x += math.radians(90)
-plane2.rotation_euler.x += math.radians(90)
-plane2.rotation_euler.z += math.radians(90)
+floor.rotation_euler.x += math.radians(90)
+reflector1.rotation_euler.x += math.radians(90)
+reflector1.rotation_euler.z += math.radians(90)
 
-for plane in [plane1, plane2, plane3]:
-    make_object_reflector(plane)
+make_object_reflector(reflector1)
+make_object_reflector(reflector2)
 
 # Make floor
 bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
@@ -112,26 +104,18 @@ floor = bpy.data.objects['Plane.003']
 floor.scale = (20,20,20)
 texture_object(floor)
 
-# Add more props
-for index in range(1, int(PROPS_NUMBER)):
-    new_object = duplicate_object(cube)
-    props.append(new_object)
-    new_object.location = rand_location()
-    texture_object(new_object)
-
-# Import guns
-for index in range(1, 5):
-    new_object = duplicate_object(m4a1)
-    props.append(new_object)
-    shuffle(new_object)
-    texture_object(new_object)
+build_grid(2, 2)
 
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
     props.append(new_object)
-    new_object.scale = (0.75, 0.75, 0.75)
+    text_scale = random.uniform(0.75, 2)
+    make_object_glossy(new_object, GREY)
+    new_object.scale = (text_scale, text_scale, text_scale)
     new_object.location = rand_location()
-    new_object.rotation_euler = rand_rotation()
+    # pivot text to make it readable by camera
+    new_object.rotation_euler.x += math.radians(90)
+    new_object.rotation_euler.z += math.radians(90)
 
 for model in bpy.data.objects:
     unwrap_model(model)
@@ -143,8 +127,9 @@ print('Rendering images with resolution: ' + str(context.scene.render.resolution
 for index in range(0, int(shots_number)):
     print("-------------------------- " + str(index) + " --------------------------")
     rotate(model_object, index)
+    randomize_reflectors_colors()
     for prop in props:
-        prop.rotation_euler = rand_rotation()
+        prop.location = rand_location()
     shoot(camera_object, model_object, output_name(index, model_path))
 
 print('FINISHED ¯\_(ツ)_/¯')

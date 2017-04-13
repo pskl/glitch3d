@@ -1,8 +1,9 @@
-require "glitch3d/version"
-require "glitch3d/objects/vertex"
-require "glitch3d/objects/face"
+# frozen_string_literal: true
+require 'glitch3d/version'
+require 'glitch3d/objects/vertex'
+require 'glitch3d/objects/face'
 require 'pry'
-Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each {|file| require file }
+Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each { |file| require file }
 
 module Glitch3d
   VERTEX_GLITCH_ITERATION_RATIO = 0.1
@@ -25,16 +26,16 @@ module Glitch3d
 
   def process_model(source_file)
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
-    return clean_model(source_file) if args["clean"]
+    return clean_model(source_file) if args['clean']
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
-    self.class.include infer_strategy(args["mode"] || 'default')
-    @quality = args["quality"] || 'low'
+    self.class.include infer_strategy(args['mode'] || 'default')
+    @quality = args['quality'] || 'low'
     source_file = source_file
     base_file_name = source_file.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
-    render(target_file, args["shots-number"] || 6) unless args["no-render"]
+    render(target_file, args['shots-number'] || 6) unless args['no-render']
   end
 
   def infer_strategy(mode)
@@ -81,10 +82,10 @@ module Glitch3d
       f = sf.split(' ')
       next if f.length <= 3
       faces_list << Face.new(
-                      vertices_list[f[1].to_i],
-                      vertices_list[f[2].to_i],
-                      vertices_list[f[3].to_i]
-                    )
+        vertices_list[f[1].to_i],
+        vertices_list[f[2].to_i],
+        vertices_list[f[3].to_i]
+      )
     end
     faces_list
   end
@@ -141,8 +142,6 @@ module Glitch3d
       '-p',
       File.dirname(__FILE__).to_s
     ]
-    unless system(*args)
-      fail 'Make sure Blender is correctly installed'
-    end
+    raise 'Make sure Blender is correctly installed' unless system(*args)
   end
 end

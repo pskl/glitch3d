@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Glitch3d
   module Default
     def alter_vertices(vertices_objects_array)
