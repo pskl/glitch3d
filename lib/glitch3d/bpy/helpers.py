@@ -14,10 +14,11 @@ import logging
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
 REFLECTOR_LOCATION_PADDING = 10
-PROPS_NUMBER = 100
-SHADERS = ['ShaderNodeBsdfGlossy', 'ShaderNodeBsdfDiffuse', 'ShaderNodeBsdfVelvet', 'ShaderNodeEmission']
+WIREFRAME_THICKNESS = 0.008
+ORIGIN  = (0,0,0)
 props = []
-YELLOW = (1,0.7,0.1,1)
+YELLOW = (1, 0.7, 0.1, 1)
+GREY = (0.2, 0.2, 0.2 ,1)
 WORDS = ['POWER', 'MONEY', 'SEX', 'BLOOD', 'DOLLARS', 'PSKL', 'SKYNET', 'LOVE']
 
 def debug():
@@ -124,17 +125,16 @@ def random_texture():
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
-    # If its a default material
     bsdf_node = material.node_tree.nodes['Diffuse BSDF']
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
     texture_node.image = texture
     material.node_tree.links.new(texture_node.outputs['Color'], bsdf_node.inputs['Color'])
 
-def make_object_gold(obj):
+def make_object_glossy(obj, color):
     material = bpy.data.materials.new('Gold Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
     glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
-    glossy_node.inputs[0].default_value = YELLOW
+    glossy_node.inputs[0].default_value = color
     # roughness
     glossy_node.inputs[1].default_value = 0.2
     assign_node_to_output(material, glossy_node)
@@ -142,15 +142,19 @@ def make_object_gold(obj):
 
 def make_object_reflector(obj):
     obj.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
+    make_object_emitter(obj, REFLECTOR_STRENGTH)
+
+def make_object_emitter(obj, emission_strength):
     emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
     # Set color
     emission_node.inputs[0].default_value = rand_color_vector()
     # Set strength
-    emission_node.inputs[1].default_value = REFLECTOR_STRENGTH
+    emission_node.inputs[1].default_value = emission_strength
     assign_node_to_output(emissive_material, emission_node)
     assign_material(obj, emissive_material)
+    return emission_node
 
 def texture_object(obj):
     new_material = create_cycles_material()
@@ -164,18 +168,51 @@ def duplicate_object(obj):
     return new_object
 
 def random_text():
-    return random.choice(WORDS)
+    global WORDS
+    chosen_word = random.choice(WORDS)
+    WORDS.remove(chosen_word)
+    return chosen_word
 
 def spawn_text():
     identifier = str(uuid.uuid1())
     new_curve = bpy.data.curves.new(type="FONT",name="Curve - " + identifier)
-    new_curve.extrude = 0.15
+    new_curve.extrude = 0.12
     new_text = bpy.data.objects.new("Text - " + identifier, new_curve)
     new_text.data.body = random_text()
-    bpy.context.scene.objects.link(new_text)
+    context.scene.objects.link(new_text)
     return new_text
+
+def wireframize(obj):
+    context.scene.objects.active = obj
+    bpy.ops.object.modifier_add(type='WIREFRAME')
+    obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
+    make_object_emitter(obj, 2)
 
 def shuffle(obj):
     obj.location = rand_location()
     obj.scale = rand_scale_vector()
     obj.rotation_euler = rand_rotation()
+
+def randomize_reflectors_colors():
+    reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
+    reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
+
+# Builds a grid of mesh
+def build_grid(side, radius):
+    cubes = []
+    bpy.ops.mesh.primitive_cube_add(location=(-side, -side, -side),radius=radius)
+    cube = bpy.data.objects['Cube']
+    cubes.append(cube)
+    for z in range(-int(side), int(side)):
+        z_index = z + 2 * radius
+        for x in range(-int(side), int(side)):
+            new_cube1 = duplicate_object(cube)
+            cubes.append(new_cube1)            
+            new_cube1.location = (x + 2 * radius, cube.location.y, z_index)
+            for y in range(-int(side), int(side)):
+                new_cube2 = duplicate_object(new_cube1)
+                cubes.append(new_cube2)
+                new_cube2.location = (x, y + 2 * radius, z_index)
+    for cube in cubes:
+        wireframize(cube)
+    return cubes
