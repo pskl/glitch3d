@@ -18,9 +18,8 @@ file = args.file
 mode = args.mode
 shots_number = int(args.shots_number)
 
-context = bpy.context
-fixtures_folder_path = str(args.path) + '/../fixtures/'
-texture_folder_path = fixtures_folder_path + 'textures/'
+FIXTURES_FOLDER_PATH = str(args.path) + '/../fixtures/'
+TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
@@ -47,12 +46,13 @@ if mode == 'high':
 world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
 world_node_tree = world.node_tree
+# Paint background with color
 # world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
 context.scene.world = world
 
 # Delete current objects
 for index, obj in enumerate(bpy.data.objects):
-    bpy.data.objects.remove(obj)
+    bpy.data.objects.remove(obj, do_unlink=True)
 
 # Load model
 model_path = os.path.join(file)
@@ -60,7 +60,7 @@ bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
 
 # Load props
-bpy.ops.import_scene.obj(filepath = os.path.join(fixtures_folder_path + 'm4a1.obj'), use_edges=True)
+bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
 
 # Use center of mass to center object
@@ -71,9 +71,9 @@ model_object.location = ORIGIN
 # --------------
 # Create camera
 # --------------
-camera_data = bpy.data.cameras.new('Render Camera')
-bpy.data.objects.new('Render Camera', object_data=camera_data)
-camera_object = bpy.data.objects['Render Camera']
+camera_data = bpy.data.cameras.new('Camera')
+bpy.data.objects.new('Camera', object_data=camera_data)
+camera_object = bpy.data.objects['Camera']
 new_scene.objects.link(camera_object)
 camera_object.location = (8, 8, 1)
 
@@ -103,8 +103,8 @@ bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
 floor = bpy.data.objects['Plane.003']
 floor.scale = (20,20,20)
 texture_object(floor)
-
-build_grid(2, 2)
+subdivide(floor)
+build_composite_cube(10,1)
 
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
@@ -119,6 +119,8 @@ for index in range(1, len(WORDS)):
 
 for model in bpy.data.objects:
     unwrap_model(model)
+    if model.name.startswith('Cube'):
+        wireframize(model)
 
 # ------
 # Shoot

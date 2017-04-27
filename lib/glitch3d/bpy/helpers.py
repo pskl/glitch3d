@@ -10,6 +10,7 @@ import random
 import uuid
 import sys
 import logging
+import bmesh
 
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
@@ -20,6 +21,10 @@ props = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
 WORDS = ['POWER', 'MONEY', 'SEX', 'BLOOD', 'DOLLARS', 'PSKL', 'SKYNET', 'LOVE']
+
+context = bpy.context
+bpy.ops.mesh.primitive_cube_add(location=(-50, -50, -50),radius=1)
+CUBE = bpy.data.objects['Cube']
 
 def debug():
     code.interact(local=dict(globals(), **locals()))
@@ -75,7 +80,7 @@ def rand_scale_vector():
     return(scale, scale, scale)
 
 def unwrap_model(obj):
-    if obj == camera_object or obj.name.startswith('Text'):
+    if obj.name.startswith('Camera') or obj.name.startswith('Text') or obj.name.startswith('Cube'):
         return False
     context.scene.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
@@ -117,9 +122,9 @@ def create_cycles_material():
     return material
 
 def random_texture():
-    texture_path = texture_folder_path + random.choice(os.listdir(texture_folder_path))
+    texture_path = TEXTURE_FOLDER_PATH + random.choice(os.listdir(TEXTURE_FOLDER_PATH))
     logging.info('---------')
-    logging.info(texture_folder_path)
+    logging.info(TEXTURE_FOLDER_PATH)
     logging.info('---------')
     return bpy.data.images.load(texture_path)
 
@@ -145,7 +150,7 @@ def make_object_reflector(obj):
     make_object_emitter(obj, REFLECTOR_STRENGTH)
 
 def make_object_emitter(obj, emission_strength):
-    emissive_material = bpy.data.materials.new('Emissive Material #' + str(index))
+    emissive_material = bpy.data.materials.new('Emissive Material #' + str(uuid.uuid1()))
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
     # Set color
@@ -197,22 +202,46 @@ def randomize_reflectors_colors():
     reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
     reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
 
-# Builds a grid of mesh
-def build_grid(side, radius):
-    cubes = []
-    bpy.ops.mesh.primitive_cube_add(location=(-side, -side, -side),radius=radius)
+def build_composite_cube(size, radius):
+    build_grid_cube(size, -int(size/2), radius)
     cube = bpy.data.objects['Cube']
-    cubes.append(cube)
-    for z in range(-int(side), int(side)):
-        z_index = z + 2 * radius
-        for x in range(-int(side), int(side)):
-            new_cube1 = duplicate_object(cube)
-            cubes.append(new_cube1)            
-            new_cube1.location = (x + 2 * radius, cube.location.y, z_index)
-            for y in range(-int(side), int(side)):
-                new_cube2 = duplicate_object(new_cube1)
-                cubes.append(new_cube2)
-                new_cube2.location = (x, y + 2 * radius, z_index)
-    for cube in cubes:
-        wireframize(cube)
-    return cubes
+    for z in range(-int(size/2) + 1, +int(size/2)):
+        build_grid_cube(size, cube.location.z + 2 * radius, radius)
+        cube = bpy.data.objects[-1]
+
+def build_grid_cube(size, z_index, radius):
+    bpy.ops.mesh.primitive_cube_add(location=(-int(size/2), -int(size/2), z_index),radius=radius)
+    cube = bpy.data.objects[-1]
+    for y in range(-int(size/2), +int(size/2)): 
+        build_cube_line(size, z_index, cube.location.y + 2 * radius, radius)  
+        cube = bpy.data.objects[-1]
+
+def build_cube_line(size, z_index, y_index, radius):
+    bpy.ops.mesh.primitive_cube_add(location=(-int(size/2), y_index, z_index),radius=radius)
+    for x in range(- int(size/2), + int(size/2)):
+        cube = bpy.data.objects[-1]
+        new_cube=duplicate_object(cube)
+        new_cube.location = (int(cube.location.x + 2 * radius), y_index, z_index)
+
+def scramble_vertices(vertices_list):
+    new_vertice_list = vertices_list
+    return new_vertice_list
+
+def glitch(object):
+    bpy.ops.object.mode_set(mode='OBJECT')
+    assert object.type == 'MESH'    
+    object.select = True
+    vertices_list = scramble_vertices([vertex.co for vertex in object.data.vertices])
+    new_mesh = bmesh.new()
+    new_mesh.from_mesh(object.data)
+    object.data.from_pydata(vertices_list, [], new_mesh.faces)
+    object.update()
+    object.select = False
+
+def subdivide(object, cuts):
+    context.scene.objects.active = object
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.subdivide(cuts)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
