@@ -10,7 +10,6 @@ import random
 import uuid
 import sys
 import logging
-import bmesh
 
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
@@ -18,6 +17,7 @@ REFLECTOR_LOCATION_PADDING = 10
 WIREFRAME_THICKNESS = 0.008
 ORIGIN  = (0,0,0)
 props = []
+CUBES = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
 WORDS = ['POWER', 'MONEY', 'SEX', 'BLOOD', 'DOLLARS', 'PSKL', 'SKYNET', 'LOVE']
@@ -202,46 +202,39 @@ def randomize_reflectors_colors():
     reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
     reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
 
+def add_cube(x,y,z,radius):
+    bpy.ops.mesh.primitive_cube_add(location=(x, y, z),radius=radius)
+    CUBES.append(bpy.data.objects[-1])
+
 def build_composite_cube(size, radius):
     build_grid_cube(size, -int(size/2), radius)
-    cube = bpy.data.objects['Cube']
-    for z in range(-int(size/2) + 1, +int(size/2)):
-        build_grid_cube(size, cube.location.z + 2 * radius, radius)
-        cube = bpy.data.objects[-1]
+    for z in range(-int(size/2) + 1, int(size/2)):
+        build_grid_cube(size, CUBES[-1].location.z + 2 * radius, radius)
 
 def build_grid_cube(size, z_index, radius):
-    bpy.ops.mesh.primitive_cube_add(location=(-int(size/2), -int(size/2), z_index),radius=radius)
-    cube = bpy.data.objects[-1]
-    for y in range(-int(size/2), +int(size/2)): 
-        build_cube_line(size, z_index, cube.location.y + 2 * radius, radius)  
-        cube = bpy.data.objects[-1]
+    add_cube(-int(size/2), -int(size/2), z_index, radius)
+    for y in range(-int(size/2), int(size/2)): 
+        build_cube_line(size, z_index, CUBES[-1].location.y + 2 * radius, radius)  
 
 def build_cube_line(size, z_index, y_index, radius):
-    bpy.ops.mesh.primitive_cube_add(location=(-int(size/2), y_index, z_index),radius=radius)
-    for x in range(- int(size/2), + int(size/2)):
-        cube = bpy.data.objects[-1]
-        new_cube=duplicate_object(cube)
-        new_cube.location = (int(cube.location.x + 2 * radius), y_index, z_index)
+    add_cube(-int(size/2), y_index, z_index, radius)
+    for x in range(- int(size/2), int(size/2)):
+        new_cube=duplicate_object(CUBES[-1])
+        new_cube.location = (int(CUBES[-1].location.x + 2 * radius), y_index, z_index)
 
-def scramble_vertices(vertices_list):
-    new_vertice_list = vertices_list
-    return new_vertice_list
+def displace(vector):
+    return mathutils.Vector((vector.x + random.uniform(-0.08, 0.08), vector.y + random.uniform(-0.08, 0.08), vector.z + random.uniform(-0.08, 0.08)))    
 
 def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
     assert object.type == 'MESH'    
-    object.select = True
-    vertices_list = scramble_vertices([vertex.co for vertex in object.data.vertices])
-    new_mesh = bmesh.new()
-    new_mesh.from_mesh(object.data)
-    object.data.from_pydata(vertices_list, [], new_mesh.faces)
-    object.update()
-    object.select = False
-
+    for vertex in object.data.vertices:
+        vertex.co = displace(vertex.co)
+    
 def subdivide(object, cuts):
-    context.scene.objects.active = object
+    assert context.scene.objects.active == object
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.subdivide(cuts)
-    bpy.ops.object.mode_set(mode='OBJECT')
+    for index in range(0, cuts):  
+        bpy.ops.mesh.subdivide(cuts)
 
 

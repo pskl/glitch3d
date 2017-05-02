@@ -98,13 +98,16 @@ reflector1.rotation_euler.z += math.radians(90)
 make_object_reflector(reflector1)
 make_object_reflector(reflector2)
 
+# Add props
+build_composite_cube(10,1)
+
 # Make floor
 bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
 floor = bpy.data.objects['Plane.003']
 floor.scale = (20,20,20)
 texture_object(floor)
-subdivide(floor)
-build_composite_cube(10,1)
+subdivide(floor, 5)
+glitch(floor)
 
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
