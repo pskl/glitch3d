@@ -12,6 +12,7 @@ module Glitch3d
   FACE_GLITCH_ITERATION_RATIO = 0.1
   FACE_GLITCH_OFFSET = 0.5
   BOUNDARY_LIMIT = 4 # Contain model within 2x2x2 cube
+  CHUNK_SIZE=20
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/rendering.py'
@@ -40,11 +41,11 @@ module Glitch3d
 
   def infer_strategy(mode)
     return Glitch3d::Default if mode.nil?
-    {
-      default: Glitch3d::Default,
-      localized: Glitch3d::Localized,
-      none: Glitch3d::None
-    }[mode.to_sym]
+    begin
+      return eval("Glitch3d::#{mode.to_s.capitalize}")
+    rescue
+      raise "Strategy #{mode.to_s.capitalize} not found"
+    end
   end
 
   class << self
