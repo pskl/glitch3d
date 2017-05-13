@@ -20,7 +20,8 @@ props = []
 CUBES = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
-WORDS = ['POWER', 'MONEY', 'SEX', 'BLOOD', 'DOLLARS', 'PSKL', 'SKYNET', 'LOVE']
+BLUE = (0.1, 0.1, 0.8, 1)
+WORDS = ['SEX', 'BLOOD', 'BITCOIN', 'PSKL', 'LOVE', 'SINGULARITY']
 
 context = bpy.context
 bpy.ops.mesh.primitive_cube_add(location=(-50, -50, -50),radius=1)
@@ -136,7 +137,7 @@ def assign_texture_to_material(material, texture):
     material.node_tree.links.new(texture_node.outputs['Color'], bsdf_node.inputs['Color'])
 
 def make_object_glossy(obj, color):
-    material = bpy.data.materials.new('Gold Material - ' + str(uuid.uuid1()))
+    material = bpy.data.materials.new('Glossy Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
     glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     glossy_node.inputs[0].default_value = color
@@ -148,6 +149,14 @@ def make_object_glossy(obj, color):
 def make_object_reflector(obj):
     obj.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
     make_object_emitter(obj, REFLECTOR_STRENGTH)
+
+def make_object_transparent(obj, color):
+    material = bpy.data.materials.new('Transparent Material - ' + str(uuid.uuid1()))
+    material.use_nodes = True
+    node = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+    node.inputs[0].default_value = color
+    assign_node_to_output(material, node)
+    assign_material(obj, material)
 
 def make_object_emitter(obj, emission_strength):
     emissive_material = bpy.data.materials.new('Emissive Material #' + str(uuid.uuid1()))
@@ -236,5 +245,16 @@ def subdivide(object, cuts):
     bpy.ops.object.mode_set(mode='EDIT')
     for index in range(0, cuts):  
         bpy.ops.mesh.subdivide(cuts)
+
+def add_ocean(spatial_size, resolution):
+    add_cube(0,0,0,1)
+    ocean = CUBES[-1]
+    context.scene.objects.active = ocean
+    bpy.ops.object.modifier_add(type='OCEAN')
+    ocean.modifiers["Ocean"].spatial_size = 1000
+    ocean.modifiers["Ocean"].resolution = 20
+    make_object_transparent(ocean, BLUE)
+    return ocean
+
 
 

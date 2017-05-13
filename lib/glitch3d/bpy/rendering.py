@@ -98,6 +98,8 @@ reflector1.rotation_euler.z += math.radians(90)
 make_object_reflector(reflector1)
 make_object_reflector(reflector2)
 
+add_ocean(1000, 20)
+
 # Add props
 build_composite_cube(10,1)
 
