@@ -44,13 +44,16 @@ def empty_materials():
         bpy.data.materials.remove(object.data.materials[material])
 
 def shoot(camera, model_object, filepath):
+    directory = os.path.dirname('./renders')
+    if not os.path.exists(directory):
+      os.makedirs(directory)
     look_at(camera, model_object)
     print('Camera now at location: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera))
     bpy.context.scene.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
-    return './' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
+    return './renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
 
 def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
@@ -216,20 +219,21 @@ def add_cube(x,y,z,radius):
     CUBES.append(bpy.data.objects[-1])
 
 def build_composite_cube(size, radius):
-    build_grid_cube(size, -int(size/2), radius)
-    for z in range(-int(size/2) + 1, int(size/2)):
+    build_grid_cube(size, -size, radius)
+    for z in range(0, size):
         build_grid_cube(size, CUBES[-1].location.z + 2 * radius, radius)
 
 def build_grid_cube(size, z_index, radius):
-    add_cube(-int(size/2), -int(size/2), z_index, radius)
-    for y in range(-int(size/2), int(size/2)): 
+    build_cube_line(size, z_index, -size, radius)
+    for y in range(0, size): 
         build_cube_line(size, z_index, CUBES[-1].location.y + 2 * radius, radius)  
 
 def build_cube_line(size, z_index, y_index, radius):
-    add_cube(-int(size/2), y_index, z_index, radius)
-    for x in range(- int(size/2), int(size/2)):
+    add_cube(-size, y_index, z_index, radius)
+    for x in range(0, size):
         new_cube=duplicate_object(CUBES[-1])
-        new_cube.location = (int(CUBES[-1].location.x + 2 * radius), y_index, z_index)
+        CUBES.append(new_cube)
+        new_cube.location = ((CUBES[-1].location.x + 2 * radius), y_index, z_index)
 
 def displace(vector):
     return mathutils.Vector((vector.x + random.uniform(-0.08, 0.08), vector.y + random.uniform(-0.08, 0.08), vector.z + random.uniform(-0.08, 0.08)))    
@@ -251,9 +255,10 @@ def add_ocean(spatial_size, resolution):
     ocean = CUBES[-1]
     context.scene.objects.active = ocean
     bpy.ops.object.modifier_add(type='OCEAN')
-    ocean.modifiers["Ocean"].spatial_size = 1000
-    ocean.modifiers["Ocean"].resolution = 20
+    ocean.modifiers["Ocean"].spatial_size = spatial_size
+    ocean.modifiers["Ocean"].resolution = resolution
     make_object_transparent(ocean, BLUE)
+    ocean.name = 'Chillwaves~'
     return ocean
 
 
