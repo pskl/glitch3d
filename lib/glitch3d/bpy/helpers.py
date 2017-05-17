@@ -53,7 +53,7 @@ def shoot(camera, model_object, filepath):
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
-    return './renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
+    return '/renders/' + os.path.splitext(model_path)[0].split('/')[1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
 
 def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
@@ -245,6 +245,8 @@ def glitch(object):
         vertex.co = displace(vertex.co)
     
 def subdivide(object, cuts):
+    if context.scene.objects.active != object:
+        context.scene.objects.active = object
     assert context.scene.objects.active == object
     bpy.ops.object.mode_set(mode='EDIT')
     for index in range(0, cuts):  

@@ -60,8 +60,8 @@ bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
 
 # Load props
-bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
-m4a1 = bpy.data.objects['m4a1']
+# bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
+# m4a1 = bpy.data.objects['m4a1']
 
 # Use center of mass to center object
 model_object.select = True
