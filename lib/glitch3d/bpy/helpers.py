@@ -266,14 +266,15 @@ def subdivide(object, cuts):
         bpy.ops.mesh.subdivide(cuts)
 
 def add_ocean(spatial_size, resolution):
-    bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.6),radius=8)
+    bpy.ops.mesh.primitive_cube_add(location=(0, 0, -1),radius=1)
     ocean = last_added_cube()
     context.scene.objects.active = ocean
+    ocean.scale = (2,2,2)
     bpy.ops.object.modifier_add(type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
-    make_object_transparent(ocean, BLUE)
-    ocean.name = 'Chillwaves~'
+    make_object_glossy(ocean, BLUE)
+    ocean.name = 'Ocean'
     return ocean
 
 def flush_all_objects():

@@ -148,6 +148,7 @@ for index in range(0, int(shots_number)):
     print("-------------------------- " + str(index) + " --------------------------")
     rotate(model_object, index)
     randomize_reflectors_colors()
+    bpy.data.objects['Ocean'].modifiers['Ocean'].time += 1
     for prop in props:
         prop.location = rand_location()
     shoot(camera_object, model_object, output_name(index, model_path))
