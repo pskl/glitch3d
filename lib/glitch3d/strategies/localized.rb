@@ -2,10 +2,14 @@
 module Glitch3d
   module Localized
     def alter_vertices(vertices_objects_array)
-      (VERTEX_GLITCH_ITERATION_RATIO * vertices_objects_array.size).to_i.times do |_|
-        random_element(target(vertices_objects_array)).fuck
+      sorted_array = vertices_objects_array.sort do |v1, v2| 
+        rand_attr = v1.rand_attr
+        v1.send(rand_attr) <=> v2.send(rand_attr)
       end
-      vertices_objects_array
+      (VERTEX_GLITCH_ITERATION_RATIO * sorted_array.size).to_i.times do |_|
+        random_element(target(sorted_array)).fuck
+      end
+      sorted_array
     end
 
     def alter_faces(faces_objects_array, vertices_objects_array)

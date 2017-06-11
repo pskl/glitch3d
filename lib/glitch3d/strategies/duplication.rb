@@ -2,7 +2,7 @@
 module Glitch3d
   module Duplication
     def alter_vertices(vertices_objects_array)
-      iteration_number = 8
+      iteration_number = 2
       res = []
       iteration_number.times do |_|
         res = copy_random_element(vertices_objects_array, iteration_number, CHUNK_SIZE)

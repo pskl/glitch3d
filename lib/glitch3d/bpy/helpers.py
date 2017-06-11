@@ -15,9 +15,9 @@ REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
 REFLECTOR_LOCATION_PADDING = 10
 WIREFRAME_THICKNESS = 0.008
+DISPLACEMENT_AMPLITUDE = 0.008
 ORIGIN  = (0,0,0)
 props = []
-CUBES = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 1)
@@ -216,27 +216,40 @@ def randomize_reflectors_colors():
 
 def add_cube(x,y,z,radius):
     bpy.ops.mesh.primitive_cube_add(location=(x, y, z),radius=radius)
-    CUBES.append(bpy.data.objects[-1])
+    group_add('Cubes', last_added_cube())
+
+def group_add(group_name, obj):
+    bpy.data.groups[group_name].objects.link(obj)
+
+def last_added_cube():
+    l = []
+    for obj in bpy.data.objects:
+        if obj.name.startswith('Cube'):
+            l.append(obj)
+    return l[-1]
+
+def last_cube():
+    return bpy.data.groups['Cubes'].objects[-1]
 
 def build_composite_cube(size, radius):
     build_grid_cube(size, -size, radius)
     for z in range(0, size):
-        build_grid_cube(size, CUBES[-1].location.z + 2 * radius, radius)
+        build_grid_cube(size, last_cube().location.z + 2 * radius, radius)
 
 def build_grid_cube(size, z_index, radius):
     build_cube_line(size, z_index, -size, radius)
     for y in range(0, size): 
-        build_cube_line(size, z_index, CUBES[-1].location.y + 2 * radius, radius)  
+        build_cube_line(size, z_index, last_cube().location.y + 2 * radius, radius)  
 
 def build_cube_line(size, z_index, y_index, radius):
     add_cube(-size, y_index, z_index, radius)
     for x in range(0, size):
-        new_cube=duplicate_object(CUBES[-1])
-        CUBES.append(new_cube)
-        new_cube.location = ((CUBES[-1].location.x + 2 * radius), y_index, z_index)
+        new_cube = duplicate_object(last_cube())
+        group_add('Cubes', new_cube)
+        new_cube.location = ((last_cube().location.x + 2 * radius), y_index, z_index)
 
 def displace(vector):
-    return mathutils.Vector((vector.x + random.uniform(-0.08, 0.08), vector.y + random.uniform(-0.08, 0.08), vector.z + random.uniform(-0.08, 0.08)))    
+    return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))    
 
 def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -253,8 +266,8 @@ def subdivide(object, cuts):
         bpy.ops.mesh.subdivide(cuts)
 
 def add_ocean(spatial_size, resolution):
-    add_cube(0,0,0,1)
-    ocean = CUBES[-1]
+    bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.6),radius=8)
+    ocean = last_added_cube()
     context.scene.objects.active = ocean
     bpy.ops.object.modifier_add(type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
@@ -262,6 +275,11 @@ def add_ocean(spatial_size, resolution):
     make_object_transparent(ocean, BLUE)
     ocean.name = 'Chillwaves~'
     return ocean
+
+def flush_all_objects():
+    # Delete current objects
+    for index, obj in enumerate(bpy.data.objects):
+        bpy.data.objects.remove(obj, do_unlink=True)
 
 
 
