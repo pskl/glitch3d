@@ -16,15 +16,28 @@ exec(open(os.path.join(os.path.dirname(__file__), 'helpers.py')).read())
 args = get_args()
 file = args.file
 mode = args.mode
+path = str(args.path)
 shots_number = int(args.shots_number)
 
-FIXTURES_FOLDER_PATH = str(args.path) + '/../fixtures/'
+FIXTURES_FOLDER_PATH = path + '/../fixtures/'
+
+DEBUG = False
+
+if DEBUG: 
+    shots_number = 2
+    import os
+    mode = 'low'
+    file = "/Users/pascal/dev/glitch3d/fixtures/skull.obj"
+    FIXTURES_FOLDER_PATH = "/Users/pascal/dev/glitch3d/fixtures/"
+
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 
 # Scene
 new_scene = bpy.data.scenes.new("Automated Render Scene")
 bpy.ops.scene.delete() # Delete old scene
 context.screen.scene = new_scene # selects the new scene as the current one
+
+bpy.data.groups.new('Cubes')
 
 # Render settings
 context.scene.render.resolution_x = 1920
@@ -50,14 +63,16 @@ world_node_tree = world.node_tree
 # world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
 context.scene.world = world
 
-# Delete current objects
-for index, obj in enumerate(bpy.data.objects):
-    bpy.data.objects.remove(obj, do_unlink=True)
+flush_all_objects()
 
 # Load model
 model_path = os.path.join(file)
+
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
+
+# Add props
+build_composite_cube(4,1)
 
 # Load props
 # bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
@@ -98,9 +113,6 @@ reflector1.rotation_euler.z += math.radians(90)
 make_object_reflector(reflector1)
 make_object_reflector(reflector2)
 
-# Add props
-build_composite_cube(4,1)
-
 # Make floor
 bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
 floor = bpy.data.objects['Plane.003']
@@ -124,8 +136,9 @@ for index in range(1, len(WORDS)):
 
 for model in bpy.data.objects:
     unwrap_model(model)
-    if model.name.startswith('Cube'):
-        wireframize(model)
+
+for cube in bpy.data.groups['Cubes'].objects:
+    wireframize(cube)
 
 # ------
 # Shoot

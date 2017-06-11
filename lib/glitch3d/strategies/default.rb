@@ -9,9 +9,9 @@ module Glitch3d
     end
 
     def alter_faces(faces_objects_array, vertex_objects_array)
-      (FACE_GLITCH_ITERATION_RATIO * faces_objects_array.count).to_i.times do |_|
-        random_element(faces_objects_array).fuck(random_element(vertex_objects_array))
-      end
+      # (FACE_GLITCH_ITERATION_RATIO * faces_objects_array.count).to_i.times do |_|
+      #   random_element(faces_objects_array).fuck(random_element(vertex_objects_array))
+      # end
       faces_objects_array
     end
   end
