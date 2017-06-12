@@ -15,7 +15,7 @@ REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
 REFLECTOR_LOCATION_PADDING = 10
 WIREFRAME_THICKNESS = 0.008
-DISPLACEMENT_AMPLITUDE = 0.008
+DISPLACEMENT_AMPLITUDE = 0.04
 ORIGIN  = (0,0,0)
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
@@ -273,7 +273,7 @@ def add_ocean(spatial_size, resolution):
     bpy.ops.object.modifier_add(type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
-    make_object_glossy(ocean, BLUE)
+    make_object_glossy(ocean, rand_color_vector())
     ocean.name = 'Ocean'
     return ocean
 
