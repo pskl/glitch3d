@@ -23,7 +23,7 @@ FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 
 DEBUG = False
 
-if DEBUG: 
+if DEBUG:
     shots_number = 2
     import os
     mode = 'low'
@@ -37,13 +37,15 @@ new_scene = bpy.data.scenes.new("Automated Render Scene")
 bpy.ops.scene.delete() # Delete old scene
 context.screen.scene = new_scene # selects the new scene as the current one
 
-bpy.data.groups.new('Cubes')
+bpy.data.groups.new('Cube')
+bpy.data.groups.new('Ico')
 
 # Render settings
 context.scene.render.resolution_x = 1920
 context.scene.render.resolution_y = 1080
 context.scene.render.engine = 'CYCLES'
 context.scene.render.resolution_percentage = 25
+# uncomment if GPU
 # bpy.context.scene.cycles.device = 'GPU'
 context.scene.render.image_settings.compression = 0
 context.scene.cycles.samples = 25
@@ -52,17 +54,16 @@ context.scene.render.image_settings.file_format='PNG'
 
 if mode == 'high':
     context.scene.render.image_settings.compression = 90
-    context.scene.cycles.samples = 500
-    context.scene.render.resolution_percentage = 200
+    context.scene.cycles.samples = 400
+    context.scene.render.resolution_percentage = 100
 
 # Add background to world
 world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
 world_node_tree = world.node_tree
-# Paint background with color
-# world_node_tree.nodes['Background'].inputs[0].default_value = rand_color_vector()
 context.scene.world = world
 
+# Clean slate
 flush_all_objects()
 
 # Load model
@@ -71,17 +72,21 @@ model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 model_object = bpy.data.objects[0]
 
-# Add props
-build_composite_cube(4,1)
-
 # Load props
-# bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
-# m4a1 = bpy.data.objects['m4a1']
+bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
+m4a1 = bpy.data.objects['m4a1']
+m4a1.location = rand_location()
+m4a1.scale = (0.4, 0.4, 0.4)
 
 # Use center of mass to center object
 model_object.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 model_object.location = ORIGIN
+make_object_glossy(model_object, YELLOW)
+
+# Add props
+rand_primitive = random.choice(PRIMITIVES)
+build_composite_object(rand_primitive, 4, 1)
 
 # --------------
 # Create camera
@@ -97,25 +102,22 @@ bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, 8))
 
-floor = bpy.data.objects['Plane']
 reflector1 = bpy.data.objects['Plane.001']
 reflector2 = bpy.data.objects['Plane.002']
 
-# Adjust camera
-context.scene.camera = camera_object
-look_at(camera_object, model_object)
-make_object_glossy(model_object, YELLOW)
-
-floor.rotation_euler.x += math.radians(90)
 reflector1.rotation_euler.x += math.radians(90)
 reflector1.rotation_euler.z += math.radians(90)
 
 make_object_reflector(reflector1)
 make_object_reflector(reflector2)
 
+# Adjust camera
+context.scene.camera = camera_object
+look_at(camera_object, model_object)
+
 # Make floor
-bpy.ops.mesh.primitive_plane_add(calc_uvs=True, location=(0,0,-2))
-floor = bpy.data.objects['Plane.003']
+floor = bpy.data.objects['Plane']
+floor.rotation_euler.x += math.radians(90)
 floor.scale = (20,20,20)
 texture_object(floor)
 subdivide(floor, 5)
@@ -137,8 +139,8 @@ for index in range(1, len(WORDS)):
 for model in bpy.data.objects:
     unwrap_model(model)
 
-for cube in bpy.data.groups['Cubes'].objects:
-    wireframize(cube)
+for obj in WIREFRAMES:
+    wireframize(obj)
 
 # ------
 # Shoot
@@ -149,8 +151,14 @@ for index in range(0, int(shots_number)):
     rotate(model_object, index)
     randomize_reflectors_colors()
     bpy.data.objects['Ocean'].modifiers['Ocean'].time += 1
+    bpy.data.objects['Ocean'].modifiers['Ocean'].choppiness += 0.3
     for prop in props:
         prop.location = rand_location()
+    for obj in WIREFRAMES:
+        rotate(obj, index)
+        obj.rotation_euler.z += math.radians(90)
+    m4a1.location = rand_location()
+    m4a1.rotation_euler = rand_rotation()
     shoot(camera_object, model_object, output_name(index, model_path))
 
 print('FINISHED ¯\_(ツ)_/¯')
