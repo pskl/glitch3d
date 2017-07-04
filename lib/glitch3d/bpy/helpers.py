@@ -16,9 +16,10 @@ REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
 REFLECTOR_LOCATION_PADDING = 10
 WIREFRAME_THICKNESS = 0.008
-DISPLACEMENT_AMPLITUDE = 0.04
+DISPLACEMENT_AMPLITUDE = 0.06
 ORIGIN  = (0,0,0)
-PRIMITIVES = ['CUBE', 'ICO']
+
+PRIMITIVES = ['PYRAMID', 'CONE', 'PLANE', 'CUBE', 'ICO']
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
@@ -191,6 +192,15 @@ def random_text():
     chosen_word = random.choice(WORDS)
     return chosen_word
 
+def create_mesh(name, verts, faces, location):
+    mesh_data = bpy.data.meshes.new("cube_mesh_data")
+    mesh_data.from_pydata(verts, [], faces)
+    mesh_data.update()
+    obj = bpy.data.objects.new(name, mesh_data)
+    obj.location = location
+    context.scene.objects.link(obj)
+    return obj
+
 def spawn_text():
     identifier = str(uuid.uuid1())
     new_curve = bpy.data.curves.new(type="FONT",name="Curve - " + identifier)
@@ -225,6 +235,12 @@ def infer_primitive(obj, **kwargs):
         bpy.ops.mesh.primitive_cube_add(radius = kwargs['radius'], location = kwargs['location'])
     elif obj == 'ICO':
         bpy.ops.mesh.primitive_ico_sphere_add(location = kwargs['location'])
+    elif obj == 'CONE':
+        bpy.ops.mesh.primitive_cone_add(location = kwargs['location'], radius1 = kwargs['radius'])
+    elif obj == 'PYRAMID':
+        build_pyramid(location = kwargs['location'])
+    elif obj == 'PLANE':
+        bpy.ops.mesh.primitive_plane_add(location = kwargs['location'], radius = kwargs['radius'])
 
 def group_add(group_name, obj):
     bpy.data.groups[group_name.lower().title()].objects.link(obj)
@@ -291,5 +307,19 @@ def flush_all_objects():
     for index, obj in enumerate(bpy.data.objects):
         bpy.data.objects.remove(obj, do_unlink=True)
 
-
+def build_pyramid(width=1.0, length=1.0, height=1.0, location=ORIGIN):
+    verts=[]
+    faces=[]
+    verts.append([-(width/2),(length/2),0.0])
+    verts.append([-(width/2),-(length/2),0.0])
+    verts.append([(width/2),-(length/2),0.0])
+    verts.append([(width/2),(length/2),0.0])
+    verts.append([0.0,0.0,(height/2)])
+    faces.append([0,1,2,3])
+    faces.append([0,1,4])
+    faces.append([1,2,4])
+    faces.append([2,3,4])
+    faces.append([3,0,4])
+    id = str(uuid.uuid1())
+    return create_mesh('Pyramid ' + id, verts, faces, location)
 
