@@ -37,8 +37,9 @@ new_scene = bpy.data.scenes.new("Automated Render Scene")
 bpy.ops.scene.delete() # Delete old scene
 context.screen.scene = new_scene # selects the new scene as the current one
 
-bpy.data.groups.new('Cube')
-bpy.data.groups.new('Ico')
+# Initialize groups
+for primitive in PRIMITIVES:
+    bpy.data.groups.new(primitive.lower().title())
 
 # Render settings
 context.scene.render.resolution_x = 1920
@@ -120,10 +121,10 @@ floor = bpy.data.objects['Plane']
 floor.rotation_euler.x += math.radians(90)
 floor.scale = (20,20,20)
 texture_object(floor)
-subdivide(floor, 5)
+subdivide(floor, 8)
 glitch(floor)
 
-add_ocean(10, 20)
+OCEAN = add_ocean(10, 20)
 
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
@@ -136,8 +137,8 @@ for index in range(1, len(WORDS)):
     new_object.rotation_euler.x += math.radians(90)
     new_object.rotation_euler.z += math.radians(90)
 
-for model in bpy.data.objects:
-    unwrap_model(model)
+for plane in bpy.data.groups['Plane'].objects:
+    unwrap_model(plane)
 
 for obj in WIREFRAMES:
     wireframize(obj)
@@ -150,8 +151,9 @@ for index in range(0, int(shots_number)):
     print("-------------------------- " + str(index) + " --------------------------")
     rotate(model_object, index)
     randomize_reflectors_colors()
-    bpy.data.objects['Ocean'].modifiers['Ocean'].time += 1
-    bpy.data.objects['Ocean'].modifiers['Ocean'].choppiness += 0.3
+    OCEAN.modifiers['Ocean'].time += 1
+    make_object_glossy(OCEAN, rand_color_vector())
+    OCEAN.modifiers['Ocean'].choppiness += 0.3
     for prop in props:
         prop.location = rand_location()
     for obj in WIREFRAMES:
