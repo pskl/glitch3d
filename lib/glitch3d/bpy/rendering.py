@@ -22,6 +22,7 @@ shots_number = int(args.shots_number)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 
 DEBUG = False
+FISHEYE = False
 
 if DEBUG:
     shots_number = 2
@@ -97,6 +98,14 @@ bpy.data.objects.new('Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Camera']
 new_scene.objects.link(camera_object)
 camera_object.location = (8, 8, 1)
+
+if FISHEYE:
+    camera_object.data.type = 'PANO'
+    camera_object.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
+    camera_object.data.cycles.fisheye_lens = 8
+    camera_object.data.cycles.fisheye_fov = 2.27
+    camera_object.data.sensor_width = 15.81
+    camera_object.data.sensor_height = 8.88
 
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
