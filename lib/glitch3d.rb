@@ -2,7 +2,6 @@
 require 'glitch3d/version'
 require 'glitch3d/objects/vertex'
 require 'glitch3d/objects/face'
-require 'pry'
 Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each { |file| require file }
 
 module Glitch3d
