@@ -31,7 +31,7 @@ module Glitch3d
     self.class.include infer_strategy(args['mode'] || 'default')
     @quality = args['quality'] || 'low'
     source_file = source_file
-    base_file_name = source_file.gsub(/.obj/, '')
+    base_file_name = source_file&.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
