@@ -4,4 +4,4 @@
 require 'glitch3d'
 
 include Glitch3d
-process_model(ARGV[0])
+process_model(ARGV[0] || File.dirname(__FILE__) + '/../fixtures/cube.obj')
