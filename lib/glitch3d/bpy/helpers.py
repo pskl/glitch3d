@@ -305,7 +305,7 @@ def add_ocean(spatial_size, resolution):
 def flush_all_objects():
     # Delete current objects
     for index, obj in enumerate(bpy.data.objects):
-        bpy.data.objects.remove(obj, do_unlink=True)
+        bpy.data.objects.remove(obj)
 
 def build_pyramid(width=1.0, length=1.0, height=1.0, location=ORIGIN):
     verts=[]
