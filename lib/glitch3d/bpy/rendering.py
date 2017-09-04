@@ -23,6 +23,7 @@ FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 
 DEBUG = False
 FISHEYE = False
+COLORS = rand_color_palette(5)
 
 if DEBUG:
     shots_number = 2
@@ -111,23 +112,31 @@ if FISHEYE:
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, 8))
+bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 
-reflector1 = bpy.data.objects['Plane.001']
-reflector2 = bpy.data.objects['Plane.002']
+reflector1 = bpy.data.objects['Plane']
+reflector2 = bpy.data.objects['Plane.001']
+reflector3 = bpy.data.objects['Plane.002']
 
+bpy.data.groups.new('Plane')
+bpy.data.groups['Plane'].objects.link(reflector1)
+bpy.data.groups['Plane'].objects.link(reflector2)
+bpy.data.groups['Plane'].objects.link(reflector3)
+
+reflector2.rotation_euler.x += math.radians(90)
 reflector1.rotation_euler.x += math.radians(90)
-reflector1.rotation_euler.z += math.radians(90)
+reflector2.rotation_euler.z += math.radians(90)
 
 make_object_reflector(reflector1)
 make_object_reflector(reflector2)
+make_object_reflector(reflector3)
 
 # Adjust camera
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
 
 # Make floor
-floor = bpy.data.objects['Plane']
-floor.rotation_euler.x += math.radians(90)
+floor = bpy.data.objects['Plane.003']
 floor.scale = (20,20,20)
 texture_object(floor)
 subdivide(floor, 8)
@@ -161,7 +170,7 @@ for index in range(0, int(shots_number)):
     rotate(model_object, index)
     randomize_reflectors_colors()
     OCEAN.modifiers['Ocean'].time += 1
-    make_object_glossy(OCEAN, rand_color_vector())
+    make_object_glossy(OCEAN, rand_color())
     OCEAN.modifiers['Ocean'].choppiness += 0.3
     for prop in props:
         prop.location = rand_location()
