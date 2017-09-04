@@ -11,6 +11,7 @@ import uuid
 import sys
 import logging
 import string
+import colorsys
 
 REFLECTOR_SCALE = 5
 REFLECTOR_STRENGTH = 12
@@ -19,7 +20,7 @@ WIREFRAME_THICKNESS = 0.008
 DISPLACEMENT_AMPLITUDE = 0.06
 ORIGIN  = (0,0,0)
 
-PRIMITIVES = ['PYRAMID', 'CONE', 'PLANE', 'CUBE', 'ICO']
+PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
@@ -61,8 +62,9 @@ def output_name(index, model_path):
 def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
 
+# RGB 0 -> 1
 def rand_color_value():
-    return round(random.uniform(0.1, 1.0), 10)
+    return random.uniform(0, 255) / 255
 
 def rand_location():
     return (rand_location_value(), rand_location_value(), rand_location_value())
@@ -76,8 +78,8 @@ def rand_rotation_value():
 def rand_location_value():
     return round(random.uniform(-4, 4), 10)
 
-def rand_color_vector():
-    return (rand_color_value(), rand_color_value(), rand_color_value(), 1)
+def rand_color():
+    return random.choice(COLORS)
 
 def rand_scale():
     return round(random.uniform(0, 0.2), 10)
@@ -169,7 +171,7 @@ def make_object_emitter(obj, emission_strength):
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
     # Set color
-    emission_node.inputs[0].default_value = rand_color_vector()
+    emission_node.inputs[0].default_value = rand_color()
     # Set strength
     emission_node.inputs[1].default_value = emission_strength
     assign_node_to_output(emissive_material, emission_node)
@@ -222,8 +224,8 @@ def shuffle(obj):
     obj.rotation_euler = rand_rotation()
 
 def randomize_reflectors_colors():
-    reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
-    reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color_vector()
+    reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
+    reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
 
 def add_object(obj, x, y, z, radius):
     infer_primitive(obj, location=(x, y, z), radius=radius)
@@ -298,14 +300,32 @@ def add_ocean(spatial_size, resolution):
     bpy.ops.object.modifier_add(type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
-    make_object_glossy(ocean, rand_color_vector())
+    make_object_glossy(ocean, rand_color())
     ocean.name = 'Ocean'
     return ocean
 
+# Delete current objects
 def flush_all_objects():
-    # Delete current objects
     for index, obj in enumerate(bpy.data.objects):
         bpy.data.objects.remove(obj)
+
+# Rotate hue to generate palette
+def adjacent_colors(r, g, b, number):
+    angle = (360 / 5) / 360
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    hue_positions = []
+    for i in range(number):
+        hue_positions.append(angle * i)
+    h = [(h + offset) % 1 for offset in hue_positions]
+    adjacent = [colorsys.hls_to_rgb(hi, l, s) for hi in h]
+    # add alpha component
+    res = list(map(lambda x: list(x), adjacent))
+    for i in res:
+        i.append(1)
+    return res
+
+def rand_color_palette(number):
+    return adjacent_colors(rand_color_value(), rand_color_value(), rand_color_value(), number)
 
 def build_pyramid(width=1.0, length=1.0, height=1.0, location=ORIGIN):
     verts=[]
