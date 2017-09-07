@@ -2,6 +2,7 @@
 require 'glitch3d/version'
 require 'glitch3d/objects/vertex'
 require 'glitch3d/objects/face'
+
 Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each { |file| require file }
 
 module Glitch3d
@@ -25,6 +26,7 @@ module Glitch3d
   end
 
   def process_model(source_file)
+    source_file =  File.dirname(__FILE__) + '/../fixtures/cube.obj' if source_file.nil?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
     return clean_model(source_file) if args['clean']
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
