@@ -24,6 +24,7 @@ FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 DEBUG = False
 FISHEYE = False
 COLORS = rand_color_palette(5)
+INITIAL_CAMERA_LOCATION = (8, 8, 1)
 
 if DEBUG:
     shots_number = 2
@@ -98,7 +99,7 @@ camera_data = bpy.data.cameras.new('Camera')
 bpy.data.objects.new('Camera', object_data=camera_data)
 camera_object = bpy.data.objects['Camera']
 new_scene.objects.link(camera_object)
-camera_object.location = (8, 8, 1)
+camera_object.location = INITIAL_CAMERA_LOCATION
 
 if FISHEYE:
     camera_object.data.type = 'PANO'
@@ -168,15 +169,21 @@ print('Rendering images with resolution: ' + str(context.scene.render.resolution
 for index in range(0, int(shots_number)):
     print("-------------------------- " + str(index) + " --------------------------")
     rotate(model_object, index)
+    camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
+    camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
+    look_at(camera_object, model_object)
+
     randomize_reflectors_colors()
     OCEAN.modifiers['Ocean'].time += 1
+    OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
     make_object_glossy(OCEAN, rand_color())
     OCEAN.modifiers['Ocean'].choppiness += 0.3
     for prop in props:
         prop.location = rand_location()
     for obj in WIREFRAMES:
         rotate(obj, index)
-        obj.rotation_euler.z += math.radians(90)
+        obj.location.z += round(random.uniform(-1, 1), 10)
+        obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
     m4a1.location = rand_location()
     m4a1.rotation_euler = rand_rotation()
     shoot(camera_object, model_object, output_name(index, model_path))
