@@ -11,6 +11,7 @@
 # Use `debug()` to pry into the script
 import os
 exec(open(os.path.join(os.path.dirname(__file__), 'helpers.py')).read())
+exec(open(os.path.join(os.path.dirname(__file__), 'animation_recording.py')).read())
 
 # Arguments parsing
 args = get_args()
@@ -132,6 +133,19 @@ make_object_reflector(reflector1)
 make_object_reflector(reflector2)
 make_object_reflector(reflector3)
 
+# Set up virtual displays
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, calc_uvs=True, location=(0, 3, 2))
+display1 = bpy.data.objects['Grid']
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, calc_uvs=True, location=(3, 0, 2))
+display2 = bpy.data.objects['Grid.001']
+
+display1.rotation_euler.x += math.radians(90)
+display2.rotation_euler.x += math.radians(90)
+
+for display in [display1, display2]:
+    texture_object(display)
+    glitch(display)
+
 # Adjust camera
 context.scene.camera = camera_object
 look_at(camera_object, model_object)
@@ -182,6 +196,7 @@ for index in range(0, int(shots_number)):
         prop.location = rand_location()
     for obj in WIREFRAMES:
         rotate(obj, index)
+        obj.scale = rand_scale_vector()
         obj.location.z += round(random.uniform(-1, 1), 10)
         obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
     m4a1.location = rand_location()

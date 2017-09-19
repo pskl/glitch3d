@@ -13,12 +13,15 @@ import logging
 import string
 import colorsys
 
-REFLECTOR_SCALE = 5
-REFLECTOR_STRENGTH = 12
-REFLECTOR_LOCATION_PADDING = 10
-WIREFRAME_THICKNESS = 0.008
-DISPLACEMENT_AMPLITUDE = 0.06
+REFLECTOR_SCALE = random.uniform(4, 6)
+REFLECTOR_STRENGTH = random.uniform(8, 12)
+REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
+WIREFRAME_THICKNESS = random.uniform(0.008, 0.01)
+DISPLACEMENT_AMPLITUDE = random.uniform(0.06, 0.08)
+REPLACE_TARGET = '6'
+REPLACEMENT = '2'
 ORIGIN  = (0,0,0)
+NUMBER_OF_FRAMES = 100
 
 PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
@@ -275,8 +278,13 @@ def build_object_line(obj, size, z_index, y_index, radius):
         group_add(obj, new_obj)
         new_obj.location = ((last_object_group(obj).location.x + 2 * radius), y_index, z_index)
 
+# Displace vertex by random offset
 def displace(vector):
     return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))
+
+# Replace vertex coordinate everywhere
+def find_and_replace(vector):
+    return mathutils.Vector((float(str(vector.x).replace(REPLACE_TARGET, REPLACEMENT)), float(str(vector.y).replace(REPLACE_TARGET, REPLACEMENT)), float(str(vector.z).replace(REPLACE_TARGET, REPLACEMENT))))
 
 def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
