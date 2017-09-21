@@ -25,9 +25,11 @@ module Glitch3d
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
   end
 
-  def process_model(source_file)
+  # @param String source_file, 3d model file to take as input
+  # @param Hash args, parameters { 'stuff' => 'shit' }
+  def process_model(source_file, args = nil)
     source_file =  File.dirname(__FILE__) + '/../fixtures/cube.obj' if source_file.nil?
-    args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)]
+    args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
     return clean_model(source_file) if args['clean']
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
     self.class.include infer_strategy(args['mode'] || 'default')
@@ -41,11 +43,11 @@ module Glitch3d
   end
 
   def infer_strategy(mode)
-    return Glitch3d::Default if mode.nil?
+    return [ Glitch3d::Default, Glitch3d::Duplication, Glitch3d::FindAndReplace, Glitch3d::Localized, Glitch3d::None].sample if mode.nil?
     begin
-      return eval("Glitch3d::#{mode.to_s.capitalize}")
+      return eval("Glitch3d::#{mode.to_s.gsub(/(?:_|^)(\w)/){$1.upcase}}")
     rescue
-      raise "Strategy #{mode.to_s.capitalize} not found"
+      raise "Strategy #{mode.to_s..gsub(/(?:_|^)(\w)/){$1.upcase}} not found"
     end
   end
 

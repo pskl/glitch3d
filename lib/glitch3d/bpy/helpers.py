@@ -290,7 +290,7 @@ def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
     assert object.type == 'MESH'
     for vertex in object.data.vertices:
-        vertex.co = displace(vertex.co)
+        vertex.co = find_and_replace(vertex.co)
 
 def subdivide(object, cuts):
     if context.scene.objects.active != object:
