@@ -186,7 +186,6 @@ for index in range(0, int(shots_number)):
     camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
     camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
     look_at(camera_object, model_object)
-
     randomize_reflectors_colors()
     OCEAN.modifiers['Ocean'].time += 1
     OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
@@ -196,7 +195,6 @@ for index in range(0, int(shots_number)):
         prop.location = rand_location()
     for obj in WIREFRAMES:
         rotate(obj, index)
-        obj.scale = rand_scale_vector()
         obj.location.z += round(random.uniform(-1, 1), 10)
         obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
     m4a1.location = rand_location()
