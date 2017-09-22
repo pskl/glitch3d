@@ -134,16 +134,21 @@ make_object_reflector(reflector2)
 make_object_reflector(reflector3)
 
 # Set up virtual displays
-bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, calc_uvs=True, location=(0, 3, 2))
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 3, 2))
 display1 = bpy.data.objects['Grid']
-bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, calc_uvs=True, location=(3, 0, 2))
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(3, 0, 2))
 display2 = bpy.data.objects['Grid.001']
+
+bpy.data.groups.new('Displays')
+bpy.data.groups['Displays'].objects.link(display1)
+bpy.data.groups['Displays'].objects.link(display2)
 
 display1.rotation_euler.x += math.radians(90)
 display2.rotation_euler.x += math.radians(90)
 
 for display in [display1, display2]:
     texture_object(display)
+    unwrap_model(display)
     glitch(display)
 
 # Adjust camera
