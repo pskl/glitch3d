@@ -31,6 +31,12 @@ module Glitch3d
     source_file =  File.dirname(__FILE__) + '/../fixtures/cube.obj' if source_file.nil?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
     return clean_model(source_file) if args['clean']
+
+    if args.has_key?('version')
+      puts Glitch3d::VERSION
+      return nil
+    end
+
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
     self.class.include infer_strategy(args['mode'] || 'default')
     @quality = args['quality'] || 'low'
