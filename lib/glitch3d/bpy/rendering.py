@@ -11,7 +11,6 @@
 # Use `debug()` to pry into the script
 import os
 exec(open(os.path.join(os.path.dirname(__file__), 'helpers.py')).read())
-exec(open(os.path.join(os.path.dirname(__file__), 'animation_recording.py')).read())
 
 # Arguments parsing
 args = get_args()
@@ -26,6 +25,7 @@ DEBUG = False
 FISHEYE = False
 COLORS = rand_color_palette(5)
 INITIAL_CAMERA_LOCATION = (8, 8, 1)
+ANIMATE = False
 
 if DEBUG:
     shots_number = 2
@@ -63,6 +63,7 @@ if mode == 'high':
     context.scene.render.resolution_percentage = 100
 
 # Add background to world
+bpy.data.worlds.remove(bpy.data.worlds[0])
 world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
 world_node_tree = world.node_tree
@@ -81,7 +82,8 @@ model_object = bpy.data.objects[0]
 bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
 m4a1.location = rand_location()
-m4a1.scale = (0.4, 0.4, 0.4)
+m4a1.scale = (0.5, 0.5, 0.5)
+props.append(m4a1)
 
 # Use center of mass to center object
 model_object.select = True
@@ -134,9 +136,9 @@ make_object_reflector(reflector2)
 make_object_reflector(reflector3)
 
 # Set up virtual displays
-bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 3, 2))
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
 display1 = bpy.data.objects['Grid']
-bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(3, 0, 2))
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(6, 0, 2))
 display2 = bpy.data.objects['Grid.001']
 
 bpy.data.groups.new('Displays')
@@ -144,12 +146,20 @@ bpy.data.groups['Displays'].objects.link(display1)
 bpy.data.groups['Displays'].objects.link(display2)
 
 display1.rotation_euler.x += math.radians(90)
+display1.rotation_euler.z -= math.radians(90)
 display2.rotation_euler.x += math.radians(90)
+display2.rotation_euler.y += math.radians(90)
+display2.rotation_euler.z += math.radians(120)
 
-for display in [display1, display2]:
+for display in bpy.data.groups['Displays'].objects:
+    display.rotation_euler.x += math.radians(90)
+    display.scale = (3,3,3)
     texture_object(display)
     unwrap_model(display)
     glitch(display)
+
+glitch(m4a1)
+make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 
 # Adjust camera
 context.scene.camera = camera_object
@@ -181,29 +191,36 @@ for plane in bpy.data.groups['Plane'].objects:
 for obj in WIREFRAMES:
     wireframize(obj)
 
+if ANIMATE == True:
+    exec(open(os.path.join(os.path.dirname(__file__), 'animation_recording.py')).read())
+
 # ------
 # Shoot
 # ------
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
-for index in range(0, int(shots_number)):
-    print("-------------------------- " + str(index) + " --------------------------")
-    rotate(model_object, index)
-    camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
-    camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
-    look_at(camera_object, model_object)
-    randomize_reflectors_colors()
-    OCEAN.modifiers['Ocean'].time += 1
-    OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-    make_object_glossy(OCEAN, rand_color())
-    OCEAN.modifiers['Ocean'].choppiness += 0.3
-    for prop in props:
-        prop.location = rand_location()
-    for obj in WIREFRAMES:
-        rotate(obj, index)
-        obj.location.z += round(random.uniform(-1, 1), 10)
-        obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
-    m4a1.location = rand_location()
-    m4a1.rotation_euler = rand_rotation()
-    shoot(camera_object, model_object, output_name(index, model_path))
+
+if ANIMATE:
+    print('ANIMATION RENDERING BEGIN')
+    context.scene.frame_start = 0
+    context.scene.frame_end   = NUMBER_OF_FRAMES
+    bpy.ops.screen.frame_jump(end=False)
+
+    for frame in range(1, NUMBER_OF_FRAMES):
+        bpy.context.scene.frame_set(frame)
+
+        dance_routine()
+
+        for ob in context.scene.objects:
+            ob.keyframe_insert(data_path="location", index=-1)
+
+    bpy.ops.screen.frame_jump(end=False)
+    shoot(True, camera_object, model_object, output_name(index, model_path))
+else:
+    print('STILL RENDERING BEGIN')
+    for index in range(0, int(shots_number)):
+        print("-------------------------- " + str(index) + " --------------------------")
+        shoot(False, camera_object, model_object, output_name(index, model_path))
+        dance_routine()
+
 
 print('FINISHED ¯\_(ツ)_/¯')
