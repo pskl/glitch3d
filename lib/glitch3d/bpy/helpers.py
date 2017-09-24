@@ -50,13 +50,16 @@ def empty_materials():
     for material in bpy.data.materials.keys():
         bpy.data.materials.remove(object.data.materials[material])
 
-def shoot(camera, model_object, filepath):
+def shoot(animate, camera, model_object, filepath):
     directory = os.path.dirname('./renders')
     if not os.path.exists(directory):
       os.makedirs(directory)
     look_at(camera, model_object)
     print('Camera now at location: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera))
     bpy.context.scene.render.filepath = filepath
+    if animate:
+        bpy.context.scene.render.filepath = './renders/animation-' + str(uuid.uuid1()) + '/'
+        return bpy.ops.render.render(animation=animate)
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
@@ -122,11 +125,6 @@ def camera_location_string(camera):
 def assign_material(model_object, material):
     model_object.data.materials.append(material)
 
-def assign_node_to_output(material, new_node):
-    assert material.use_nodes == True
-    output_node = material.node_tree.nodes['Material Output']
-    material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
-
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material():
     material = bpy.data.materials.new('Object Material - ' + str(uuid.uuid1()))
@@ -146,6 +144,17 @@ def assign_texture_to_material(material, texture):
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
     texture_node.image = texture
     material.node_tree.links.new(texture_node.outputs['Color'], bsdf_node.inputs['Color'])
+
+def assign_node_to_output(material, new_node):
+    assert material.use_nodes == True
+    output_node = material.node_tree.nodes['Material Output']
+    material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
+
+def mix_nodes(material, node1, node2):
+    mix = material.node_tree.nodes.new('ShaderNodeMixShader')
+    material.node_tree.links.new(mix.inputs[1], node1.outputs[0])
+    material.node_tree.links.new(mix.inputs[2], node2.outputs[0])
+    assign_node_to_output(material, mix)
 
 def make_object_glossy(obj, color):
     material = bpy.data.materials.new('Glossy Material - ' + str(uuid.uuid1()))
@@ -180,6 +189,19 @@ def make_object_emitter(obj, emission_strength):
     assign_node_to_output(emissive_material, emission_node)
     assign_material(obj, emissive_material)
     return emission_node
+
+def make_object_gradient_fabulous(obj, color1, color2):
+    material = bpy.data.materials.new('Fabulous #' + str(uuid.uuid1()))
+    material.use_nodes = True
+    assign_material(obj, material)
+    mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
+    bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+    material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
+    material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
+    assign_node_to_output(material, bsdf_node)
+    mixer_node.inputs['Color1'].default_value = color1
+    mixer_node.inputs['Color2'].default_value = color2
 
 def texture_object(obj):
     new_material = create_cycles_material()
@@ -309,6 +331,8 @@ def add_ocean(spatial_size, resolution):
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
     make_object_glossy(ocean, rand_color())
+    make_object_gradient_fabulous(ocean, rand_color(), rand_color())
+    mix_nodes(ocean.data.materials[0], ocean.data.materials[0].node_tree.nodes['Diffuse BSDF'], ocean.data.materials[0].node_tree.nodes['Glossy BSDF'])
     ocean.name = 'Ocean'
     return ocean
 
@@ -335,7 +359,7 @@ def adjacent_colors(r, g, b, number):
 def rand_color_palette(number):
     return adjacent_colors(rand_color_value(), rand_color_value(), rand_color_value(), number)
 
-def build_pyramid(width=1.0, length=1.0, height=1.0, location=ORIGIN):
+def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=random.uniform(1,3), location=ORIGIN):
     verts=[]
     faces=[]
     verts.append([-(width/2),(length/2),0.0])
@@ -348,6 +372,24 @@ def build_pyramid(width=1.0, length=1.0, height=1.0, location=ORIGIN):
     faces.append([1,2,4])
     faces.append([2,3,4])
     faces.append([3,0,4])
-    id = str(uuid.uuid1())
-    return create_mesh('Pyramid ' + id, verts, faces, location)
+    return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
+
+def dance_routine():
+    camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
+    camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
+    look_at(camera_object, model_object)
+    randomize_reflectors_colors()
+    OCEAN.modifiers['Ocean'].time += 1
+    OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
+    make_object_glossy(OCEAN, rand_color())
+    OCEAN.modifiers['Ocean'].choppiness += 0.3
+    for prop in props:
+        prop.location = rand_location()
+        prop.rotation_euler = rand_rotation()
+    for obj in WIREFRAMES:
+        rotate(obj, index)
+        obj.location.z += round(random.uniform(-1, 1), 10)
+        obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
+    for display in bpy.data.groups['Displays'].objects:
+        display.location = rand_location()
 
