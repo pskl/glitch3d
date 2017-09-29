@@ -140,10 +140,11 @@ def random_texture():
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
-    bsdf_node = material.node_tree.nodes['Diffuse BSDF']
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
+    emission_node = material.node_tree.nodes.new('ShaderNodeEmission')
+    material.node_tree.links.new(texture_node.outputs['Color'], emission_node.inputs['Color'])
     texture_node.image = texture
-    material.node_tree.links.new(texture_node.outputs['Color'], bsdf_node.inputs['Color'])
+    assign_node_to_output(material, emission_node)
 
 def assign_node_to_output(material, new_node):
     assert material.use_nodes == True
@@ -301,7 +302,7 @@ def build_object_line(obj, size, z_index, y_index, radius):
         new_obj.location = ((last_object_group(obj).location.x + 2 * radius), y_index, z_index)
 
 # Displace vertex by random offset
-def displace(vector):
+def displace_vector(vector):
     return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))
 
 # Replace vertex coordinate everywhere
@@ -313,6 +314,12 @@ def glitch(object):
     assert object.type == 'MESH'
     for vertex in object.data.vertices:
         vertex.co = find_and_replace(vertex.co)
+
+def displace(object):
+    bpy.ops.object.mode_set(mode='OBJECT')
+    assert object.type == 'MESH'
+    for vertex in object.data.vertices:
+        vertex.co = displace_vector(vertex.co)
 
 def subdivide(object, cuts):
     if context.scene.objects.active != object:
@@ -392,4 +399,5 @@ def dance_routine():
         obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
     for display in bpy.data.groups['Displays'].objects:
         display.location = rand_location()
+        rotate(display, index)
 

@@ -22,11 +22,12 @@ shots_number = int(args.shots_number)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 
 DEBUG = False
-FISHEYE = False
+FISHEYE = True
 COLORS = rand_color_palette(5)
-INITIAL_CAMERA_LOCATION = (8, 8, 1)
+INITIAL_CAMERA_LOCATION = (5, 5, 1)
 ANIMATE = False
 
+# DEBUG = True
 if DEBUG:
     shots_number = 2
     import os
@@ -46,8 +47,8 @@ for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
 
 # Render settings
-context.scene.render.resolution_x = 1920
-context.scene.render.resolution_y = 1080
+context.scene.render.resolution_x = 2000
+context.scene.render.resolution_y = 2000
 context.scene.render.engine = 'CYCLES'
 context.scene.render.resolution_percentage = 25
 # uncomment if GPU
@@ -109,15 +110,15 @@ camera_object.location = INITIAL_CAMERA_LOCATION
 if FISHEYE:
     camera_object.data.type = 'PANO'
     camera_object.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
-    camera_object.data.cycles.fisheye_lens = 8
-    camera_object.data.cycles.fisheye_fov = 2.27
-    camera_object.data.sensor_width = 15.81
-    camera_object.data.sensor_height = 8.88
+    camera_object.data.cycles.fisheye_lens = 12
+    camera_object.data.cycles.fisheye_fov = 2.5
+    camera_object.data.sensor_width = 20
+    camera_object.data.sensor_height = 20
 
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
-bpy.ops.mesh.primitive_plane_add(location=(0, 0, 8))
+bpy.ops.mesh.primitive_plane_add(location=(0, 0, 15))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 
 reflector1 = bpy.data.objects['Plane']
@@ -172,7 +173,7 @@ floor = bpy.data.objects['Plane.003']
 floor.scale = (20,20,20)
 texture_object(floor)
 subdivide(floor, 8)
-glitch(floor)
+displace(floor)
 
 OCEAN = add_ocean(10, 20)
 
