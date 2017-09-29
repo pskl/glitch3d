@@ -12,6 +12,7 @@ import sys
 import logging
 import string
 import colorsys
+import numpy
 
 REFLECTOR_SCALE = random.uniform(4, 6)
 REFLECTOR_STRENGTH = random.uniform(8, 12)
@@ -63,7 +64,7 @@ def shoot(animate, camera, model_object, filepath):
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
-    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '.png'
+    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
 
 def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
@@ -80,6 +81,9 @@ def rand_rotation():
 
 def rand_rotation_value():
     return round(random.uniform(0, 1), 10)
+
+def rand_rotation():
+    return (random.uniform(0, 20), random.uniform(0, 20), random.uniform(0, 20))
 
 def rand_location_value():
     return round(random.uniform(-4, 4), 10)
@@ -197,6 +201,7 @@ def make_object_gradient_fabulous(obj, color1, color2):
     assign_material(obj, material)
     mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
     gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
+    gradient_node.gradient_type = 'SPHERICAL'
     bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
     material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
     material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
@@ -248,6 +253,9 @@ def shuffle(obj):
     obj.location = rand_location()
     obj.scale = rand_scale_vector()
     obj.rotation_euler = rand_rotation()
+
+def series(length):
+    return list(map(lambda x: (0, x, math.cos(x)), numpy.arange(0.0, length, 0.1)))
 
 def randomize_reflectors_colors():
     reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
@@ -329,6 +337,13 @@ def subdivide(object, cuts):
     for index in range(0, cuts):
         bpy.ops.mesh.subdivide(cuts)
 
+def clone(obj):
+    new_obj = obj.copy()
+    new_obj.data = obj.data.copy()
+    new_obj.animation_data_clear()
+    context.scene.objects.link(new_obj)
+    return new_obj
+
 def add_ocean(spatial_size, resolution):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, -1),radius=1)
     ocean = last_added_object('CUBE')
@@ -340,7 +355,11 @@ def add_ocean(spatial_size, resolution):
     make_object_glossy(ocean, rand_color())
     make_object_gradient_fabulous(ocean, rand_color(), rand_color())
     mix_nodes(ocean.data.materials[0], ocean.data.materials[0].node_tree.nodes['Diffuse BSDF'], ocean.data.materials[0].node_tree.nodes['Glossy BSDF'])
-    ocean.name = 'Ocean'
+    shadow = clone(ocean)
+    shadow.location.x += 3
+    wireframize(shadow)
+    shadow.name = 'ocean'
+    ocean.name = 'ocean'
     return ocean
 
 # Delete current objects
@@ -384,12 +403,15 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
 def dance_routine():
     camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
     camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
-    look_at(camera_object, model_object)
     randomize_reflectors_colors()
     OCEAN.modifiers['Ocean'].time += 1
     OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
     make_object_glossy(OCEAN, rand_color())
     OCEAN.modifiers['Ocean'].choppiness += 0.3
+    rotate(model_object, index)
+    for l in bpy.data.groups['Lines'].objects:
+        rotation = rand_rotation()
+        l.rotation_euler = rotation
     for prop in props:
         prop.location = rand_location()
         prop.rotation_euler = rand_rotation()
@@ -401,3 +423,20 @@ def dance_routine():
         display.location = rand_location()
         rotate(display, index)
 
+def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
+    # setup basic line data
+    line_data = bpy.data.curves.new(name=name,type='CURVE')
+    line_data.dimensions = '3D'
+    line_data.fill_mode = 'FULL'
+    line_data.bevel_depth = thickness
+    # define points that make the line
+    polyline = line_data.splines.new('POLY')
+    polyline.points.add(len(point_list)-1)
+    for idx in range(len(point_list)):
+        polyline.points[idx].co = (point_list[idx])+(1.0,)
+    # create an object that uses the linedata
+    line = bpy.data.objects.new('LineOne', line_data)
+    bpy.context.scene.objects.link(line)
+    line.location = location
+    make_object_emitter(line, 0.8)
+    return line
