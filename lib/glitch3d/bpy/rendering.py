@@ -24,7 +24,7 @@ FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 DEBUG = False
 FISHEYE = True
 COLORS = rand_color_palette(5)
-INITIAL_CAMERA_LOCATION = (5, 5, 1)
+INITIAL_CAMERA_LOCATION = (4, 4, 1)
 ANIMATE = False
 
 # DEBUG = True
@@ -118,7 +118,7 @@ if FISHEYE:
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
-bpy.ops.mesh.primitive_plane_add(location=(0, 0, 15))
+bpy.ops.mesh.primitive_plane_add(location=(0, 0, 20))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 
 reflector1 = bpy.data.objects['Plane']
@@ -170,12 +170,19 @@ look_at(camera_object, model_object)
 
 # Make floor
 floor = bpy.data.objects['Plane.003']
+bpy.data.groups['Plane'].objects.link(floor)
 floor.scale = (20,20,20)
-texture_object(floor)
 subdivide(floor, 8)
 displace(floor)
+texture_object(floor)
 
 OCEAN = add_ocean(10, 20)
+
+# Create lines
+bpy.data.groups.new('Lines')
+for i in range(0, 20):
+    new_line = create_line('line' + str(uuid.uuid1()), series(30))
+    new_line.location.z += i / 6
 
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
@@ -194,8 +201,8 @@ for plane in bpy.data.groups['Plane'].objects:
 for obj in WIREFRAMES:
     wireframize(obj)
 
-if ANIMATE == True:
-    exec(open(os.path.join(os.path.dirname(__file__), 'animation_recording.py')).read())
+look_at(camera_object, model_object)
+model_object.location.z += 2
 
 # ------
 # Shoot
