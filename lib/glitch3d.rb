@@ -28,7 +28,7 @@ module Glitch3d
   # @param String source_file, 3d model file to take as input
   # @param Hash args, parameters { 'stuff' => 'shit' }
   def process_model(source_file, args = nil)
-    source_file =  File.dirname(__FILE__) + '/../fixtures/cube.obj' if source_file.nil?
+    source_file = random_fixture if source_file.nil?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
     return clean_model(source_file) if args['clean']
 
@@ -46,6 +46,16 @@ module Glitch3d
     target_file = base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
     render(target_file, args['shots-number'] || 6) unless args['no-render']
+  end
+
+  def random_fixture
+    @fixtures_path = File.dirname(__FILE__) + '/../fixtures'
+    fixtures = []
+    Dir.foreach(@fixtures_path) do |item|
+      next if item == '.' or item == '..' or item.end_with?('_glitched.obj') or !item.end_with?('.obj')
+      fixtures << @fixtures_path + '/' + item
+    end
+    fixtures.sample
   end
 
   def infer_strategy(mode)
