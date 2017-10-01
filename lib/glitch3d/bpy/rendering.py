@@ -17,15 +17,15 @@ args = get_args()
 file = args.file
 mode = args.mode
 path = str(args.path)
+animate = args.animate
 shots_number = int(args.shots_number)
-
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 
 DEBUG = False
 FISHEYE = True
 COLORS = rand_color_palette(5)
 INITIAL_CAMERA_LOCATION = (4, 4, 1)
-ANIMATE = False
+ANIMATE = (animate == 'True')
 
 # DEBUG = True
 if DEBUG:
@@ -56,7 +56,11 @@ context.scene.render.resolution_percentage = 25
 context.scene.render.image_settings.compression = 0
 context.scene.cycles.samples = 25
 context.scene.render.image_settings.color_mode ='RGBA'
-context.scene.render.image_settings.file_format='PNG'
+
+if ANIMATE:
+    context.scene.render.image_settings.file_format='H264'
+else:
+    context.scene.render.image_settings.file_format='PNG'
 
 if mode == 'high':
     context.scene.render.image_settings.compression = 90
@@ -69,7 +73,7 @@ if mode == 'high':
 # bpy.data.worlds.remove(bpy.data.worlds[0])
 world = bpy.data.worlds.new('A Brave New World')
 world.use_nodes = True
-world_node_tree = world.node_tree
+make_world_volumetric(world)
 context.scene.world = world
 
 # Clean slate
@@ -115,10 +119,13 @@ if FISHEYE:
     camera_object.data.sensor_width = 20
     camera_object.data.sensor_height = 20
 
+# LIGTHING
+add_spotlight(15000, math.radians(60))
+
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
 bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
-bpy.ops.mesh.primitive_plane_add(location=(0, 0, 20))
+bpy.ops.mesh.primitive_plane_add(location=(0, 0, 30))
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 
 reflector1 = bpy.data.objects['Plane']
@@ -184,6 +191,11 @@ for i in range(0, 20):
     new_line = create_line('line' + str(uuid.uuid1()), series(30))
     new_line.location.z += i / 6
 
+for i in range(0, 20):
+    new_line = create_line('line' + str(uuid.uuid1()), series(30), 0.003, (0, 5, 2))
+    new_line.location.z += i / 3
+    new_line.rotation_euler.x += math.radians(90)
+
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
     props.append(new_object)
@@ -209,7 +221,7 @@ model_object.location.z += 2
 # ------
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
 
-if ANIMATE:
+if ANIMATE == True:
     print('ANIMATION RENDERING BEGIN')
     context.scene.frame_start = 0
     context.scene.frame_end   = NUMBER_OF_FRAMES
@@ -224,12 +236,12 @@ if ANIMATE:
             ob.keyframe_insert(data_path="location", index=-1)
 
     bpy.ops.screen.frame_jump(end=False)
-    shoot(True, camera_object, model_object, output_name(index, model_path))
+    shoot(camera_object, model_object, output_name(index, model_path))
 else:
     print('STILL RENDERING BEGIN')
     for index in range(0, int(shots_number)):
         print("-------------------------- " + str(index) + " --------------------------")
-        shoot(False, camera_object, model_object, output_name(index, model_path))
+        shoot(camera_object, model_object, output_name(index, model_path))
         dance_routine()
 
 
