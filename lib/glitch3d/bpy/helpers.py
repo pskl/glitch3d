@@ -14,15 +14,17 @@ import string
 import colorsys
 import numpy
 
-REFLECTOR_SCALE = random.uniform(4, 6)
-REFLECTOR_STRENGTH = random.uniform(8, 12)
+REFLECTOR_SCALE = random.uniform(5, 8)
+REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
 WIREFRAME_THICKNESS = random.uniform(0.008, 0.01)
 DISPLACEMENT_AMPLITUDE = random.uniform(0.06, 0.08)
 REPLACE_TARGET = '6'
 REPLACEMENT = '2'
 ORIGIN  = (0,0,0)
-NUMBER_OF_FRAMES = 100
+NUMBER_OF_FRAMES = 5
+SCATTER_INTENSITY = 0.015
+ABSORPTION_INTENSITY = 0.25
 
 PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
@@ -51,20 +53,22 @@ def empty_materials():
     for material in bpy.data.materials.keys():
         bpy.data.materials.remove(object.data.materials[material])
 
-def shoot(animate, camera, model_object, filepath):
+def shoot(camera, model_object, filepath):
     directory = os.path.dirname('./renders')
     if not os.path.exists(directory):
       os.makedirs(directory)
     look_at(camera, model_object)
     print('Camera now at location: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera))
     bpy.context.scene.render.filepath = filepath
-    if animate:
-        bpy.context.scene.render.filepath = './renders/animation-' + str(uuid.uuid1()) + '/'
-        return bpy.ops.render.render(animation=animate)
+    if ANIMATE == True:
+        return bpy.ops.render.render(animation=ANIMATE)
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
-    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
+    if ANIMATE == True:
+        return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.avi'
+    else:
+        return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
 
 def rotate(model_object, index):
     model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
@@ -117,6 +121,7 @@ def get_args():
     parser.add_argument('-n', '--shots-number', help="number of shots desired")
     parser.add_argument('-m', '--mode', help="quality mode: low | high")
     parser.add_argument('-p', '--path', help="root path of assets")
+    parser.add_argument('-a', '--animate', help="render animation") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
@@ -435,8 +440,30 @@ def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     for idx in range(len(point_list)):
         polyline.points[idx].co = (point_list[idx])+(1.0,)
     # create an object that uses the linedata
-    line = bpy.data.objects.new('LineOne', line_data)
+    line = bpy.data.objects.new('line' + str(uuid.uuid1()), line_data)
     bpy.context.scene.objects.link(line)
     line.location = location
     make_object_emitter(line, 0.8)
     return line
+
+def add_spotlight(intensity, radians):
+    bpy.ops.object.lamp_add(type='SPOT', radius=1.0, view_align=False, location=(0.0, 0.0, 10.0))
+    spot = bpy.data.objects['Spot']
+    spot.data.node_tree.nodes['Emission'].inputs[1].default_value = intensity
+    spot.data.spot_size = radians
+    return spot
+
+def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorption_intensity = ABSORPTION_INTENSITY):
+    assert world.use_nodes == True
+    output = world.node_tree.nodes['World Output']
+    bg_node = world.node_tree.nodes.new('ShaderNodeBackground')
+    absorption_node = world.node_tree.nodes.new('ShaderNodeVolumeAbsorption')
+    scatter_node = world.node_tree.nodes.new('ShaderNodeVolumeScatter')
+    add_shader = world.node_tree.nodes.new('ShaderNodeAddShader')
+    world.node_tree.links.new(add_shader.outputs[0], output.inputs['Volume'])
+    world.node_tree.links.new(bg_node.outputs['Background'], output.inputs['Surface'])
+    world.node_tree.links.new(scatter_node.outputs[0], add_shader.inputs[0])
+    world.node_tree.links.new(absorption_node.outputs[0], add_shader.inputs[1])
+    scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
+    absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
+    bg_node.inputs[0].default_value = rand_color()
