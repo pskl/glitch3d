@@ -55,6 +55,12 @@ context.scene.render.resolution_percentage = 25
 # bpy.context.scene.cycles.device = 'GPU'
 context.scene.render.image_settings.compression = 0
 context.scene.cycles.samples = 25
+context.scene.cycles.max_bounces = 1
+context.scene.cycles.min_bounces = 1
+context.scene.cycles.caustics_reflective = False
+context.scene.cycles.caustics_refractive = False
+context.scene.render.tile_x = 16
+context.scene.render.tile_y = 16
 context.scene.render.image_settings.color_mode ='RGBA'
 
 if ANIMATE:
@@ -120,7 +126,11 @@ if FISHEYE:
     camera_object.data.sensor_height = 20
 
 # LIGTHING
-add_spotlight(15000, math.radians(60))
+add_spotlight((0, 0, 12), 14000, math.radians(60))
+spot1 = add_spotlight((0, 8, 4), 8000, math.radians(60))
+spot2 = add_spotlight((0, -8, 4), 8000, math.radians(60))
+spot1.rotation_euler.x -= math.radians(90)
+spot2.rotation_euler.x += math.radians(90)
 
 # Add reflectors
 bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
@@ -165,6 +175,7 @@ for display in bpy.data.groups['Displays'].objects:
     display.rotation_euler.x += math.radians(90)
     display.scale = (3,3,3)
     texture_object(display)
+    make_texture_object_transparent(display)
     unwrap_model(display)
     glitch(display)
 
@@ -185,22 +196,19 @@ texture_object(floor)
 
 OCEAN = add_ocean(10, 20)
 
-# Create lines
+# Create lines as backdrop
 bpy.data.groups.new('Lines')
-for i in range(0, 20):
-    new_line = create_line('line' + str(uuid.uuid1()), series(30))
-    new_line.location.z += i / 6
+for j in range(0,20):
+    for i in range(0, 20):
+        new_line = create_line('line' + str(uuid.uuid1()), series(30), 0.003, (j, -10, 2))
+        new_line.location.z += i / 3
 
-for i in range(0, 20):
-    new_line = create_line('line' + str(uuid.uuid1()), series(30), 0.003, (0, 5, 2))
-    new_line.location.z += i / 3
-    new_line.rotation_euler.x += math.radians(90)
-
+# Add flying letters, lmao
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
     props.append(new_object)
-    text_scale = random.uniform(0.75, 2)
-    make_object_glossy(new_object, GREY)
+    text_scale = random.uniform(0.75, 3)
+    make_object_glossy(new_object, rand_color(), 0.0)
     new_object.scale = (text_scale, text_scale, text_scale)
     new_object.location = rand_location()
     # pivot text to make it readable by camera
@@ -226,23 +234,22 @@ if ANIMATE == True:
     context.scene.frame_start = 0
     context.scene.frame_end   = NUMBER_OF_FRAMES
     bpy.ops.screen.frame_jump(end=False)
+    camera_path = camera_path(0.08)
 
-    for frame in range(1, NUMBER_OF_FRAMES):
+    for frame in range(0, NUMBER_OF_FRAMES):
         bpy.context.scene.frame_set(frame)
-
-        dance_routine()
-
+        animation_routine(camera_object, frame - 1)
         for ob in context.scene.objects:
             ob.keyframe_insert(data_path="location", index=-1)
-
     bpy.ops.screen.frame_jump(end=False)
     shoot(camera_object, model_object, output_name(index, model_path))
+
 else:
     print('STILL RENDERING BEGIN')
     for index in range(0, int(shots_number)):
         print("-------------------------- " + str(index) + " --------------------------")
+        still_routine()
         shoot(camera_object, model_object, output_name(index, model_path))
-        dance_routine()
 
 
 print('FINISHED ¯\_(ツ)_/¯')
