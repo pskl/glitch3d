@@ -1,3 +1,6 @@
+# DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
+# This is just what works for now for the needs of my current project
+
 import bpy
 import argparse
 import datetime
@@ -17,12 +20,12 @@ import numpy
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-WIREFRAME_THICKNESS = random.uniform(0.008, 0.01)
-DISPLACEMENT_AMPLITUDE = random.uniform(0.06, 0.08)
+WIREFRAME_THICKNESS = random.uniform(0.006, 0.02)
+DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
 REPLACE_TARGET = '6'
 REPLACEMENT = '2'
 ORIGIN  = (0,0,0)
-NUMBER_OF_FRAMES = 5
+NUMBER_OF_FRAMES = 200
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
 
@@ -166,13 +169,12 @@ def mix_nodes(material, node1, node2):
     material.node_tree.links.new(mix.inputs[2], node2.outputs[0])
     assign_node_to_output(material, mix)
 
-def make_object_glossy(obj, color):
+def make_object_glossy(obj, color, roughness = 0.2):
     material = bpy.data.materials.new('Glossy Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
     glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     glossy_node.inputs[0].default_value = color
-    # roughness
-    glossy_node.inputs[1].default_value = 0.2
+    glossy_node.inputs[1].default_value = roughness
     assign_node_to_output(material, glossy_node)
     assign_material(obj, material)
 
@@ -180,13 +182,16 @@ def make_object_reflector(obj):
     obj.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
     make_object_emitter(obj, REFLECTOR_STRENGTH)
 
-def make_object_transparent(obj, color):
-    material = bpy.data.materials.new('Transparent Material - ' + str(uuid.uuid1()))
-    material.use_nodes = True
-    node = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-    node.inputs[0].default_value = color
-    assign_node_to_output(material, node)
-    assign_material(obj, material)
+def make_texture_object_transparent(obj, color = (1,1,1,0.5), intensity = 0.25):
+    material = obj.data.materials[-1]
+    emission_node = material.node_tree.nodes['Emission']
+    trans = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+    add = material.node_tree.nodes.new('ShaderNodeMixShader')
+    material.node_tree.links.new(emission_node.outputs[0], add.inputs[0])
+    material.node_tree.links.new(trans.outputs[0], add.inputs[1])
+    material.node_tree.links.new(emission_node.outputs[0], add.inputs[0])
+    add.inputs[0].default_value = intensity
+    trans.inputs[0].default_value = color
 
 def make_object_emitter(obj, emission_strength):
     emissive_material = bpy.data.materials.new('Emissive Material #' + str(uuid.uuid1()))
@@ -405,7 +410,7 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
-def dance_routine():
+def still_routine():
     camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
     camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
     randomize_reflectors_colors()
@@ -428,6 +433,39 @@ def dance_routine():
         display.location = rand_location()
         rotate(display, index)
 
+def camera_path(pitch):
+    res = []
+    initial_z = INITIAL_CAMERA_LOCATION[2]
+    initial_x = INITIAL_CAMERA_LOCATION[0]
+    for y in numpy.arange(initial_x, -initial_x, pitch):
+        res.append((initial_x, y, initial_z))
+    for x in numpy.arange(initial_x, -initial_x, pitch):
+        res.append((x,-initial_x, initial_z))
+    for y in numpy.arange(-initial_x, initial_x, pitch):
+        res.append((-initial_x, y, initial_z))
+    for x in numpy.arange(-initial_x, initial_x, pitch):
+        res.append((x, initial_x, initial_z))
+    return res
+
+def animation_routine(camera, frame):
+    assert len(camera_path) >= NUMBER_OF_FRAMES
+    camera_object.location = camera_path[frame]
+    look_at(camera, model_object)
+    randomize_reflectors_colors()
+    OCEAN.modifiers['Ocean'].time += 0.1
+    OCEAN.modifiers['Ocean'].choppiness += 0.002
+    model_object.rotation_euler.z += math.radians(3)
+    for l in bpy.data.groups['Lines'].objects:
+        l.rotation_euler.x += 0.01
+        l.rotation_euler.z += 0.1
+    for prop in props:
+        prop.location.x += -0.01
+    for obj in WIREFRAMES:
+        obj.location.z += round(random.uniform(-0.3, 0.3), 10)
+        obj.rotation_euler.z += math.radians(round(random.uniform(-1,1)))
+    for display in bpy.data.groups['Displays'].objects:
+        display.rotation_euler.x += math.radians(1)
+
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     # setup basic line data
     line_data = bpy.data.curves.new(name=name,type='CURVE')
@@ -446,9 +484,9 @@ def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     make_object_emitter(line, 0.8)
     return line
 
-def add_spotlight(intensity, radians):
-    bpy.ops.object.lamp_add(type='SPOT', radius=1.0, view_align=False, location=(0.0, 0.0, 10.0))
-    spot = bpy.data.objects['Spot']
+def add_spotlight(location, intensity, radians):
+    bpy.ops.object.lamp_add(type='SPOT', radius=1.0, view_align=False, location=location)
+    spot = last_added_object('Spot')
     spot.data.node_tree.nodes['Emission'].inputs[1].default_value = intensity
     spot.data.spot_size = radians
     return spot
