@@ -42,38 +42,12 @@ new_scene = bpy.data.scenes.new("Automated Render Scene")
 bpy.ops.scene.delete() # Delete old scene
 context.screen.scene = new_scene # selects the new scene as the current one
 
+# Render settings
+exec(open(os.path.join(os.path.dirname(__file__), 'render_settings.py')).read())
+
 # Initialize groups
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
-
-# Render settings
-context.scene.render.resolution_x = 2000
-context.scene.render.resolution_y = 2000
-context.scene.render.engine = 'CYCLES'
-context.scene.render.resolution_percentage = 25
-# uncomment if GPU
-# bpy.context.scene.cycles.device = 'GPU'
-context.scene.render.image_settings.compression = 0
-context.scene.cycles.samples = 25
-context.scene.cycles.max_bounces = 1
-context.scene.cycles.min_bounces = 1
-context.scene.cycles.caustics_reflective = False
-context.scene.cycles.caustics_refractive = False
-context.scene.render.tile_x = 16
-context.scene.render.tile_y = 16
-context.scene.render.image_settings.color_mode ='RGBA'
-
-if ANIMATE:
-    context.scene.render.image_settings.file_format='H264'
-else:
-    context.scene.render.image_settings.file_format='PNG'
-
-if mode == 'high':
-    context.scene.render.image_settings.compression = 90
-    context.scene.cycles.samples = 400
-    context.scene.render.resolution_percentage = 100
-
-# Add background to world
 
 # This shit doesnt work in v 2.76
 # bpy.data.worlds.remove(bpy.data.worlds[0])
@@ -102,7 +76,7 @@ props.append(m4a1)
 model_object.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 model_object.location = ORIGIN
-make_object_glossy(model_object, YELLOW)
+make_object_glossy(model_object, YELLOW, 0.1)
 
 # Add props
 rand_primitive = random.choice(PRIMITIVES)
@@ -113,47 +87,19 @@ build_composite_object(rand_primitive, 4, 1)
 # --------------
 camera_data = bpy.data.cameras.new('Camera')
 bpy.data.objects.new('Camera', object_data=camera_data)
-camera_object = bpy.data.objects['Camera']
-new_scene.objects.link(camera_object)
-camera_object.location = INITIAL_CAMERA_LOCATION
+CAMERA = bpy.data.objects['Camera']
+new_scene.objects.link(CAMERA)
+CAMERA.location = INITIAL_CAMERA_LOCATION
 
 if FISHEYE:
-    camera_object.data.type = 'PANO'
-    camera_object.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
-    camera_object.data.cycles.fisheye_lens = 12
-    camera_object.data.cycles.fisheye_fov = 2.5
-    camera_object.data.sensor_width = 20
-    camera_object.data.sensor_height = 20
+    CAMERA.data.type = 'PANO'
+    CAMERA.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
+    CAMERA.data.cycles.fisheye_lens = 12
+    CAMERA.data.cycles.fisheye_fov = 2.5
+    CAMERA.data.sensor_width = 20
+    CAMERA.data.sensor_height = 20
 
-# LIGTHING
-add_spotlight((0, 0, 12), 14000, math.radians(60))
-spot1 = add_spotlight((0, 8, 4), 8000, math.radians(60))
-spot2 = add_spotlight((0, -8, 4), 8000, math.radians(60))
-spot1.rotation_euler.x -= math.radians(90)
-spot2.rotation_euler.x += math.radians(90)
-
-# Add reflectors
-bpy.ops.mesh.primitive_plane_add(location=(0,8 + REFLECTOR_LOCATION_PADDING, 0))
-bpy.ops.mesh.primitive_plane_add(location=(8 + REFLECTOR_LOCATION_PADDING,0,0))
-bpy.ops.mesh.primitive_plane_add(location=(0, 0, 30))
-bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
-
-reflector1 = bpy.data.objects['Plane']
-reflector2 = bpy.data.objects['Plane.001']
-reflector3 = bpy.data.objects['Plane.002']
-
-bpy.data.groups.new('Plane')
-bpy.data.groups['Plane'].objects.link(reflector1)
-bpy.data.groups['Plane'].objects.link(reflector2)
-bpy.data.groups['Plane'].objects.link(reflector3)
-
-reflector2.rotation_euler.x += math.radians(90)
-reflector1.rotation_euler.x += math.radians(90)
-reflector2.rotation_euler.z += math.radians(90)
-
-make_object_reflector(reflector1)
-make_object_reflector(reflector2)
-make_object_reflector(reflector3)
+exec(open(os.path.join(os.path.dirname(__file__), 'lighting.py')).read())
 
 # Set up virtual displays
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
@@ -173,7 +119,7 @@ display2.rotation_euler.z += math.radians(120)
 
 for display in bpy.data.groups['Displays'].objects:
     display.rotation_euler.x += math.radians(90)
-    display.scale = (3,3,3)
+    display.scale = DISPLAY_SCALE
     texture_object(display)
     make_texture_object_transparent(display)
     unwrap_model(display)
@@ -183,8 +129,8 @@ glitch(m4a1)
 make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 
 # Adjust camera
-context.scene.camera = camera_object
-look_at(camera_object, model_object)
+context.scene.camera = CAMERA
+look_at(model_object)
 
 # Make floor
 floor = bpy.data.objects['Plane.003']
@@ -221,7 +167,7 @@ for plane in bpy.data.groups['Plane'].objects:
 for obj in WIREFRAMES:
     wireframize(obj)
 
-look_at(camera_object, model_object)
+look_at(model_object)
 model_object.location.z += 2
 
 # ------
@@ -238,11 +184,11 @@ if ANIMATE == True:
 
     for frame in range(0, NUMBER_OF_FRAMES):
         bpy.context.scene.frame_set(frame)
-        animation_routine(camera_object, frame - 1)
+        animation_routine(frame - 1)
         for ob in context.scene.objects:
             ob.keyframe_insert(data_path="location", index=-1)
     bpy.ops.screen.frame_jump(end=False)
-    shoot(camera_object, model_object, output_name(index, model_path))
+    shoot(model_object, output_name(index, model_path))
 
 else:
     print('STILL RENDERING BEGIN')
