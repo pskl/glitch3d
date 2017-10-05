@@ -28,6 +28,7 @@ ORIGIN  = (0,0,0)
 NUMBER_OF_FRAMES = 200
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
+DISPLAY_SCALE = (2, 2, 2)
 
 PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
@@ -45,23 +46,23 @@ def debug():
     sys.exit("Aborting execution")
 
 # Helper methods
-def look_at(camera_object, point):
-    location_camera = camera_object.matrix_world.to_translation()
-    location_point = point.matrix_world.to_translation()
-    direction = location_point - location_camera
+def look_at(object):
+    location_camera = CAMERA.matrix_world.to_translation()
+    location_object = object.matrix_world.to_translation()
+    direction = location_object - location_camera
     rot_quat = direction.to_track_quat('-Z', 'Y')
-    camera_object.rotation_euler = rot_quat.to_euler()
+    CAMERA.rotation_euler = rot_quat.to_euler()
 
 def empty_materials():
     for material in bpy.data.materials.keys():
         bpy.data.materials.remove(object.data.materials[material])
 
-def shoot(camera, model_object, filepath):
+def shoot(model_object, filepath):
     directory = os.path.dirname('./renders')
     if not os.path.exists(directory):
       os.makedirs(directory)
-    look_at(camera, model_object)
-    print('Camera now at location: ' + camera_location_string(camera) + ' / rotation: ' + camera_rotation_string(camera))
+    look_at(CAMERA)
+    print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
     bpy.context.scene.render.filepath = filepath
     if ANIMATE == True:
         return bpy.ops.render.render(animation=ANIMATE)
@@ -169,7 +170,7 @@ def mix_nodes(material, node1, node2):
     material.node_tree.links.new(mix.inputs[2], node2.outputs[0])
     assign_node_to_output(material, mix)
 
-def make_object_glossy(obj, color, roughness = 0.2):
+def make_object_glossy(obj, color = (PINK), roughness = 0.2):
     material = bpy.data.materials.new('Glossy Material - ' + str(uuid.uuid1()))
     material.use_nodes = True
     glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
@@ -370,7 +371,7 @@ def add_ocean(spatial_size, resolution):
     wireframize(shadow)
     shadow.name = 'ocean'
     ocean.name = 'ocean'
-    return ocean
+    return [ocean, shadow]
 
 # Delete current objects
 def flush_all_objects():
@@ -414,10 +415,8 @@ def still_routine():
     camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
     camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
     randomize_reflectors_colors()
-    OCEAN.modifiers['Ocean'].time += 1
-    OCEAN.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-    make_object_glossy(OCEAN, rand_color())
-    OCEAN.modifiers['Ocean'].choppiness += 0.3
+    map(move_ocean, OCEAN)
+    map(make_object_glossy, OCEAN)
     rotate(model_object, index)
     for l in bpy.data.groups['Lines'].objects:
         rotation = rand_rotation()
@@ -432,6 +431,11 @@ def still_routine():
     for display in bpy.data.groups['Displays'].objects:
         display.location = rand_location()
         rotate(display, index)
+
+def move_ocean(ocean):
+    ocean.modifiers['Ocean'].time += 1.5
+    ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
+    ocean.modifers['Ocean'].choppiness += 0.3
 
 def camera_path(pitch):
     res = []
@@ -450,7 +454,7 @@ def camera_path(pitch):
 def animation_routine(camera, frame):
     assert len(camera_path) >= NUMBER_OF_FRAMES
     camera_object.location = camera_path[frame]
-    look_at(camera, model_object)
+    look_at(model_object)
     randomize_reflectors_colors()
     OCEAN.modifiers['Ocean'].time += 0.1
     OCEAN.modifiers['Ocean'].choppiness += 0.002
