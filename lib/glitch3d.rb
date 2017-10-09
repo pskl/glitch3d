@@ -15,7 +15,7 @@ module Glitch3d
   CHUNK_SIZE=20
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
-  RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/rendering.py'
+  RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
 
   def clean_model(source_file)
     self.class.include Glitch3d::None
