@@ -1,35 +1,18 @@
 # DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
 # This is just what works for now for the needs of my current project
 
-import bpy
-import argparse
-import datetime
-import bmesh
-import random
-import code
-import math
-import mathutils
-import random
-import uuid
-import sys
-import logging
-import string
-import colorsys
-import numpy
-
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
 WIREFRAME_THICKNESS = random.uniform(0.006, 0.02)
 DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
-REPLACE_TARGET = '6'
-REPLACEMENT = '2'
-ORIGIN  = (0,0,0)
-NUMBER_OF_FRAMES = 200
+REPLACE_TARGET = str(random.uniform(0, 9))
+REPLACEMENT = str(random.uniform(0, 9))
+ORIGIN  = (0,0,2)
+NUMBER_OF_FRAMES = 400
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
 DISPLAY_SCALE = (2, 2, 2)
-
 PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
@@ -38,8 +21,7 @@ BLUE = (0.1, 0.1, 0.8, 1)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 WIREFRAMES = []
-
-context = bpy.context
+VORONOIED = []
 
 def debug():
     code.interact(local=dict(globals(), **locals()))
@@ -61,15 +43,15 @@ def shoot(model_object, filepath):
     directory = os.path.dirname('./renders')
     if not os.path.exists(directory):
       os.makedirs(directory)
-    look_at(CAMERA)
+    look_at(model_object)
     print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
     bpy.context.scene.render.filepath = filepath
-    if ANIMATE == True:
-        return bpy.ops.render.render(animation=ANIMATE)
+    if animate:
+        return bpy.ops.render.render(animation=animate)
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
-    if ANIMATE == True:
+    if animate == True:
         return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.avi'
     else:
         return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
@@ -88,7 +70,7 @@ def rand_rotation():
     return (rand_rotation_value(), rand_rotation_value(), rand_rotation_value())
 
 def rand_rotation_value():
-    return round(random.uniform(0, 1), 10)
+    return round(math.radians(random.uniform(0, 60), 10))
 
 def rand_rotation():
     return (random.uniform(0, 20), random.uniform(0, 20), random.uniform(0, 20))
@@ -113,21 +95,6 @@ def unwrap_model(obj):
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.uv.unwrap()
     bpy.ops.object.mode_set(mode='OBJECT')
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    # get all script args
-    _, all_arguments = parser.parse_known_args()
-    double_dash_index = all_arguments.index('--')
-    script_args = all_arguments[double_dash_index + 1: ]
-    # add parser rules
-    parser.add_argument('-f', '--file', help="obj file to render")
-    parser.add_argument('-n', '--shots-number', help="number of shots desired")
-    parser.add_argument('-m', '--mode', help="quality mode: low | high")
-    parser.add_argument('-p', '--path', help="root path of assets")
-    parser.add_argument('-a', '--animate', help="render animation") # bool
-    parsed_script_args, _ = parser.parse_known_args(script_args)
-    return parsed_script_args
 
 def camera_rotation_string(camera):
     return str(int(camera.rotation_euler.x)) + ' ' + str(int(camera.rotation_euler.y)) + ' ' + str(int(camera.rotation_euler.z))
@@ -220,6 +187,14 @@ def make_object_gradient_fabulous(obj, color1, color2):
     mixer_node.inputs['Color1'].default_value = color1
     mixer_node.inputs['Color2'].default_value = color2
 
+def voronoize(obj, scale = 5.0):
+    material = obj.data.materials[-1]
+    texture_node = material.node_tree.nodes.new('ShaderNodeTexVoronoi')
+    material.node_tree.links.new(texture_node.outputs['Color'], material.node_tree.nodes['Glossy BSDF'].inputs['Color'])
+    texture_node.coloring = 'CELLS'
+    texture_node.inputs[1].default_value = scale
+    VORONOIED.append(obj)
+
 def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
@@ -269,8 +244,8 @@ def series(length):
     return list(map(lambda x: (0, x, math.cos(x)), numpy.arange(0.0, length, 0.1)))
 
 def randomize_reflectors_colors():
-    reflector1.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
-    reflector2.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
+    for r in bpy.data.groups['Plane'].objects:
+        r.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
 
 def add_object(obj, x, y, z, radius):
     infer_primitive(obj, location=(x, y, z), radius=radius)
@@ -325,8 +300,8 @@ def displace_vector(vector):
     return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))
 
 # Replace vertex coordinate everywhere
-def find_and_replace(vector):
-    return mathutils.Vector((float(str(vector.x).replace(REPLACE_TARGET, REPLACEMENT)), float(str(vector.y).replace(REPLACE_TARGET, REPLACEMENT)), float(str(vector.z).replace(REPLACE_TARGET, REPLACEMENT))))
+def find_and_replace(vector, target = random.uniform(0,9), replacement = random.uniform(0,9)):
+    return mathutils.Vector((float(str(vector.x).replace(target, replacement)), float(str(vector.y).replace(target, replacement)), float(str(vector.z).replace(target, replacement))))
 
 def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -411,27 +386,6 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
-def still_routine():
-    camera_object.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
-    camera_object.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
-    randomize_reflectors_colors()
-    map(move_ocean, OCEAN)
-    map(make_object_glossy, OCEAN)
-    rotate(model_object, index)
-    for l in bpy.data.groups['Lines'].objects:
-        rotation = rand_rotation()
-        l.rotation_euler = rotation
-    for prop in props:
-        prop.location = rand_location()
-        prop.rotation_euler = rand_rotation()
-    for obj in WIREFRAMES:
-        rotate(obj, index)
-        obj.location.z += round(random.uniform(-1, 1), 10)
-        obj.rotation_euler.z += math.radians(round(random.uniform(0, 90)))
-    for display in bpy.data.groups['Displays'].objects:
-        display.location = rand_location()
-        rotate(display, index)
-
 def move_ocean(ocean):
     ocean.modifiers['Ocean'].time += 1.5
     ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
@@ -451,24 +405,44 @@ def camera_path(pitch):
         res.append((x, initial_x, initial_z))
     return res
 
-def animation_routine(camera, frame):
-    assert len(camera_path) >= NUMBER_OF_FRAMES
-    camera_object.location = camera_path[frame]
-    look_at(model_object)
+def still_routine():
+    CAMERA.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
+    CAMERA.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
     randomize_reflectors_colors()
-    OCEAN.modifiers['Ocean'].time += 0.1
-    OCEAN.modifiers['Ocean'].choppiness += 0.002
-    model_object.rotation_euler.z += math.radians(3)
+    map(move_ocean, OCEAN)
+    map(make_object_glossy, OCEAN)
+    rotate(model_object, index)
     for l in bpy.data.groups['Lines'].objects:
-        l.rotation_euler.x += 0.01
-        l.rotation_euler.z += 0.1
+        rotation = rand_rotation()
+        l.rotation_euler = rotation
     for prop in props:
-        prop.location.x += -0.01
+        prop.location = rand_location()
+        prop.rotation_euler = rand_rotation()
     for obj in WIREFRAMES:
-        obj.location.z += round(random.uniform(-0.3, 0.3), 10)
-        obj.rotation_euler.z += math.radians(round(random.uniform(-1,1)))
+        obj.location = rand_location()
+        obj.rotation_euler = rand_rotation()
     for display in bpy.data.groups['Displays'].objects:
-        display.rotation_euler.x += math.radians(1)
+        display.location = rand_location()
+        rotate(display, index)
+
+def animation_routine(frame):
+    assert len(camera_path) >= NUMBER_OF_FRAMES
+    CAMERA.location = camera_path[frame]
+    randomize_reflectors_colors()
+    map(move_ocean, OCEAN)
+    map(make_object_glossy, OCEAN)
+    glitch(model_object)
+    model_object.rotation_euler.z += math.radians(4)
+    for l in bpy.data.groups['Lines'].objects:
+        l.rotation_euler.x += math.radians(5)
+        l.rotation_euler.z += math.radians(5)
+    for prop in props:
+        prop.rotation_euler.x += math.radians(5)
+    for obj in WIREFRAMES:
+        obj.location.z += 0.1
+        obj.rotation_euler.z += math.radians(5)
+    for display in bpy.data.groups['Displays'].objects:
+        display.rotation_euler.x += math.radians(3)
 
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     # setup basic line data
