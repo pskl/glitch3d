@@ -30,10 +30,13 @@ Or install it yourself as:
 
 - `glitch3d file.obj`
 
+will
 Options:
-- `mode` : (localized|default|none)
-- `shots-number` : integer representing the number of - images desired
-- `quality` : (high|low)
+- `mode` : (localized|default|none) => glitching strategy
+- `shots-number` : integer representing the number of - images desired (with animate: false)
+- `quality` : (high: 2000 x 2000|low 200 x 200) default: low => size of the render
+- `animate` : (true) default: false => Render .avi file
+- `frame_numbers` : (default: 200) => number of frames
 
 ## Development
 
@@ -48,7 +51,7 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/pskl/g
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
-## TODO
-- write specs
+Copyright © 217 PSKL <hello@pascal.cc>
+This work is free. You can redistribute it and/or modify it under the
+terms of the Do What The Fuck You Want To Public License, Version 2,
+as published by Sam Hocevar. See the COPYING file for more details.
