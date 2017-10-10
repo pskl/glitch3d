@@ -28,39 +28,20 @@ path = str(args.path)
 animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
 
-import os
-import bpy
-import datetime
-import bmesh
-import random
-import math
-import mathutils
-import random
-import uuid
-import sys
-import logging
-import string
-import colorsys
-import numpy
-import code
+import os, bpy, datetime, bmesh, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
 
-# DEBUG = True
-if DEBUG:
-    shots_number = 2
-    import os
-    mode = 'low'
-    animate = False
-    file = "/Users/pascal/dev/glitch3d/fixtures/skull.obj"
-    path = "/Users/pascal/dev/glitch3d/lib/"
+# Create directory for renders
+directory = os.path.dirname('./renders')
+if not os.path.exists(directory):
+    os.makedirs(directory)
 
 exec(open(os.path.join(path + '/glitch3d/bpy', 'helpers.py')).read())
 exec(open(os.path.join(path + '/glitch3d/bpy', 'render_settings.py')).read())
 exec(open(os.path.join(path + '/glitch3d/bpy', 'lighting.py')).read())
 
-DEBUG = False
 FISHEYE = True
 COLORS = rand_color_palette(5)
-INITIAL_CAMERA_LOCATION = (4, 4, 1)
+INITIAL_CAMERA_LOCATION = (3, 3, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 
@@ -96,12 +77,12 @@ for primitive in PRIMITIVES:
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-model_object = bpy.data.objects[1]
-model_object.select = True
+SUBJECT = bpy.data.objects['glitch3d']
+SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
-model_object.location = ORIGIN
-make_object_glossy(model_object, YELLOW, 0.1)
-voronoize(model_object)
+SUBJECT.location = ORIGIN
+make_object_glossy(SUBJECT, YELLOW, 0.1)
+voronoize(SUBJECT)
 
 let_there_be_light(context.scene)
 
@@ -122,14 +103,15 @@ if animate:
         for ob in context.scene.objects:
             ob.keyframe_insert(data_path="location", index=-1)
     bpy.ops.screen.frame_jump(end=False)
-    shoot(model_object, output_name(index, model_path))
+    shoot(output_name(index, model_path))
 
 else:
     print('STILL RENDERING BEGIN')
     for index in range(0, int(shots_number)):
         print("-------------------------- " + str(index) + " --------------------------")
         still_routine()
-        shoot(model_object, output_name(index, model_path))
+        look_at(SUBJECT)
+        shoot(output_name(index, model_path))
 
 
 print('FINISHED ¯\_(ツ)_/¯')

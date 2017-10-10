@@ -9,7 +9,7 @@ DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
 ORIGIN  = (0,0,2)
-NUMBER_OF_FRAMES = 400
+NUMBER_OF_FRAMES = 200
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
 DISPLAY_SCALE = (2, 2, 2)
@@ -39,15 +39,11 @@ def empty_materials():
     for material in bpy.data.materials.keys():
         bpy.data.materials.remove(object.data.materials[material])
 
-def shoot(model_object, filepath):
-    directory = os.path.dirname('./renders')
-    if not os.path.exists(directory):
-      os.makedirs(directory)
-    look_at(model_object)
+def shoot(filepath):
     print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
     bpy.context.scene.render.filepath = filepath
     if animate:
-        return bpy.ops.render.render(animation=animate)
+        return bpy.ops.render.render(animation=animate, write_still=True)
     bpy.ops.render.render(write_still=True)
 
 def output_name(index, model_path):
@@ -56,8 +52,8 @@ def output_name(index, model_path):
     else:
         return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
 
-def rotate(model_object, index):
-    model_object.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
+def rotate(SUBJECT, index):
+    SUBJECT.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
 
 # RGB 0 -> 1
 def rand_color_value():
@@ -102,8 +98,8 @@ def camera_rotation_string(camera):
 def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
-def assign_material(model_object, material):
-    model_object.data.materials.append(material)
+def assign_material(SUBJECT, material):
+    SUBJECT.data.materials.append(material)
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material():
@@ -241,7 +237,7 @@ def shuffle(obj):
     obj.rotation_euler = rand_rotation()
 
 def series(length):
-    return list(map(lambda x: (0, x, math.cos(x)), numpy.arange(0.0, length, 0.1)))
+    return list(map(lambda x: (0, x, math.cos(x)), pitched_array(0.0, length, 0.1)))
 
 def randomize_reflectors_colors():
     for r in bpy.data.groups['Plane'].objects:
@@ -300,14 +296,17 @@ def displace_vector(vector):
     return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))
 
 # Replace vertex coordinate everywhere
-def find_and_replace(vector, target = random.uniform(0,9), replacement = random.uniform(0,9)):
+def find_and_replace(vector, target, replacement):
     return mathutils.Vector((float(str(vector.x).replace(target, replacement)), float(str(vector.y).replace(target, replacement)), float(str(vector.z).replace(target, replacement))))
 
 def glitch(object):
     bpy.ops.object.mode_set(mode='OBJECT')
     assert object.type == 'MESH'
+    ints = list(range(10))
+    target = str(ints.pop(int(random.uniform(0, len(ints) - 1))))
+    replacement = str(ints.pop(int(random.uniform(0, len(ints)))))
     for vertex in object.data.vertices:
-        vertex.co = find_and_replace(vertex.co)
+        vertex.co = find_and_replace(vertex.co, target, replacement)
 
 def displace(object):
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -391,19 +390,22 @@ def move_ocean(ocean):
     ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
     ocean.modifers['Ocean'].choppiness += 0.3
 
-def camera_path(pitch):
+def camera_path(pitch = 0.0001):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
-    for y in numpy.arange(initial_x, -initial_x, pitch):
+    for y in pitched_array(initial_x, -initial_x, pitch):
         res.append((initial_x, y, initial_z))
-    for x in numpy.arange(initial_x, -initial_x, pitch):
+    for x in pitched_array(initial_x, -initial_x, pitch):
         res.append((x,-initial_x, initial_z))
-    for y in numpy.arange(-initial_x, initial_x, pitch):
+    for y in pitched_array(-initial_x, initial_x, pitch):
         res.append((-initial_x, y, initial_z))
-    for x in numpy.arange(-initial_x, initial_x, pitch):
+    for x in pitched_array(-initial_x, initial_x, pitch):
         res.append((x, initial_x, initial_z))
     return res
+
+def pitched_array(min, max, pitch):
+    return list(map(lambda x: (min + pitch * x), range(int((max - min) / pitch))))
 
 def still_routine():
     CAMERA.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
@@ -411,7 +413,7 @@ def still_routine():
     randomize_reflectors_colors()
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)
-    rotate(model_object, index)
+    rotate(SUBJECT, index)
     for l in bpy.data.groups['Lines'].objects:
         rotation = rand_rotation()
         l.rotation_euler = rotation
@@ -428,11 +430,12 @@ def still_routine():
 def animation_routine(frame):
     assert len(camera_path) >= NUMBER_OF_FRAMES
     CAMERA.location = camera_path[frame]
+    look_at(SUBJECT)
     randomize_reflectors_colors()
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)
-    glitch(model_object)
-    model_object.rotation_euler.z += math.radians(4)
+    glitch(SUBJECT)
+    SUBJECT.rotation_euler.z += math.radians(4)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(5)
         l.rotation_euler.z += math.radians(5)

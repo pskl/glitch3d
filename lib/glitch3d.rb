@@ -137,9 +137,10 @@ module Glitch3d
     boundaries = Vertex.boundaries(content_hash[:vertices])
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
+      f.puts model_name
       f.puts '# Boundaries: ' + boundaries.to_s
       f.puts ''
-      f.puts "g #{model_name}"
+      f.puts "g glitch3d"
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
