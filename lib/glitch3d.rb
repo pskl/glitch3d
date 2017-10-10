@@ -28,6 +28,7 @@ module Glitch3d
   # @param String source_file, 3d model file to take as input
   # @param Hash args, parameters { 'stuff' => 'shit' }
   def process_model(source_file, args = nil)
+    raise 'Make sure Blender is correctly installed' if BLENDER_EXECUTABLE_PATH.nil?
     source_file = random_fixture if source_file.nil?
     args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
     return clean_model(source_file) if args['clean']
@@ -137,9 +138,10 @@ module Glitch3d
     boundaries = Vertex.boundaries(content_hash[:vertices])
     File.open(target_file, 'w') do |f|
       f.puts '# Data corrupted with glitch3D script'
+      f.puts model_name
       f.puts '# Boundaries: ' + boundaries.to_s
       f.puts ''
-      f.puts "g #{model_name}"
+      f.puts "g glitch3d"
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
@@ -170,6 +172,6 @@ module Glitch3d
       '-a',
       initial_args['animate'].capitalize
     ]
-    raise 'Make sure Blender is correctly installed' unless system(*args)
+    system(*args)
   end
 end
