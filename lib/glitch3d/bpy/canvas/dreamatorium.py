@@ -48,10 +48,11 @@ texture_object(floor)
 OCEAN = add_ocean(10, 20)
 
 # Create lines as backdrop
-bpy.data.groups.new('Lines')
+LINES = bpy.data.groups['Lines']
 for j in range(0,20):
     for i in range(0, 20):
         new_line = create_line('line' + str(uuid.uuid1()), series(30), 0.003, (j, -10, 2))
+        bpy.data.groups['Lines'].objects.link(new_line)
         new_line.location.z += i / 3
 
 # Add flying letters, lmao

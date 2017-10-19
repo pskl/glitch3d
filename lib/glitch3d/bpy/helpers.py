@@ -1,6 +1,3 @@
-# DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
-# This is just what works for now for the needs of my current project
-
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
@@ -20,8 +17,6 @@ GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 1)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
-WIREFRAMES = []
-VORONOIED = []
 
 def debug():
     code.interact(local=dict(globals(), **locals()))
@@ -46,14 +41,14 @@ def shoot(filepath):
         return bpy.ops.render.render(animation=animate, write_still=True)
     bpy.ops.render.render(write_still=True)
 
-def output_name(index, model_path):
-    if animate == True:
+def output_name(model_path, index = 0):
+    if animate:
         return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.avi'
     else:
         return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
 
-def rotate(SUBJECT, index):
-    SUBJECT.rotation_euler[2] = math.radians(index * (360.0 / shots_number))
+def rotate(model_object, index):
+    model_object.rotation_euler.z = math.radians(index * (360.0 / shots_number))
 
 # RGB 0 -> 1
 def rand_color_value():
@@ -204,11 +199,10 @@ def duplicate_object(obj):
 
 def random_text():
     global WORDS
-    chosen_word = random.choice(WORDS)
-    return chosen_word
+    return random.choice(WORDS)
 
 def create_mesh(name, verts, faces, location):
-    mesh_data = bpy.data.meshes.new("cube_mesh_data")
+    mesh_data = bpy.data.meshes.new("mesh_data")
     mesh_data.from_pydata(verts, [], faces)
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)
@@ -219,7 +213,7 @@ def create_mesh(name, verts, faces, location):
 def spawn_text():
     identifier = str(uuid.uuid1())
     new_curve = bpy.data.curves.new(type="FONT",name="Curve - " + identifier)
-    new_curve.extrude = 0.12
+    new_curve.extrude = 0.11
     new_text = bpy.data.objects.new("Text - " + identifier, new_curve)
     new_text.data.body = random_text()
     context.scene.objects.link(new_text)
@@ -329,20 +323,19 @@ def clone(obj):
     context.scene.objects.link(new_obj)
     return new_obj
 
-def add_ocean(spatial_size, resolution):
-    bpy.ops.mesh.primitive_cube_add(location=(0, 0, -1),radius=1)
+def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4)):
+    bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)
     ocean = last_added_object('CUBE')
-    context.scene.objects.active = ocean
-    ocean.scale = (2,2,2)
-    bpy.ops.object.modifier_add(type='OCEAN')
+    ocean.scale = scale
+    ocean.modifiers.new(name='Ocean', type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
+    ocean.modifiers["Ocean"].depth = depth
     make_object_glossy(ocean, rand_color())
     make_object_gradient_fabulous(ocean, rand_color(), rand_color())
     mix_nodes(ocean.data.materials[0], ocean.data.materials[0].node_tree.nodes['Diffuse BSDF'], ocean.data.materials[0].node_tree.nodes['Glossy BSDF'])
     shadow = clone(ocean)
-    shadow.location.x += 2
-    shadow.location.y += 1
+    shadow.location += mathutils.Vector((1,1,-0.4))
     wireframize(shadow)
     shadow.name = 'shadow'
     ocean.name = 'ocean'
@@ -387,11 +380,14 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
 def move_ocean(ocean):
-    ocean.modifiers['Ocean'].time += 1.5
+    if animate:
+        ocean.modifiers['Ocean'].time += 0.01
+    else:
+        ocean.modifiers['Ocean'].time += 2
     ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-    ocean.modifers['Ocean'].choppiness += 0.3
+    ocean.modifers['Ocean'].choppiness += random.uniform(0, 1.15)
 
-def camera_path(pitch = 0.0001):
+def camera_path(pitch = 0.01):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
@@ -405,16 +401,17 @@ def camera_path(pitch = 0.0001):
         res.append((x, initial_x, initial_z))
     return res
 
-def pitched_array(min, max, pitch):
-    return list(map(lambda x: (min + pitch * x), range(int((max - min) / pitch))))
+def pitched_array(minimum, maximum, pitch):
+    return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
-def still_routine():
+def still_routine(index = 1):
     CAMERA.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
     CAMERA.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
     randomize_reflectors_colors()
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)
     rotate(SUBJECT, index)
+    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-30, +30)))
     for l in bpy.data.groups['Lines'].objects:
         rotation = rand_rotation()
         l.rotation_euler = rotation
@@ -422,31 +419,35 @@ def still_routine():
         prop.location = rand_location()
         prop.rotation_euler = rand_rotation()
     for obj in WIREFRAMES:
-        obj.location = rand_location()
+        # obj.location = rand_location()
+        obj.location += mathutils.Vector((1,1,1))
         obj.rotation_euler = rand_rotation()
     for display in bpy.data.groups['Displays'].objects:
         display.location = rand_location()
         rotate(display, index)
 
 def animation_routine(frame):
-    assert len(camera_path) >= NUMBER_OF_FRAMES
-    CAMERA.location = camera_path[frame]
+    assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
+    CAMERA.location = CAMERA_PATH[frame]
     look_at(SUBJECT)
     randomize_reflectors_colors()
-    map(move_ocean, OCEAN)
-    map(make_object_glossy, OCEAN)
+    if OCEAN:
+        map(move_ocean, OCEAN)
+        map(make_object_glossy, OCEAN)
     glitch(SUBJECT)
     SUBJECT.rotation_euler.z += math.radians(4)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(5)
         l.rotation_euler.z += math.radians(5)
-    for prop in props:
-        prop.rotation_euler.x += math.radians(5)
-    for obj in WIREFRAMES:
-        obj.location.z += 0.1
-        obj.rotation_euler.z += math.radians(5)
-    for display in bpy.data.groups['Displays'].objects:
-        display.rotation_euler.x += math.radians(3)
+    if props:
+        for prop in props:
+            prop.rotation_euler.x += math.radians(5)
+    if WIREFRAMES:
+        for obj in WIREFRAMES:
+            obj.location += mathutils.Vector((0.1, 0.1, 0.1))
+            obj.rotation_euler.rotate(mathutils.Euler((math.radians(2), math.radians(2), math.radians(5)), 'XYZ'))
+    # for display in bpy.data.groups['Displays'].objects:
+    #     display.rotation_euler.x += math.radians(2)
 
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     # setup basic line data

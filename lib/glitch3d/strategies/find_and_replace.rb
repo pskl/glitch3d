@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Glitch3d
   module FindAndReplace
-    # Find and replace for vertices
     def alter_vertices(vertices_objects_array)
       @target = rand(9).to_s
       @replacement = rand(9).to_s
@@ -11,7 +10,6 @@ module Glitch3d
       vertices_objects_array
     end
 
-    # Assign some faces to different vertices
     def alter_faces(faces_objects_array, vertices_objects_array)
       faces_objects_array.sample(3) do |face|
         face.v1 = rand(0..vertices_objects_array.size - 1)
