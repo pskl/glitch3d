@@ -1,10 +1,10 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 # Use `debug()` to pry into the script
+# DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
+# This is just what works for now for the needs of my current project
 
 import argparse
-
-DEBUG=False
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -28,7 +28,11 @@ path = str(args.path)
 animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
 
-import os, bpy, datetime, bmesh, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
+#####################################
+#####################################
+#####################################
+
+import os, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
 
 # Create directory for renders
 directory = os.path.dirname('./renders')
@@ -38,6 +42,15 @@ if not os.path.exists(directory):
 exec(open(os.path.join(path + '/glitch3d/bpy', 'helpers.py')).read())
 exec(open(os.path.join(path + '/glitch3d/bpy', 'render_settings.py')).read())
 exec(open(os.path.join(path + '/glitch3d/bpy', 'lighting.py')).read())
+
+# Create groups
+WIREFRAMES = []
+VORONOIED = []
+OCEAN = []
+bpy.data.groups.new('Lines')
+LINES = bpy.data.groups['Lines'].objects
+for primitive in PRIMITIVES:
+    bpy.data.groups.new(primitive.lower().title())
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
@@ -70,10 +83,6 @@ if FISHEYE:
 
 render_settings(context.scene, animate, mode)
 
-# Initialize groups
-for primitive in PRIMITIVES:
-    bpy.data.groups.new(primitive.lower().title())
-
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
@@ -81,21 +90,25 @@ SUBJECT = bpy.data.objects['glitch3d']
 SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
-make_object_glossy(SUBJECT, YELLOW, 0.1)
-voronoize(SUBJECT)
+make_object_glossy(SUBJECT, YELLOW, 0.01)
+# voronoize(SUBJECT)
 
 let_there_be_light(context.scene)
 
 exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
+# exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
 
 print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
+
+for plane in bpy.data.groups['Plane'].objects:
+    unwrap_model(plane)
 
 if animate:
     print('ANIMATION RENDERING BEGIN')
     context.scene.frame_start = 0
     context.scene.frame_end   = NUMBER_OF_FRAMES
     bpy.ops.screen.frame_jump(end=False)
-    camera_path = camera_path(0.08)
+    CAMERA_PATH = camera_path(0.008)
 
     for frame in range(0, NUMBER_OF_FRAMES):
         bpy.context.scene.frame_set(frame)
@@ -104,15 +117,15 @@ if animate:
             obj.keyframe_insert(data_path="rotation_euler", index=-1)
             obj.keyframe_insert(data_path="location", index=-1)
     bpy.ops.screen.frame_jump(end=False)
-    shoot(output_name(index, model_path))
+    shoot(output_name(model_path))
 
 else:
     print('STILL RENDERING BEGIN')
     for index in range(0, int(shots_number)):
         print("-------------------------- " + str(index) + " --------------------------")
-        still_routine()
+        still_routine(index)
         look_at(SUBJECT)
-        shoot(output_name(index, model_path))
+        shoot(output_name(model_path, index))
 
 
 print('FINISHED ¯\_(ツ)_/¯')
