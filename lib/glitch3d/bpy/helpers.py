@@ -18,7 +18,7 @@ BLUE = (0.1, 0.1, 0.8, 1)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 
-def debug():
+def pry():
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
 
@@ -405,8 +405,7 @@ def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
 def still_routine(index = 1):
-    CAMERA.location.x = INITIAL_CAMERA_LOCATION[0] + round(random.uniform(-2, 2), 10)
-    CAMERA.location.y = INITIAL_CAMERA_LOCATION[1] + round(random.uniform(-2, 2), 10)
+    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10)))
     randomize_reflectors_colors()
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)

@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require 'glitch3d'
-
 include Glitch3d
-process_model(ARGV[0])
+
+args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
+source_file = ARGV[0].start_with?('--') ? nil : ARGV[0]
+process_model(source_file, args)

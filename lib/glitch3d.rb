@@ -27,11 +27,10 @@ module Glitch3d
 
   # @param String source_file, 3d model file to take as input
   # @param Hash args, parameters { 'stuff' => 'shit' }
-  def process_model(source_file, args = nil)
+  def process_model(source_file, args)
     raise 'Make sure Blender is correctly installed' if BLENDER_EXECUTABLE_PATH.nil?
-    source_file = random_fixture if source_file.nil?
-    args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
     return clean_model(source_file) if args['clean']
+    source_file = random_fixture if source_file.nil?
 
     if args.has_key?('version')
       puts Glitch3d::VERSION
@@ -42,6 +41,12 @@ module Glitch3d
       args['animate'] = 'true'
     else
       args['animate'] = 'false'
+    end
+
+    if args.has_key?('debug')
+      args['debug'] = 'true'
+    else
+      args['debug'] = 'false'
     end
 
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
@@ -170,7 +175,9 @@ module Glitch3d
       '-p',
       File.dirname(__FILE__).to_s,
       '-a',
-      initial_args['animate'].capitalize
+      initial_args['animate'].capitalize,
+      '-d',
+      initial_args['debug'].capitalize
     ]
     system(*args)
   end
