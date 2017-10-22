@@ -170,7 +170,9 @@ module Glitch3d
       '-p',
       File.dirname(__FILE__).to_s,
       '-a',
-      initial_args['animate'].capitalize
+      initial_args['animate'].capitalize,
+      '-d',
+      initial_args['debug'].capitalize
     ]
     system(*args)
   end
