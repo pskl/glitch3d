@@ -18,16 +18,17 @@ def get_args():
     parser.add_argument('-m', '--mode', help="quality mode: low | high")
     parser.add_argument('-p', '--path', help="root path of assets")
     parser.add_argument('-a', '--animate', help="render animation") # bool
+    parser.add_argument('-d', '--debug', help="render blank scene") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
 args = get_args()
 file = args.file
 mode = args.mode
+debug = (args.debug == 'True')
 path = str(args.path)
 animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
-
 #####################################
 #####################################
 #####################################
@@ -91,41 +92,43 @@ SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
 make_object_glossy(SUBJECT, YELLOW, 0.01)
-# voronoize(SUBJECT)
 
 let_there_be_light(context.scene)
 
-exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
-# exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
+if debug == False:
+    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
+    # exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
 
-print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
+    print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
 
-for plane in bpy.data.groups['Plane'].objects:
-    unwrap_model(plane)
+    for plane in bpy.data.groups['Plane'].objects:
+        unwrap_model(plane)
 
-if animate:
-    print('ANIMATION RENDERING BEGIN')
-    context.scene.frame_start = 0
-    context.scene.frame_end   = NUMBER_OF_FRAMES
-    bpy.ops.screen.frame_jump(end=False)
-    CAMERA_PATH = camera_path(0.008)
+    if animate:
+        print('ANIMATION RENDERING BEGIN')
+        context.scene.frame_start = 0
+        context.scene.frame_end   = NUMBER_OF_FRAMES
+        bpy.ops.screen.frame_jump(end=False)
+        CAMERA_PATH = camera_path(0.008)
 
-    for frame in range(0, NUMBER_OF_FRAMES):
-        bpy.context.scene.frame_set(frame)
-        animation_routine(frame - 1)
-        for obj in context.scene.objects:
-            obj.keyframe_insert(data_path="rotation_euler", index=-1)
-            obj.keyframe_insert(data_path="location", index=-1)
-    bpy.ops.screen.frame_jump(end=False)
-    shoot(output_name(model_path))
+        for frame in range(0, NUMBER_OF_FRAMES):
+            bpy.context.scene.frame_set(frame)
+            animation_routine(frame - 1)
+            for obj in context.scene.objects:
+                obj.keyframe_insert(data_path="rotation_euler", index=-1)
+                obj.keyframe_insert(data_path="location", index=-1)
+        bpy.ops.screen.frame_jump(end=False)
+        shoot(output_name(model_path))
 
-else:
-    print('STILL RENDERING BEGIN')
-    for index in range(0, int(shots_number)):
-        print("-------------------------- " + str(index) + " --------------------------")
-        still_routine(index)
-        look_at(SUBJECT)
-        shoot(output_name(model_path, index))
+    else:
+        print('STILL RENDERING BEGIN')
+        for index in range(0, int(shots_number)):
+            print("-------------------------- " + str(index) + " --------------------------")
+            still_routine(index)
+            look_at(SUBJECT)
+            shoot(output_name(model_path, index))
 
 
-print('FINISHED ¯\_(ツ)_/¯')
+    print('FINISHED ¯\_(ツ)_/¯')
+
+shoot(output_name(model_path))

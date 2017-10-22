@@ -41,7 +41,7 @@ bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 floor = last_added_object('PLANE')
 bpy.data.groups['Plane'].objects.link(floor)
 floor.scale = (20,20,20)
-subdivide(floor, 8)
+subdivide(floor, int(random.uniform(0, 7)))
 displace(floor)
 texture_object(floor)
 
