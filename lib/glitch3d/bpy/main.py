@@ -1,6 +1,6 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
-# Use `debug()` to pry into the script
+# Use `pry()` to pry into the script
 # DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
 # This is just what works for now for the needs of my current project
 
@@ -29,6 +29,7 @@ debug = (args.debug == 'True')
 path = str(args.path)
 animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
+
 #####################################
 #####################################
 #####################################
@@ -49,6 +50,7 @@ WIREFRAMES = []
 VORONOIED = []
 OCEAN = []
 bpy.data.groups.new('Lines')
+bpy.data.groups.new('Displays')
 LINES = bpy.data.groups['Lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
@@ -96,8 +98,8 @@ make_object_glossy(SUBJECT, YELLOW, 0.01)
 let_there_be_light(context.scene)
 
 if debug == False:
-    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
-    # exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
+    # exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
+    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
 
     print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
 
@@ -126,9 +128,11 @@ if debug == False:
             print("-------------------------- " + str(index) + " --------------------------")
             still_routine(index)
             look_at(SUBJECT)
+            bpy.context.scene.frame_set(int(context.scene.frame_end/(index+1)))
             shoot(output_name(model_path, index))
 
 
     print('FINISHED ¯\_(ツ)_/¯')
 
+look_at(SUBJECT)
 shoot(output_name(model_path))

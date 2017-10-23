@@ -15,7 +15,6 @@ display1 = bpy.data.objects['Grid']
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(6, 0, 2))
 display2 = bpy.data.objects['Grid.001']
 
-bpy.data.groups.new('Displays')
 bpy.data.groups['Displays'].objects.link(display1)
 bpy.data.groups['Displays'].objects.link(display2)
 

@@ -1,8 +1,9 @@
 # Glitch3d
 
-By altering .obj file data you can get something like this :
+Glitch3d is an automated render library that uses glitching techniques applied to 3D meshes.
 
-<img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png" width="400">
+# TODO : add image
+<!-- <img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png" width="400"> -->
 
 This gem uses the Blender Python API to produces renders headlessly.
 

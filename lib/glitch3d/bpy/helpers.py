@@ -405,25 +405,28 @@ def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
 def still_routine(index = 1):
-    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10)))
+    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10),round(random.uniform(-1, 1), 10)))
     randomize_reflectors_colors()
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)
     rotate(SUBJECT, index)
     CAMERA.rotation_euler.y += math.radians(round(random.uniform(-30, +30)))
-    for l in bpy.data.groups['Lines'].objects:
-        rotation = rand_rotation()
-        l.rotation_euler = rotation
-    for prop in props:
-        prop.location = rand_location()
-        prop.rotation_euler = rand_rotation()
-    for obj in WIREFRAMES:
-        # obj.location = rand_location()
-        obj.location += mathutils.Vector((1,1,1))
-        obj.rotation_euler = rand_rotation()
-    for display in bpy.data.groups['Displays'].objects:
-        display.location = rand_location()
-        rotate(display, index)
+    if bpy.data.groups['Lines'].objects:
+        for l in bpy.data.groups['Lines'].objects:
+            rotation = rand_rotation()
+            l.rotation_euler = rotation
+    if props:
+        for prop in props:
+            prop.location = rand_location()
+            prop.rotation_euler = rand_rotation()
+    if WIREFRAMES:
+        for obj in WIREFRAMES:
+            obj.location += mathutils.Vector((random.uniform(0,1),random.uniform(0,1),random.uniform(0,1)))
+            obj.rotation_euler = rand_rotation()
+    if bpy.data.groups['Displays'].objects:
+        for display in bpy.data.groups['Displays'].objects:
+            display.location = rand_location()
+            rotate(display, index)
 
 def animation_routine(frame):
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
@@ -445,8 +448,9 @@ def animation_routine(frame):
         for obj in WIREFRAMES:
             obj.location += mathutils.Vector((0.1, 0.1, 0.1))
             obj.rotation_euler.rotate(mathutils.Euler((math.radians(2), math.radians(2), math.radians(5)), 'XYZ'))
-    # for display in bpy.data.groups['Displays'].objects:
-    #     display.rotation_euler.x += math.radians(2)
+    if bpy.data.groups['Displays'].objects:
+        for display in bpy.data.groups['Displays'].objects:
+            display.rotation_euler.x += math.radians(2)
 
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     # setup basic line data

@@ -5,5 +5,10 @@ require 'glitch3d'
 include Glitch3d
 
 args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
-source_file = ARGV[0].start_with?('--') ? nil : ARGV[0]
+
+if ARGV[0] && !ARGV[0].start_with?('--')
+ source_file = ARGV[0]
+else
+  source_file = nil
+end
 process_model(source_file, args)
