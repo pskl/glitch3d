@@ -14,7 +14,7 @@ PRIMITIVES = ['PYRAMID', 'CUBE']
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
-BLUE = (0.1, 0.1, 0.8, 1)
+BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 
@@ -23,20 +23,16 @@ def pry():
     sys.exit("Aborting execution")
 
 # Helper methods
-def look_at(object):
+def look_at(obj):
     location_camera = CAMERA.matrix_world.to_translation()
-    location_object = object.matrix_world.to_translation()
+    location_object = obj.matrix_world.to_translation()
     direction = location_object - location_camera
     rot_quat = direction.to_track_quat('-Z', 'Y')
     CAMERA.rotation_euler = rot_quat.to_euler()
 
-def empty_materials():
-    for material in bpy.data.materials.keys():
-        bpy.data.materials.remove(object.data.materials[material])
-
 def shoot(filepath):
     print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
-    bpy.context.scene.render.filepath = filepath
+    SCENE.render.filepath = filepath
     if animate:
         return bpy.ops.render.render(animation=animate, write_still=True)
     bpy.ops.render.render(write_still=True)
@@ -82,7 +78,7 @@ def rand_scale_vector():
 def unwrap_model(obj):
     if obj.name.startswith('Camera') or obj.name.startswith('Text') or obj.name.startswith('Cube'):
         return False
-    context.scene.objects.active = obj
+    SCENE.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.uv.unwrap()
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -93,8 +89,8 @@ def camera_rotation_string(camera):
 def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
-def assign_material(SUBJECT, material):
-    SUBJECT.data.materials.append(material)
+def assign_material(obj, material):
+    obj.data.materials.append(material)
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material():
@@ -152,13 +148,19 @@ def make_texture_object_transparent(obj, color = (1,1,1,0.5), intensity = 0.25):
     add.inputs[0].default_value = intensity
     trans.inputs[0].default_value = color
 
+def make_object_transparent(obj):
+    material = bpy.data.materials.new('Transparent Material - ' + str(uuid.uuid1()))
+    material.use_nodes = True
+    trans = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+    trans.inputs[0].default_value = rand_color()
+    assign_node_to_output(material, trans)
+    assign_material(obj, material)
+
 def make_object_emitter(obj, emission_strength):
     emissive_material = bpy.data.materials.new('Emissive Material #' + str(uuid.uuid1()))
     emissive_material.use_nodes = True
     emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
-    # Set color
     emission_node.inputs[0].default_value = rand_color()
-    # Set strength
     emission_node.inputs[1].default_value = emission_strength
     assign_node_to_output(emissive_material, emission_node)
     assign_material(obj, emissive_material)
@@ -194,7 +196,7 @@ def texture_object(obj):
 def duplicate_object(obj):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
-    context.scene.objects.link(new_object)
+    SCENE.objects.link(new_object)
     return new_object
 
 def random_text():
@@ -207,7 +209,7 @@ def create_mesh(name, verts, faces, location):
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)
     obj.location = location
-    context.scene.objects.link(obj)
+    SCENE.objects.link(obj)
     return obj
 
 def spawn_text():
@@ -216,11 +218,11 @@ def spawn_text():
     new_curve.extrude = 0.11
     new_text = bpy.data.objects.new("Text - " + identifier, new_curve)
     new_text.data.body = random_text()
-    context.scene.objects.link(new_text)
+    SCENE.objects.link(new_text)
     return new_text
 
 def wireframize(obj):
-    context.scene.objects.active = obj
+    SCENE.objects.active = obj
     bpy.ops.object.modifier_add(type='WIREFRAME')
     obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
     make_object_emitter(obj, 2)
@@ -234,13 +236,14 @@ def series(length):
     return list(map(lambda x: (0, x, math.cos(x)), pitched_array(0.0, length, 0.1)))
 
 def randomize_reflectors_colors():
-    for r in bpy.data.groups['Plane'].objects:
+    for r in bpy.data.groups['Reflectors'].objects:
         r.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
 
 def add_object(obj, x, y, z, radius):
     infer_primitive(obj, location=(x, y, z), radius=radius)
     WIREFRAMES.append(last_added_object(obj))
     group_add(obj, last_added_object(obj))
+    return last_added_object(obj)
 
 def infer_primitive(obj, **kwargs):
     if obj == 'CUBE':
@@ -268,22 +271,28 @@ def last_object_group(group_name):
     return bpy.data.groups[group_name.lower().title()].objects[-1]
 
 def build_composite_object(obj, size, radius):
-    build_grid_object(obj, size, -size, radius)
+    res = []
+    res.append(build_grid_object(obj, size, -size, radius))
     for z in range(0, size):
-        build_grid_object(obj, size, last_object_group(obj).location.z + 2 * radius, radius)
+        res.append(build_grid_object(obj, size, last_object_group(obj).location.z + 2 * radius, radius))
+    return res
 
 def build_grid_object(obj, size, z_index, radius):
-    build_object_line(obj, size, z_index, -size, radius)
+    res = []
+    res.append(build_object_line(obj, size, z_index, -size, radius))
     for y in range(0, size):
-        build_object_line(obj, size, z_index, last_object_group(obj).location.y + 2 * radius, radius)
+        res.append(build_object_line(obj, size, z_index, last_object_group(obj).location.y + 2 * radius, radius))
+    return res
 
 def build_object_line(obj, size, z_index, y_index, radius):
-    add_object(obj, -size, y_index, z_index, radius)
+    res = []
+    res.append(add_object(obj, -size, y_index, z_index, radius))
     for x in range(0, size):
         new_obj = duplicate_object(last_object_group(obj))
-        WIREFRAMES.append(new_obj)
         group_add(obj, new_obj)
+        res.append(new_obj)
         new_obj.location = ((last_object_group(obj).location.x + 2 * radius), y_index, z_index)
+    return res
 
 # Displace vertex by random offset
 def displace_vector(vector):
@@ -309,9 +318,9 @@ def displace(object):
         vertex.co = displace_vector(vertex.co)
 
 def subdivide(object, cuts):
-    if context.scene.objects.active != object:
-        context.scene.objects.active = object
-    assert context.scene.objects.active == object
+    if SCENE.objects.active != object:
+        SCENE.objects.active = object
+    assert SCENE.objects.active == object
     bpy.ops.object.mode_set(mode='EDIT')
     for index in range(0, cuts):
         bpy.ops.mesh.subdivide(cuts)
@@ -320,7 +329,7 @@ def clone(obj):
     new_obj = obj.copy()
     new_obj.data = obj.data.copy()
     new_obj.animation_data_clear()
-    context.scene.objects.link(new_obj)
+    SCENE.objects.link(new_obj)
     return new_obj
 
 def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4)):
@@ -342,9 +351,9 @@ def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4)):
     return [ocean, shadow]
 
 # Delete current objects
-def flush_all_objects():
-    for index, obj in enumerate(bpy.data.objects):
-        bpy.data.objects.remove(obj)
+def flush_objects(objs = bpy.data.objects):
+    for obj in objs:
+        bpy.data.objects.remove(obj, do_unlink=True)
 
 # Rotate hue to generate palette
 def adjacent_colors(r, g, b, number):
@@ -453,19 +462,16 @@ def animation_routine(frame):
             display.rotation_euler.x += math.radians(2)
 
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
-    # setup basic line data
     line_data = bpy.data.curves.new(name=name,type='CURVE')
     line_data.dimensions = '3D'
     line_data.fill_mode = 'FULL'
     line_data.bevel_depth = thickness
-    # define points that make the line
     polyline = line_data.splines.new('POLY')
     polyline.points.add(len(point_list)-1)
     for idx in range(len(point_list)):
         polyline.points[idx].co = (point_list[idx])+(1.0,)
-    # create an object that uses the linedata
     line = bpy.data.objects.new('line' + str(uuid.uuid1()), line_data)
-    bpy.context.scene.objects.link(line)
+    SCENE.objects.link(line)
     line.location = location
     make_object_emitter(line, 0.8)
     return line
@@ -491,3 +497,15 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
     absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
     bg_node.inputs[0].default_value = rand_color()
+
+def make_object_fluid_collider(obj):
+    obj.modifiers.new(name='obstacle', type='FLUID_SIMULATION')
+    obj.modifiers['obstacle'].settings.type = 'OBSTACLE'
+    obj.modifiers['obstacle'].settings.volume_initialization = 'BOTH'
+    obj.modifiers['obstacle'].settings.partial_slip_factor = 0.15
+
+def add_frame(collection = bpy.data.objects):
+    for obj in collection:
+        obj.keyframe_insert(data_path="rotation_euler", index=-1)
+        obj.keyframe_insert(data_path="location", index=-1)
+        obj.keyframe_insert(data_path="scale", index=-1)

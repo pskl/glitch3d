@@ -1,8 +1,6 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
-# DISCLAIMER: all of this could be done in a much more intelligent way (with more Python knowledge)
-# This is just what works for now for the needs of my current project
 
 import argparse
 
@@ -49,8 +47,10 @@ exec(open(os.path.join(path + '/glitch3d/bpy', 'lighting.py')).read())
 WIREFRAMES = []
 VORONOIED = []
 OCEAN = []
-bpy.data.groups.new('Lines')
-bpy.data.groups.new('Displays')
+
+for s in ['Lines', 'Displays', 'Reflectors', 'Planes']:
+    bpy.data.groups.new(s)
+
 LINES = bpy.data.groups['Lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
@@ -64,16 +64,17 @@ TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 # Scene
 context = bpy.context
 new_scene = bpy.data.scenes.new("Automated Render Scene")
-bpy.ops.scene.delete() # Delete old scene
-context.screen.scene = new_scene # selects the new scene as the current one
+bpy.ops.scene.delete()
+context.screen.scene = new_scene
+SCENE = new_scene
 
-flush_all_objects()
+flush_objects()
 
 camera_data = bpy.data.cameras['Camera']
 bpy.data.objects.new('Camera', object_data=camera_data)
 CAMERA = bpy.data.objects['Camera']
 new_scene.objects.link(CAMERA)
-context.scene.camera = CAMERA
+SCENE.camera = CAMERA
 CAMERA.location = INITIAL_CAMERA_LOCATION
 
 if FISHEYE:
@@ -84,7 +85,7 @@ if FISHEYE:
     CAMERA.data.sensor_width = 20
     CAMERA.data.sensor_height = 20
 
-render_settings(context.scene, animate, mode)
+render_settings(animate, mode)
 
 # Load model
 model_path = os.path.join(file)
@@ -94,32 +95,29 @@ SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
 make_object_glossy(SUBJECT, YELLOW, 0.01)
-
-let_there_be_light(context.scene)
+look_at(SUBJECT)
+let_there_be_light(SCENE)
 
 if debug == False:
-    # exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
+    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py')).read())
+    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
     exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
 
-    print('Rendering images with resolution: ' + str(context.scene.render.resolution_x) + ' x ' + str(context.scene.render.resolution_y))
+    print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
-    for plane in bpy.data.groups['Plane'].objects:
+    for plane in bpy.data.groups['Planes'].objects:
         unwrap_model(plane)
 
     if animate:
         print('ANIMATION RENDERING BEGIN')
-        context.scene.frame_start = 0
-        context.scene.frame_end   = NUMBER_OF_FRAMES
-        bpy.ops.screen.frame_jump(end=False)
+        SCENE.frame_start = 0
+        SCENE.frame_end = NUMBER_OF_FRAMES
         CAMERA_PATH = camera_path(0.008)
 
         for frame in range(0, NUMBER_OF_FRAMES):
-            bpy.context.scene.frame_set(frame)
+            SCENE.frame_set(frame)
             animation_routine(frame - 1)
-            for obj in context.scene.objects:
-                obj.keyframe_insert(data_path="rotation_euler", index=-1)
-                obj.keyframe_insert(data_path="location", index=-1)
-        bpy.ops.screen.frame_jump(end=False)
+            add_frame()
         shoot(output_name(model_path))
 
     else:
@@ -127,8 +125,8 @@ if debug == False:
         for index in range(0, int(shots_number)):
             print("-------------------------- " + str(index) + " --------------------------")
             still_routine(index)
+            SCENE.frame_set(int(SCENE.frame_end/(index+1)))
             look_at(SUBJECT)
-            bpy.context.scene.frame_set(int(context.scene.frame_end/(index+1)))
             shoot(output_name(model_path, index))
 
 
