@@ -7,7 +7,12 @@ props.append(m4a1)
 
 # Add props
 rand_primitive = random.choice(PRIMITIVES)
-build_composite_object(rand_primitive, 4, 1)
+elements = build_composite_object(rand_primitive, 4, 1)
+
+for l1 in elements:
+    for l2 in l1:
+        for obj in l2:
+            WIREFRAMES.append(obj)
 
 # Set up virtual displays
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
@@ -38,9 +43,9 @@ make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 # Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 floor = last_added_object('PLANE')
-bpy.data.groups['Plane'].objects.link(floor)
+bpy.data.groups['Planes'].objects.link(floor)
 floor.scale = (20,20,20)
-subdivide(floor, int(random.uniform(0, 7)))
+subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
 texture_object(floor)
 
@@ -62,11 +67,8 @@ for index in range(1, len(WORDS)):
     make_object_glossy(new_object, rand_color(), 0.0)
     new_object.scale = (text_scale, text_scale, text_scale)
     new_object.location = rand_location()
-    # pivot text to make it readable by camera
-    new_object.rotation_euler.x += math.radians(90)
-    new_object.rotation_euler.z += math.radians(90)
 
-for plane in bpy.data.groups['Plane'].objects:
+for plane in bpy.data.groups['Planes'].objects:
     unwrap_model(plane)
 
 for obj in WIREFRAMES:

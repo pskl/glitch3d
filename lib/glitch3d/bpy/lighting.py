@@ -1,7 +1,7 @@
 def let_there_be_light(scene):
-  add_spotlight((0, 0, 12), 14000, math.radians(60))
-  spot1 = add_spotlight((0, 8, 4), 8000, math.radians(60))
-  spot2 = add_spotlight((0, -8, 4), 8000, math.radians(60))
+  add_spotlight((0, 0, 12), 15000, math.radians(70))
+  spot1 = add_spotlight((0, 8, 4), 9000, math.radians(70))
+  spot2 = add_spotlight((0, -8, 4), 9000, math.radians(70))
   spot1.rotation_euler.x -= math.radians(90)
   spot2.rotation_euler.x += math.radians(90)
 
@@ -13,10 +13,10 @@ def let_there_be_light(scene):
   reflector2 = bpy.data.objects['Plane.001']
   reflector3 = bpy.data.objects['Plane.002']
 
-  bpy.data.groups.new('Plane')
-  bpy.data.groups['Plane'].objects.link(reflector1)
-  bpy.data.groups['Plane'].objects.link(reflector2)
-  bpy.data.groups['Plane'].objects.link(reflector3)
+  for r in [reflector1, reflector2, reflector3]:
+    r.cycles_visibility.camera = False
+    bpy.data.groups['Planes'].objects.link(r)
+    bpy.data.groups['Reflectors'].objects.link(r)
 
   reflector2.rotation_euler.x += math.radians(90)
   reflector1.rotation_euler.x += math.radians(90)
