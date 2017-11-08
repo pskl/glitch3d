@@ -11,6 +11,7 @@
 /fixtures/models/*
 /fixtures/*_glitched.obj
 !/fixtures/textures/*
+!/fixtures/textures/height_maps
 !/fixtures/skull.obj
 .DS_Store
 *.png

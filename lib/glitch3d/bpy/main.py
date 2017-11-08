@@ -99,8 +99,8 @@ look_at(SUBJECT)
 let_there_be_light(SCENE)
 
 if debug == False:
-    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py')).read())
     exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
+    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py')).read())
     exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
@@ -129,8 +129,8 @@ if debug == False:
             look_at(SUBJECT)
             shoot(output_name(model_path, index))
 
-    print('Denoising')
-    exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'denoise.py')).read())
+    # print('Denoising')
+    # exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'denoise.py')).read())
     print('Printing mosaïc')
     exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'mosaic.py')).read())
     print('FINISHED ¯\_(ツ)_/¯')

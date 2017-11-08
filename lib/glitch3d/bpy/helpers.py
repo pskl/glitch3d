@@ -342,7 +342,7 @@ def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4)):
     ocean.modifiers["Ocean"].depth = depth
     make_object_glossy(ocean, rand_color())
     make_object_gradient_fabulous(ocean, rand_color(), rand_color())
-    mix_nodes(ocean.data.materials[0], ocean.data.materials[0].node_tree.nodes['Diffuse BSDF'], ocean.data.materials[0].node_tree.nodes['Glossy BSDF'])
+    # mix_nodes(ocean.data.materials[0], ocean.data.materials[0].node_tree.nodes['Diffuse BSDF'], ocean.data.materials[0].node_tree.nodes['Glossy BSDF'])
     shadow = clone(ocean)
     shadow.location += mathutils.Vector((1,1,-0.4))
     wireframize(shadow)
