@@ -1,0 +1,4 @@
+{
+  "ruby.rubocop.onSave": false,
+  "editor.insertSpaces": true
+}
