@@ -129,7 +129,10 @@ if debug == False:
             look_at(SUBJECT)
             shoot(output_name(model_path, index))
 
-
+    print('Denoising')
+    exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'denoise.py')).read())
+    print('Printing mosaïc')
+    exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'mosaic.py')).read())
     print('FINISHED ¯\_(ツ)_/¯')
 
 look_at(SUBJECT)
