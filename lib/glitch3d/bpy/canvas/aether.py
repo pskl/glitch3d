@@ -11,7 +11,7 @@ container = last_added_object('CUBE')
 container.name = 'Container'
 container.modifiers.new(name='container', type='FLUID_SIMULATION')
 container.modifiers['container'].settings.type = 'DOMAIN'
-container.modifiers['container'].settings.generate_particles = 0.06
+container.modifiers['container'].settings.generate_particles = 1
 container.modifiers['container'].settings.surface_subdivisions = 100
 container.modifiers['container'].settings.viscosity_exponent = 6
 container.modifiers['container'].settings.viscosity_base = 1.0
@@ -48,4 +48,6 @@ make_object_fluid_collider(SUBJECT)
 make_object_fluid_collider(OCEAN[0])
 
 # Bake animation
+print("*** Baking commence *** (you might see a bunch of gibberish popping up cause baking is not supposed to be used headlessly")
 bpy.ops.fluid.bake({'scene': context.scene, 'active_object': container})
+print("*** Baking finished ***")

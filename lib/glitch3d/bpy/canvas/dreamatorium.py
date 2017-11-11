@@ -62,6 +62,7 @@ for j in range(0,20):
 # Add flying letters, lmao
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
+    bpy.data.groups['Texts'].objects.link
     props.append(new_object)
     text_scale = random.uniform(0.75, 3)
     make_object_glossy(new_object, rand_color(), 0.0)

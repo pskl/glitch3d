@@ -1,3 +1,4 @@
+# Square wall art resolution: 10200x10200 (threadless, society6)
 def render_settings(animate, mode):
     SCENE.render.resolution_x = 2000
     SCENE.render.resolution_y = 2000
@@ -14,6 +15,7 @@ def render_settings(animate, mode):
     SCENE.render.tile_x = 32
     SCENE.render.tile_y = 32
     SCENE.render.image_settings.color_mode ='RGBA'
+    SCENE.render.layers[0].cycles.use_denoising = True
 
     if animate:
         SCENE.render.image_settings.file_format='AVI_RAW'
