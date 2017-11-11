@@ -35,6 +35,7 @@ def shoot(filepath):
     SCENE.render.filepath = filepath
     if animate:
         return bpy.ops.render.render(animation=animate, write_still=True)
+    bpy.ops.wm.save_as_mainfile(filepath=filepath + '.blend')
     bpy.ops.render.render(write_still=True)
 
 def output_name(model_path, index = 0):
@@ -445,7 +446,6 @@ def animation_routine(frame):
     if OCEAN:
         map(move_ocean, OCEAN)
         map(make_object_glossy, OCEAN)
-    glitch(SUBJECT)
     SUBJECT.rotation_euler.z += math.radians(4)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(5)

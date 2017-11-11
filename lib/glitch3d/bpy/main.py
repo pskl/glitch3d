@@ -48,7 +48,7 @@ WIREFRAMES = []
 VORONOIED = []
 OCEAN = []
 
-for s in ['Lines', 'Displays', 'Reflectors', 'Planes']:
+for s in ['Texts', 'Lines', 'Displays', 'Reflectors', 'Planes']:
     bpy.data.groups.new(s)
 
 LINES = bpy.data.groups['Lines'].objects
@@ -112,11 +112,11 @@ if debug == False:
         print('ANIMATION RENDERING BEGIN')
         SCENE.frame_start = 0
         SCENE.frame_end = NUMBER_OF_FRAMES
-        CAMERA_PATH = camera_path(0.008)
+        CAMERA_PATH = camera_path(0.08)
 
         for frame in range(0, NUMBER_OF_FRAMES):
             SCENE.frame_set(frame)
-            animation_routine(frame - 1)
+            animation_routine(frame)
             add_frame()
         shoot(output_name(model_path))
 
