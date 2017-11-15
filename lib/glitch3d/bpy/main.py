@@ -105,9 +105,6 @@ if debug == False:
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
-    for plane in bpy.data.groups['Planes'].objects:
-        unwrap_model(plane)
-
     if animate:
         print('ANIMATION RENDERING BEGIN')
         SCENE.frame_start = 0
@@ -129,9 +126,6 @@ if debug == False:
             look_at(SUBJECT)
             shoot(output_name(model_path, index))
 
-    # print('Denoising')
-    # exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'denoise.py')).read())
-    # print('Printing mosaïc')
     # exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'mosaic.py')).read())
     print('FINISHED ¯\_(ツ)_/¯')
 

@@ -16,9 +16,9 @@ for l1 in elements:
 
 # Set up virtual displays
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
-display1 = bpy.data.objects['Grid']
+display1 = last_added_object('Grid')
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(6, 0, 2))
-display2 = bpy.data.objects['Grid.001']
+display2 = last_added_object('Grid')
 
 bpy.data.groups['Displays'].objects.link(display1)
 bpy.data.groups['Displays'].objects.link(display2)
@@ -33,20 +33,19 @@ for display in bpy.data.groups['Displays'].objects:
     display.rotation_euler.x += math.radians(90)
     display.scale = DISPLAY_SCALE
     texture_object(display)
-    make_texture_object_transparent(display)
     unwrap_model(display)
-    glitch(display)
 
 glitch(m4a1)
 make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 
 # Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
-floor = last_added_object('PLANE')
+floor = last_added_object('Plane')
 bpy.data.groups['Planes'].objects.link(floor)
 floor.scale = (20,20,20)
 subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
+unwrap_model(floor)
 texture_object(floor)
 
 OCEAN = add_ocean(10, 20)
@@ -62,15 +61,15 @@ for j in range(0,20):
 # Add flying letters, lmao
 for index in range(1, len(WORDS)):
     new_object = spawn_text()
-    bpy.data.groups['Texts'].objects.link
+    bpy.data.groups['Texts'].objects.link(new_object)
     props.append(new_object)
     text_scale = random.uniform(0.75, 3)
     make_object_glossy(new_object, rand_color(), 0.0)
     new_object.scale = (text_scale, text_scale, text_scale)
     new_object.location = rand_location()
 
-for plane in bpy.data.groups['Planes'].objects:
-    unwrap_model(plane)
-
 for obj in WIREFRAMES:
     wireframize(obj)
+
+for plane in bpy.data.groups['Planes'].objects:
+    unwrap_model(plane)

@@ -3,6 +3,8 @@ import sys
 import os
 from PIL import Image
 
+print("Mosaicing")
+
 RES_X = 5000
 RES_Y = 5000
 path = './renders/'

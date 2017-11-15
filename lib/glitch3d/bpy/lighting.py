@@ -15,7 +15,6 @@ def let_there_be_light(scene):
 
   for r in [reflector1, reflector2, reflector3]:
     r.cycles_visibility.camera = False
-    bpy.data.groups['Planes'].objects.link(r)
     bpy.data.groups['Reflectors'].objects.link(r)
 
   reflector2.rotation_euler.x += math.radians(90)
