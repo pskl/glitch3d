@@ -443,6 +443,7 @@ def animation_routine(frame):
     CAMERA.location = CAMERA_PATH[frame]
     look_at(SUBJECT)
     randomize_reflectors_colors()
+    displace(SUBJECT)
     if OCEAN:
         map(move_ocean, OCEAN)
         map(make_object_glossy, OCEAN)
@@ -497,12 +498,6 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
     absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
     bg_node.inputs[0].default_value = rand_color()
-
-def make_object_fluid_collider(obj):
-    obj.modifiers.new(name='obstacle', type='FLUID_SIMULATION')
-    obj.modifiers['obstacle'].settings.type = 'OBSTACLE'
-    obj.modifiers['obstacle'].settings.volume_initialization = 'BOTH'
-    obj.modifiers['obstacle'].settings.partial_slip_factor = 0.15
 
 def add_frame(collection = bpy.data.objects):
     for obj in collection:
