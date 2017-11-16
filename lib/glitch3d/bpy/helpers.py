@@ -17,6 +17,7 @@ GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
+RENDER_OUTPUT_PATHS = []
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
@@ -34,9 +35,10 @@ def shoot(filepath):
     print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
     SCENE.render.filepath = filepath
     if animate:
-        return bpy.ops.render.render(animation=animate, write_still=True)
-    bpy.ops.wm.save_as_mainfile(filepath=filepath + '.blend')
-    bpy.ops.render.render(write_still=True)
+        bpy.ops.render.render(animation=animate, write_still=True)
+    else:
+        RENDER_OUTPUT_PATHS.append(filepath)
+        bpy.ops.render.render(write_still=True)
 
 def output_name(model_path, index = 0):
     if animate:
@@ -101,9 +103,7 @@ def create_cycles_material():
 
 def random_texture():
     texture_path = TEXTURE_FOLDER_PATH + random.choice(os.listdir(TEXTURE_FOLDER_PATH))
-    logging.info('---------')
-    logging.info(TEXTURE_FOLDER_PATH)
-    logging.info('---------')
+    print("LOADING TEXTURE -> " + texture_path)
     return bpy.data.images.load(texture_path)
 
 def assign_texture_to_material(material, texture):
@@ -226,7 +226,7 @@ def wireframize(obj):
     SCENE.objects.active = obj
     bpy.ops.object.modifier_add(type='WIREFRAME')
     obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
-    make_object_emitter(obj, 2)
+    make_object_emitter(obj, 1)
 
 def shuffle(obj):
     obj.location = rand_location()
@@ -420,7 +420,7 @@ def still_routine(index = 1):
     map(move_ocean, OCEAN)
     map(make_object_glossy, OCEAN)
     rotate(SUBJECT, index)
-    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-30, +30)))
+    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-50, +50)))
     if bpy.data.groups['Lines'].objects:
         for l in bpy.data.groups['Lines'].objects:
             rotation = rand_rotation()

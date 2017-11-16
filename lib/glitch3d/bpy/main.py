@@ -48,7 +48,7 @@ WIREFRAMES = []
 VORONOIED = []
 OCEAN = []
 
-for s in ['Texts', 'Lines', 'Displays', 'Reflectors', 'Planes']:
+for s in ['Texts', 'Lines', 'Displays', 'Reflectors']:
     bpy.data.groups.new(s)
 
 LINES = bpy.data.groups['Lines'].objects
@@ -121,13 +121,17 @@ if debug == False:
         print('STILL RENDERING BEGIN')
         for index in range(0, int(shots_number)):
             print("-------------------------- " + str(index) + " --------------------------")
+            look_at(SUBJECT)
             still_routine(index)
             SCENE.frame_set(int(SCENE.frame_end/(index+1)))
-            look_at(SUBJECT)
             shoot(output_name(model_path, index))
+else:
+    look_at(SUBJECT)
+    shoot(output_name(model_path))
 
-    # exec(open(os.path.join(path + '/glitch3d/bpy/post-processing', 'mosaic.py')).read())
-    print('FINISHED ¯\_(ツ)_/¯')
-
-look_at(SUBJECT)
-shoot(output_name(model_path))
+# Save scene as .blend file
+bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
+print("Files rendered:")
+for p in RENDER_OUTPUT_PATHS:
+    print(p)
+print('FINISHED ¯\_(ツ)_/¯')
