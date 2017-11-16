@@ -41,12 +41,11 @@ make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 # Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 floor = last_added_object('Plane')
-bpy.data.groups['Planes'].objects.link(floor)
 floor.scale = (20,20,20)
 subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
-unwrap_model(floor)
 texture_object(floor)
+unwrap_model(floor)
 
 OCEAN = add_ocean(10, 20)
 
@@ -70,6 +69,3 @@ for index in range(1, len(WORDS)):
 
 for obj in WIREFRAMES:
     wireframize(obj)
-
-for plane in bpy.data.groups['Planes'].objects:
-    unwrap_model(plane)
