@@ -46,6 +46,7 @@ subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
 texture_object(floor)
 unwrap_model(floor)
+bpy.data.groups['Displays'].objects.link(floor)
 
 OCEAN = add_ocean(10, 20)
 
