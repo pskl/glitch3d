@@ -402,13 +402,13 @@ def camera_path(pitch = 0.01):
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
     for y in pitched_array(initial_x, -initial_x, pitch):
-        res.append((initial_x, y, initial_z))
+        res.append((initial_x, y, math.sin(y) + 0.5))
     for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_x, initial_z))
+        res.append((x,-initial_x, math.sin(x) + 0.5))
     for y in pitched_array(-initial_x, initial_x, pitch):
-        res.append((-initial_x, y, initial_z))
+        res.append((-initial_x, y, math.sin(y) + 0.5))
     for x in pitched_array(-initial_x, initial_x, pitch):
-        res.append((x, initial_x, initial_z))
+        res.append((x, initial_x, math.sin(x) + 0.5))
     return res
 
 def pitched_array(minimum, maximum, pitch):
@@ -447,7 +447,7 @@ def animation_routine(frame):
     if OCEAN:
         map(move_ocean, OCEAN)
         map(make_object_glossy, OCEAN)
-    SUBJECT.rotation_euler.z += math.radians(4)
+    SUBJECT.rotation_euler.z += math.radians(1)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(5)
         l.rotation_euler.z += math.radians(5)
