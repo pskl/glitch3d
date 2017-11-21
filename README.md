@@ -1,9 +1,10 @@
 # Glitch3d
 
-Glitch3d is an automated render library that uses glitching techniques applied to 3D meshes.
+Glitch3d is an automated render library that uses glitching techniques applied to 3D meshes. The original intent was to focus on 3D glitching techniques and morphed into a render bot.
 
-# TODO : add image
-<!-- <img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/demo.png" width="400"> -->
+You can read a bit more about where it come from [here](http://pascal.cc/blog/glitches) and see it living [there](https://twitter.com/glitchdemon).
+
+<img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/examples/demo.jpg" width="400">
 
 This gem uses the Blender Python API to produces renders headlessly.
 
@@ -39,6 +40,8 @@ Options:
 - `animate` : (true) default: false => Render .avi file
 - `frame_numbers` : (default: 200) => number of frames
 
+Renders (wether it is video or an image) will be output to `./renders` along with an export of the `.scene` file so that you can potentially fiddle with the existing setup.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
@@ -48,7 +51,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/pskl/glitch3d. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-
 
 ## License
 
