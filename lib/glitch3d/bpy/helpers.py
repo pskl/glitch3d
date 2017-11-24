@@ -389,26 +389,18 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
-def move_ocean(ocean):
-    if animate:
-        ocean.modifiers['Ocean'].time += 0.01
-    else:
-        ocean.modifiers['Ocean'].time += 2
-    ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-    ocean.modifers['Ocean'].choppiness += random.uniform(0, 1.15)
-
 def camera_path(pitch = 0.01):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
     for y in pitched_array(initial_x, -initial_x, pitch):
-        res.append((initial_x, y, math.sin(y) + 0.5))
+        res.append((initial_x, y, math.sin(0.5*y) + 0.5))
     for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_x, math.sin(x) + 0.5))
+        res.append((x,-initial_x, math.sin(0.5*x) + 0.5))
     for y in pitched_array(-initial_x, initial_x, pitch):
-        res.append((-initial_x, y, math.sin(y) + 0.5))
+        res.append((-initial_x, y, math.sin(0.5*y) + 0.5))
     for x in pitched_array(-initial_x, initial_x, pitch):
-        res.append((x, initial_x, math.sin(x) + 0.5))
+        res.append((x, initial_x, math.sin(0.5*x) + 0.5))
     return res
 
 def pitched_array(minimum, maximum, pitch):
@@ -417,10 +409,12 @@ def pitched_array(minimum, maximum, pitch):
 def still_routine(index = 1):
     CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10),round(random.uniform(-1, 1), 10)))
     randomize_reflectors_colors()
-    map(move_ocean, OCEAN)
-    map(make_object_glossy, OCEAN)
+    make_object_glossy(OCEAN[0])
     rotate(SUBJECT, index)
     CAMERA.rotation_euler.y += math.radians(round(random.uniform(-50, +50)))
+    for ocean in OCEAN:
+        ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 1)
     if bpy.data.groups['Lines'].objects:
         for l in bpy.data.groups['Lines'].objects:
             rotation = rand_rotation()
@@ -444,9 +438,9 @@ def animation_routine(frame):
     look_at(SUBJECT)
     randomize_reflectors_colors()
     displace(SUBJECT)
-    if OCEAN:
-        map(move_ocean, OCEAN)
-        map(make_object_glossy, OCEAN)
+    for ocean in OCEAN:
+        ocean.modifiers['Ocean'].time += 0.5
+    make_object_glossy(OCEAN[0])
     SUBJECT.rotation_euler.z += math.radians(1)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(5)
