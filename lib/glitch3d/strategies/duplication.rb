@@ -2,12 +2,6 @@
 module Glitch3d
   module Duplication
     def alter_vertices(vertices_objects_array)
-      # iteration_number = 2
-      # res = []
-      # iteration_number.times do |_|
-      #   res = copy_random_element(vertices_objects_array, iteration_number, CHUNK_SIZE)
-      # end
-      # res
       shuffle_vertices(vertices_objects_array)
     end
 
@@ -16,22 +10,12 @@ module Glitch3d
     end
 
     def shuffle_vertices(array)
-      2.times do
+      rand(3).times do
         rand_index1 = rand(0..array.size - 1)
         rand_index2 = rand(0..array.size - 1)
         array[rand_index1], array[rand_index2] = array[rand_index2], array[rand_index1]
       end
       array
-    end
-
-    def copy_random_element(collection, iteration_number, chunk_size)
-      new_array = collection
-      iteration_number.times do
-        rand1 = rand(0..collection.size - 1)
-        rand2 = rand(0..collection.size - 1)
-        new_array[rand1..rand1 + chunk_size] = new_array[rand2..rand2 + chunk_size]
-      end
-      new_array
     end
   end
 end

@@ -2,9 +2,12 @@
 # frozen_string_literal: true
 
 require 'glitch3d'
+require 'pry' if ENV['RACK_ENV'] == 'development'
+
 include Glitch3d
 
 args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
+args.default = false
 
 if ARGV[0] && !ARGV[0].start_with?('--')
  source_file = ARGV[0]

@@ -31,24 +31,7 @@ module Glitch3d
     raise 'Make sure Blender is correctly installed' if BLENDER_EXECUTABLE_PATH.nil?
     return clean_model(source_file) if args['clean']
     source_file = random_fixture if source_file.nil?
-
-    if args.has_key?('version')
-      puts Glitch3d::VERSION
-      return nil
-    end
-
-    if args.has_key?('animate')
-      args['animate'] = 'true'
-    else
-      args['animate'] = 'false'
-    end
-
-    if args.has_key?('debug')
-      args['debug'] = 'true'
-    else
-      args['debug'] = 'false'
-    end
-
+    print_version if args.has_key?('version')
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
     self.class.include infer_strategy(args['mode'] || 'default')
     @quality = args['quality'] || 'low'
@@ -58,6 +41,11 @@ module Glitch3d
     target_file = base_file_name + '_glitched.obj'
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
     render(args, target_file, args['shots-number'] || 6) unless args['no-render']
+  end
+
+  def print_version
+    puts Glitch3d::VERSION
+    return nil
   end
 
   def random_fixture
@@ -159,7 +147,6 @@ module Glitch3d
   end
 
   def render(initial_args, file_path, shots_number)
-    raise 'Animation arg not boolean' unless eval(initial_args['animate']).is_a?(FalseClass) || eval(initial_args['animate']).is_a?(TrueClass)
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
@@ -175,9 +162,9 @@ module Glitch3d
       '-p',
       File.dirname(__FILE__).to_s,
       '-a',
-      initial_args['animate'].capitalize,
+      initial_args['animate'].to_s.capitalize,
       '-d',
-      initial_args['debug'].capitalize
+      initial_args['debug'].to_s.capitalize
     ]
     system(*args)
   end
