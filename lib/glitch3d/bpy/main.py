@@ -33,6 +33,7 @@ shots_number = int(args.shots_number)
 #####################################
 
 import os, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
+from subprocess import call
 
 # Create directory for renders
 directory = os.path.dirname('./renders')
@@ -134,4 +135,8 @@ bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 print("Files rendered:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
+
+call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+
 print('FINISHED ¯\_(ツ)_/¯')
