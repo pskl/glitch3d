@@ -3,8 +3,8 @@ import os, sys
 from PIL import Image
 
 print("Mosaicing")
-path = './renders/'
-files = [path + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+path = os.environ['RENDER_PATH']
+files = [path + f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and os.path.join(path, f).endswith(".png"))]
 images = map(Image.open, files)
 widths, heights = zip(*(i.size for i in images))
 
@@ -27,4 +27,4 @@ for file in files:
       y_offset += image.size[1]
       x_offset = 0
 
-res.save('./mosaic.png')
+res.save(path + 'mosaic.png')
