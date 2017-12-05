@@ -6,11 +6,11 @@ You can read a bit more about where it come from [here](http://pascal.cc/blog/gl
 
 <img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/examples/demo.jpg" width="400">
 
-This gem uses the Blender Python API to produces renders headlessly.
+This gem uses the Blender Python API to produces renders headlessly. Calls made to the Blender API have been tested with versions 2.78 and 2.79.
 
 ## Warning
 
-Setting `BLENDER_EXECUTABLE_PATH` in your environment is required.
+Setting `BLENDER_EXECUTABLE_PATH` in your environment is required. In general this gem relies on the presence of Python and Blender on the host machine. I am very aware this is not standard practice and plan to split components later down the road but this proves convenient for now.
 
 ## Installation
 
