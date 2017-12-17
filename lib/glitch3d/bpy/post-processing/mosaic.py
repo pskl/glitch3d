@@ -17,13 +17,10 @@ print('stitching ' + str(len(files)) + ' images')
 x_offset = 0
 y_offset = 0
 for file in files:
-    print(file)
     image = Image.open(file)
-    print(image.size)
     res.paste(image, (x_offset, y_offset))
     x_offset += image.size[0]
     if x_offset > total_width:
-      print('reset')
       y_offset += image.size[1]
       x_offset = 0
 

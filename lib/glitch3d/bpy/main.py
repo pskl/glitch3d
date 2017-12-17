@@ -20,6 +20,7 @@ def get_args():
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
+
 args = get_args()
 file = args.file
 mode = args.mode
@@ -35,14 +36,19 @@ shots_number = int(args.shots_number)
 import os, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
 from subprocess import call
 
+def load_file(file_path):
+    # load and define function and vars in global namespace, yolo
+    exec(open(file_path).read(), globals())
+
 # Create directory for renders
 directory = os.path.dirname('./renders')
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-exec(open(os.path.join(path + '/glitch3d/bpy', 'helpers.py')).read())
-exec(open(os.path.join(path + '/glitch3d/bpy', 'render_settings.py')).read())
-exec(open(os.path.join(path + '/glitch3d/bpy', 'lighting.py')).read())
+load_file(os.path.join(path + '/glitch3d/bpy/helpers.py'))
+load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
+load_file(os.path.join(path + '/glitch3d/bpy/material_serializer.py'))
+load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
 # Create groups
 WIREFRAMES = []
@@ -56,11 +62,14 @@ LINES = bpy.data.groups['Lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
 
+# Hash which will cache all materials loaded in memory
+MATERIALS = {}
 FISHEYE = True
 COLORS = rand_color_palette(5)
 INITIAL_CAMERA_LOCATION = (3, 3, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
+MATERIALS_PATH = FIXTURES_FOLDER_PATH + 'materials/'
 
 # Scene
 context = bpy.context
@@ -70,6 +79,7 @@ context.screen.scene = new_scene
 SCENE = new_scene
 
 flush_objects()
+flush_materials()
 
 camera_data = bpy.data.cameras['Camera']
 bpy.data.objects.new('Camera', object_data=camera_data)
@@ -86,31 +96,38 @@ if FISHEYE:
     CAMERA.data.sensor_width = 20
     CAMERA.data.sensor_height = 20
 
-render_settings(animate, mode)
+render_settings(animate, mode, (random.randint(0, 1) == 1))
 
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-SUBJECT = bpy.data.objects['glitch3d']
+SUBJECT = bpy.data.objects['0_glitch3d']
 SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
 make_object_glossy(SUBJECT, YELLOW, 0.01)
+# assign_material(SUBJECT, fetch_material('musgrave'))
 look_at(SUBJECT)
-let_there_be_light(SCENE)
+# let_there_be_light(SCENE)
 
 if debug == False:
-    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py')).read())
-    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py')).read())
-    exec(open(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py')).read())
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
+    # Save scene as .blend file
+    bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 
     if animate:
         print('ANIMATION RENDERING BEGIN')
         SCENE.frame_start = 0
         SCENE.frame_end = NUMBER_OF_FRAMES
-        CAMERA_PATH = camera_path(0.08)
+
+        x = 0.08
+        while len(camera_path(x)) <= NUMBER_OF_FRAMES:
+            x -= 0.01
+        CAMERA_PATH = camera_path(x)
 
         for frame in range(0, NUMBER_OF_FRAMES):
             SCENE.frame_set(frame)
@@ -130,13 +147,11 @@ else:
     look_at(SUBJECT)
     shoot(output_name(model_path))
 
-# Save scene as .blend file
-bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 print("Files rendered:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
-call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+# call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+# call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
 print('FINISHED ¯\_(ツ)_/¯')
