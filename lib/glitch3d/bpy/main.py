@@ -65,7 +65,7 @@ for primitive in PRIMITIVES:
 MATERIALS = {}
 FISHEYE = True
 COLORS = rand_color_palette(5)
-INITIAL_CAMERA_LOCATION = (3, 3, 1)
+INITIAL_CAMERA_LOCATION = (2.5, 2.5, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 
@@ -104,7 +104,7 @@ SUBJECT.location = ORIGIN
 # make_object_glossy(SUBJECT, YELLOW, 0.01)
 assign_material(SUBJECT, fetch_material('displace'))
 look_at(SUBJECT)
-# let_there_be_light(SCENE)
+let_there_be_light(SCENE)
 
 if debug == False:
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))

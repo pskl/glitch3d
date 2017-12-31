@@ -25,7 +25,9 @@ def pry():
     sys.exit("Aborting execution")
 
 def fetch_material(material_name):
-    return bpy.data.materials[material_name]
+    new_material = create_cycles_material(material_name)
+    new_material.data = bpy.data.materials[material_name].data.copy()
+    return new_material
 
 # Helper methods
 def look_at(obj):
@@ -98,6 +100,7 @@ def camera_location_string(camera):
 
 def assign_material(obj, material):
     obj.data.materials.append(material)
+    return material
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material(name = 'Object Material - ', clean=False):
@@ -162,25 +165,23 @@ def make_object_transparent(obj):
     assign_material(obj, material)
 
 def make_object_emitter(obj, emission_strength):
-    assign_material(obj, fetch_material('emission'))
-    # emission_node = emissive_material.node_tree.nodes['ShaderNodeEmission']
-    # emission_node.inputs[0].default_value = rand_color()
-    # emission_node.inputs[1].default_value = emission_strength
-    # return emission_node
+    emissive_material = assign_material(obj, fetch_material('emission'))
+    emission_node = emissive_material.node_tree.nodes['ShaderNodeEmission']
+    emission_node.inputs[0].default_value = rand_color()
+    emission_node.inputs[1].default_value = emission_strength
+    return emission_node
 
 def make_object_gradient_fabulous(obj, color1, color2):
-    # material = create_cycles_material()
-    assign_material(obj, fetch_material('gradient_fabulous'))
-    # assign_material(obj, material)
-    # mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    # gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
-    # gradient_node.gradient_type = 'SPHERICAL'
-    # bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    # material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
-    # material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
-    # assign_node_to_output(material, bsdf_node)
-    # mixer_node.inputs['Color1'].default_value = color1
-    # mixer_node.inputs['Color2'].default_value = color2
+    material = assign_material(obj, fetch_material('gradient_fabulous'))
+    mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
+    gradient_node.gradient_type = 'SPHERICAL'
+    bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+    material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
+    material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
+    assign_node_to_output(material, bsdf_node)
+    mixer_node.inputs['Color1'].default_value = color1
+    mixer_node.inputs['Color2'].default_value = color2
 
 def voronoize(obj, scale = 5.0):
     material = obj.data.materials[-1]
@@ -460,7 +461,7 @@ def animation_routine(frame):
             prop.rotation_euler.x += math.radians(5)
     if WIREFRAMES:
         for obj in WIREFRAMES:
-            obj.location.z = math.sin(frame) # mathutils.Vector((0.1, 0.1, 0.1))
+            obj.location.z = math.sin(frame)
             obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
     if bpy.data.groups['Displays'].objects:
         for display in bpy.data.groups['Displays'].objects:
