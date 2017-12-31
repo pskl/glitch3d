@@ -18,10 +18,14 @@ BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 RENDER_OUTPUT_PATHS = []
+NORMALS_RENDERING = (random.randint(0, 1) == 1)
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
+
+def fetch_material(material_name):
+    return bpy.data.materials[material_name]
 
 # Helper methods
 def look_at(obj):
@@ -159,29 +163,24 @@ def make_object_transparent(obj):
 
 def make_object_emitter(obj, emission_strength):
     assign_material(obj, fetch_material('emission'))
-    # emissive_material = create_cycles_material('Emissive Material - ')
-    # emissive_material.use_nodes = True
-    # emission_node = emissive_material.node_tree.nodes.new('ShaderNodeEmission')
+    # emission_node = emissive_material.node_tree.nodes['ShaderNodeEmission']
     # emission_node.inputs[0].default_value = rand_color()
     # emission_node.inputs[1].default_value = emission_strength
-    # assign_node_to_output(emissive_material, emission_node)
-    # assign_material(obj, emissive_material)
     # return emission_node
 
 def make_object_gradient_fabulous(obj, color1, color2):
-    material = create_cycles_material()
-    # assign_material(obj, fetch_material('gradient'))
-    assign_material(obj, material)
-    mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
-    gradient_node.gradient_type = 'SPHERICAL'
-    bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
-    material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
-    assign_node_to_output(material, bsdf_node)
-    mixer_node.inputs['Color1'].default_value = color1
-    mixer_node.inputs['Color2'].default_value = color2
-    # serialize_material(obj, 'gradient')
+    # material = create_cycles_material()
+    assign_material(obj, fetch_material('gradient_fabulous'))
+    # assign_material(obj, material)
+    # mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    # gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
+    # gradient_node.gradient_type = 'SPHERICAL'
+    # bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+    # material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
+    # material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
+    # assign_node_to_output(material, bsdf_node)
+    # mixer_node.inputs['Color1'].default_value = color1
+    # mixer_node.inputs['Color2'].default_value = color2
 
 def voronoize(obj, scale = 5.0):
     material = obj.data.materials[-1]
@@ -190,7 +189,6 @@ def voronoize(obj, scale = 5.0):
     texture_node.coloring = 'CELLS'
     texture_node.inputs[1].default_value = scale
     VORONOIED.append(obj)
-    # serialize_material(obj, 'voronoize')
 
 def texture_object(obj):
     new_material = create_cycles_material()
@@ -230,7 +228,6 @@ def wireframize(obj):
     bpy.ops.object.modifier_add(type='WIREFRAME')
     obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
     make_object_emitter(obj, 1)
-    # serialize_material(obj, 'emission')
     return obj
 
 def shuffle(obj):
@@ -363,7 +360,7 @@ def flush_objects(objs = bpy.data.objects):
 # Delete materials
 def flush_materials(mats = bpy.data.materials):
     for mat in mats:
-        bpy.data.materials.remove(material, do_unlink=True)
+        bpy.data.materials.remove(mat, do_unlink=True)
 
 def flush_nodes(material):
     for node in material.node_tree.nodes:

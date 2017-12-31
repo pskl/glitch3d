@@ -47,7 +47,6 @@ if not os.path.exists(directory):
 
 load_file(os.path.join(path + '/glitch3d/bpy/helpers.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
-load_file(os.path.join(path + '/glitch3d/bpy/material_serializer.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
 # Create groups
@@ -69,19 +68,16 @@ COLORS = rand_color_palette(5)
 INITIAL_CAMERA_LOCATION = (3, 3, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
-MATERIALS_PATH = FIXTURES_FOLDER_PATH + 'materials/'
 
 # Scene
 context = bpy.context
 new_scene = bpy.data.scenes.new("Automated Render Scene")
-bpy.ops.scene.delete()
 context.screen.scene = new_scene
 SCENE = new_scene
 
 flush_objects()
-flush_materials()
 
-camera_data = bpy.data.cameras['Camera']
+camera_data = bpy.data.cameras.new(name = 'Camera')
 bpy.data.objects.new('Camera', object_data=camera_data)
 CAMERA = bpy.data.objects['Camera']
 new_scene.objects.link(CAMERA)
@@ -96,7 +92,7 @@ if FISHEYE:
     CAMERA.data.sensor_width = 20
     CAMERA.data.sensor_height = 20
 
-render_settings(animate, mode, (random.randint(0, 1) == 1))
+render_settings(animate, mode, NORMALS_RENDERING)
 
 # Load model
 model_path = os.path.join(file)
@@ -105,19 +101,17 @@ SUBJECT = bpy.data.objects['0_glitch3d']
 SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
-make_object_glossy(SUBJECT, YELLOW, 0.01)
-# assign_material(SUBJECT, fetch_material('musgrave'))
+# make_object_glossy(SUBJECT, YELLOW, 0.01)
+assign_material(SUBJECT, fetch_material('displace'))
 look_at(SUBJECT)
 # let_there_be_light(SCENE)
 
 if debug == False:
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
-    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
-    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
-    # Save scene as .blend file
-    bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 
     if animate:
         print('ANIMATION RENDERING BEGIN')
@@ -146,6 +140,9 @@ if debug == False:
 else:
     look_at(SUBJECT)
     shoot(output_name(model_path))
+
+# Save scene as .blend file
+bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 
 print("Files rendered:")
 for p in RENDER_OUTPUT_PATHS:
