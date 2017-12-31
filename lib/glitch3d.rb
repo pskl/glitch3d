@@ -16,6 +16,7 @@ module Glitch3d
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
+  BASE_BLEND_FILE_PATH = File.dirname(__FILE__) + '/../fixtures/base.blend'
 
   def clean_model(source_file)
     self.class.include Glitch3d::None
@@ -150,6 +151,7 @@ module Glitch3d
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
+      BASE_BLEND_FILE_PATH,
       '-P',
       RENDERING_SCRIPT_PATH,
       '--',

@@ -58,3 +58,5 @@ Copyright © 217 PSKL <hello@pascal.cc>
 This work is free. You can redistribute it and/or modify it under the
 terms of the Do What The Fuck You Want To Public License, Version 2,
 as published by Sam Hocevar. See the COPYING file for more details.
+
+NOTE: Above license is for the code part only. Some of the materials used as fixtures could be copyrighted (models and textures). Please be careful.
