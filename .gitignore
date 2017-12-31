@@ -10,6 +10,7 @@
 /renders/*
 /fixtures/models/*
 /fixtures/*.blend1
+/fixtures/cache_fluid
 /fixtures/*_glitched.obj
 !/fixtures/textures/*
 !/fixtures/textures/height_maps
