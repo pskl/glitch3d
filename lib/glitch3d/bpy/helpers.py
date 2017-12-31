@@ -18,14 +18,15 @@ BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 RENDER_OUTPUT_PATHS = []
-NORMALS_RENDERING = (random.randint(0, 1) == 1)
+NORMALS_RENDERING = False #(random.randint(0, 1) == 1)
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
 
 def fetch_material(material_name):
-    return bpy.data.materials[material_name]
+    new_material = bpy.data.materials[material_name].copy()
+    return new_material
 
 # Helper methods
 def look_at(obj):
@@ -98,6 +99,7 @@ def camera_location_string(camera):
 
 def assign_material(obj, material):
     obj.data.materials.append(material)
+    return material
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material(name = 'Object Material - ', clean=False):
@@ -111,6 +113,9 @@ def random_texture():
     texture_path = TEXTURE_FOLDER_PATH + random.choice(os.listdir(TEXTURE_FOLDER_PATH))
     print("LOADING TEXTURE -> " + texture_path)
     return bpy.data.images.load(texture_path)
+
+def random_material():
+    return random.choice(bpy.data.materials)
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
@@ -162,25 +167,23 @@ def make_object_transparent(obj):
     assign_material(obj, material)
 
 def make_object_emitter(obj, emission_strength):
-    assign_material(obj, fetch_material('emission'))
-    # emission_node = emissive_material.node_tree.nodes['ShaderNodeEmission']
-    # emission_node.inputs[0].default_value = rand_color()
-    # emission_node.inputs[1].default_value = emission_strength
-    # return emission_node
+    emissive_material = assign_material(obj, fetch_material('emission'))
+    emission_node = emissive_material.node_tree.nodes['Emission']
+    emission_node.inputs[0].default_value = rand_color()
+    emission_node.inputs[1].default_value = emission_strength
+    return emission_node
 
 def make_object_gradient_fabulous(obj, color1, color2):
-    # material = create_cycles_material()
-    assign_material(obj, fetch_material('gradient_fabulous'))
-    # assign_material(obj, material)
-    # mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    # gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
-    # gradient_node.gradient_type = 'SPHERICAL'
-    # bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    # material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
-    # material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
-    # assign_node_to_output(material, bsdf_node)
-    # mixer_node.inputs['Color1'].default_value = color1
-    # mixer_node.inputs['Color2'].default_value = color2
+    material = assign_material(obj, fetch_material('gradient_fabulous'))
+    mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
+    gradient_node.gradient_type = 'SPHERICAL'
+    bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+    material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
+    material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
+    assign_node_to_output(material, bsdf_node)
+    mixer_node.inputs['Color1'].default_value = color1
+    mixer_node.inputs['Color2'].default_value = color2
 
 def voronoize(obj, scale = 5.0):
     material = obj.data.materials[-1]
@@ -417,14 +420,15 @@ def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
 def still_routine(index = 1):
-    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-3, 3), 10),round(random.uniform(-3, 3), 10),round(random.uniform(-1, 1), 10)))
-    # randomize_reflectors_colors()
+    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10),round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10), round(random.uniform(-1, 1), 10)))
+    randomize_reflectors_colors()
     make_object_glossy(OCEAN[0])
+    assign_material(SUBJECT, random_material())
     rotate(SUBJECT, index)
     CAMERA.rotation_euler.y += math.radians(round(random.uniform(-50, +50)))
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 1)
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.5)
     if bpy.data.groups['Lines'].objects:
         for l in bpy.data.groups['Lines'].objects:
             rotation = rand_rotation()
@@ -460,7 +464,7 @@ def animation_routine(frame):
             prop.rotation_euler.x += math.radians(5)
     if WIREFRAMES:
         for obj in WIREFRAMES:
-            obj.location.z = math.sin(frame) # mathutils.Vector((0.1, 0.1, 0.1))
+            obj.location.z = math.sin(frame)
             obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
     if bpy.data.groups['Displays'].objects:
         for display in bpy.data.groups['Displays'].objects:

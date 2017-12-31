@@ -61,11 +61,10 @@ LINES = bpy.data.groups['Lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
 
-# Hash which will cache all materials loaded in memory
-MATERIALS = {}
 FISHEYE = True
 COLORS = rand_color_palette(5)
-INITIAL_CAMERA_LOCATION = (3, 3, 1)
+CAMERA_OFFSET = 1
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 
@@ -102,14 +101,14 @@ SUBJECT.select = True
 bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
 SUBJECT.location = ORIGIN
 # make_object_glossy(SUBJECT, YELLOW, 0.01)
-assign_material(SUBJECT, fetch_material('displace'))
+assign_material(SUBJECT, fetch_material('magma'))
 look_at(SUBJECT)
-# let_there_be_light(SCENE)
+let_there_be_light(SCENE)
 
 if debug == False:
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    # load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
