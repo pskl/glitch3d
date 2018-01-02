@@ -107,8 +107,8 @@ let_there_be_light(SCENE)
 
 if debug == False:
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
-    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
-    # load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
@@ -147,7 +147,7 @@ print("Files rendered:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
-# call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-# call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
 print('FINISHED ¯\_(ツ)_/¯')
