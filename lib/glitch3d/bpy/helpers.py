@@ -1,12 +1,12 @@
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-WIREFRAME_THICKNESS = random.uniform(0.006, 0.02)
+WIREFRAME_THICKNESS = random.uniform(0.0006, 0.006)
 DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
 ORIGIN  = (0,0,2)
-NUMBER_OF_FRAMES = 300
+NUMBER_OF_FRAMES = 100
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
 DISPLAY_SCALE = (2, 2, 2)
@@ -98,7 +98,11 @@ def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
 def assign_material(obj, material):
-    obj.data.materials.append(material)
+    flush_materials(obj.data.materials)
+    if len(obj.data.materials) == 0:
+        obj.data.materials.append(material)
+    else:
+        obj.data.materials[0] = material
     return material
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
@@ -115,7 +119,7 @@ def random_texture():
     return bpy.data.images.load(texture_path)
 
 def random_material():
-    return random.choice(bpy.data.materials)
+    return fetch_material(random.choice(bpy.data.materials).name)
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
@@ -166,7 +170,7 @@ def make_object_transparent(obj):
     assign_node_to_output(material, trans)
     assign_material(obj, material)
 
-def make_object_emitter(obj, emission_strength):
+def make_object_emitter(obj, emission_strength = 1):
     emissive_material = assign_material(obj, fetch_material('emission'))
     emission_node = emissive_material.node_tree.nodes['Emission']
     emission_node.inputs[0].default_value = rand_color()
@@ -226,11 +230,11 @@ def spawn_text():
     SCENE.objects.link(new_text)
     return new_text
 
-def wireframize(obj):
+def wireframize(obj, emission_strength = 1):
     SCENE.objects.active = obj
     bpy.ops.object.modifier_add(type='WIREFRAME')
     obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
-    make_object_emitter(obj, 1)
+    make_object_emitter(obj, emission_strength)
     return obj
 
 def shuffle(obj):
@@ -363,11 +367,17 @@ def flush_objects(objs = bpy.data.objects):
 # Delete materials
 def flush_materials(mats = bpy.data.materials):
     for mat in mats:
-        bpy.data.materials.remove(mat, do_unlink=True)
+        if mat != None:
+            bpy.data.materials.remove(mat, do_unlink=True)
 
 def flush_nodes(material):
     for node in material.node_tree.nodes:
         material.node_tree.nodes.remove(node)
+
+def delete_useless_materials():
+    for mat in bpy.data.materials:
+        if mat.name.startswith('Material'):
+            bpy.data.materials.remove(mat, do_unlink=True)
 
 # Rotate hue to generate palette
 def adjacent_colors(r, g, b, number):
