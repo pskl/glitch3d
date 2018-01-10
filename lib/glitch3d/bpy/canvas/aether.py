@@ -40,8 +40,11 @@ spawn_emitter_fuild((0,0,((RADIUS/2) - 2)),mathutils.Vector((0.5, 0.5, -2)))
 spawn_emitter_fuild((0,3,((RADIUS/2) - 2)),mathutils.Vector((0., -0.5, -0.5)))
 
 make_object_gradient_fabulous(container, rand_color(), rand_color())
+container.modifiers.new(name='Container Subsurf', type='SUBSURF')
 make_object_fluid_collider(SUBJECT)
-make_object_fluid_collider(OCEAN[1])
+
+if OCEAN:
+  make_object_fluid_collider(OCEAN[1])
 
 # Bake animation
 print("*** Baking commence *** (you might see a bunch of gibberish popping up cause baking is not supposed to be used headlessly")

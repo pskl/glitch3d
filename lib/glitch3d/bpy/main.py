@@ -48,6 +48,11 @@ load_file(os.path.join(path + '/glitch3d/bpy/helpers.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
+# Fill base materials list
+for mat in bpy.data.materials:
+    MATERIALS_NAMES.append(mat.name)
+print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
+
 # Create groups
 WIREFRAMES = []
 VORONOIED = []
@@ -102,15 +107,16 @@ SUBJECT.location = ORIGIN
 
 # make_object_glossy(SUBJECT, YELLOW, 0.01)
 assign_material(SUBJECT, fetch_material('magma'))
-SUBJECT.modifiers.new(name='SUBSURF', type='SUBSURF')
+SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 
 look_at(SUBJECT)
 let_there_be_light(SCENE)
 
 if debug == False:
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'particles.py'))
     load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
@@ -149,7 +155,8 @@ print("Files rendered:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
-call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+if animate == False and debug == False:
+    call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
 print('FINISHED ¯\_(ツ)_/¯')
