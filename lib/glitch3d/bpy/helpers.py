@@ -19,6 +19,7 @@ PINK = (0.8, 0.2, 0.7, 1.0)
 WORDS = string.ascii_lowercase
 RENDER_OUTPUT_PATHS = []
 NORMALS_RENDERING = False #(random.randint(0, 1) == 1)
+MATERIALS_NAMES = []
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
@@ -28,7 +29,6 @@ def fetch_material(material_name):
     new_material = bpy.data.materials[material_name].copy()
     return new_material
 
-# Helper methods
 def look_at(obj):
     location_camera = CAMERA.matrix_world.to_translation()
     location_object = obj.matrix_world.to_translation()
@@ -118,8 +118,8 @@ def random_texture():
     print("LOADING TEXTURE -> " + texture_path)
     return bpy.data.images.load(texture_path)
 
-def random_material():
-    return fetch_material(random.choice(bpy.data.materials).name)
+def random_material(blacklist=[]):
+    return fetch_material(random.choice(MATERIALS_NAMES))
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
@@ -432,13 +432,14 @@ def pitched_array(minimum, maximum, pitch):
 def still_routine(index = 1):
     CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10),round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10), round(random.uniform(-1, 1), 10)))
     randomize_reflectors_colors()
-    make_object_glossy(OCEAN[0])
+    if OCEAN:
+        make_object_glossy(OCEAN[0])
     assign_material(SUBJECT, random_material())
     rotate(SUBJECT, index)
     CAMERA.rotation_euler.y += math.radians(round(random.uniform(-50, +50)))
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.5)
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.3)
     if bpy.data.groups['Lines'].objects:
         for l in bpy.data.groups['Lines'].objects:
             rotation = rand_rotation()
@@ -460,11 +461,13 @@ def animation_routine(frame):
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
     CAMERA.location = CAMERA_PATH[frame]
     look_at(SUBJECT)
+    assign_material(SUBJECT, random_material())
     randomize_reflectors_colors()
     displace(SUBJECT)
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].time += 0.5
-    make_object_glossy(OCEAN[0])
+    if OCEAN:
+        make_object_glossy(OCEAN[0])
     SUBJECT.rotation_euler.z += math.radians(1)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(1)
