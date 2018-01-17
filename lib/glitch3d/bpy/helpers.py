@@ -1,7 +1,7 @@
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-WIREFRAME_THICKNESS = random.uniform(0.0006, 0.006)
+WIREFRAME_THICKNESS = random.uniform(0.0004, 0.002)
 DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
@@ -28,6 +28,16 @@ def pry():
 def fetch_material(material_name):
     new_material = bpy.data.materials[material_name].copy()
     return new_material
+
+def apply_displacement(obj):
+    subdivide(obj, 6)
+    subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
+    subsurf.levels = 2
+    subsurf.render_levels = 2
+    displace = obj.modifiers.new(name='displace', type='DISPLACE')
+    new_texture = bpy.data.textures.new(name='texture', type='IMAGE')
+    new_texture.image = random_height_map()
+    displace.texture = new_texture
 
 def look_at(obj):
     location_camera = CAMERA.matrix_world.to_translation()
@@ -117,6 +127,11 @@ def random_texture():
     texture_path = TEXTURE_FOLDER_PATH + random.choice(os.listdir(TEXTURE_FOLDER_PATH))
     print("LOADING TEXTURE -> " + texture_path)
     return bpy.data.images.load(texture_path)
+
+def random_height_map():
+    path = HEIGHT_MAP_FOLDER_PATH + random.choice(os.listdir(HEIGHT_MAP_FOLDER_PATH))
+    print("LOADING HEIGHT MAP -> " + path)
+    return bpy.data.images.load(path)
 
 def random_material(blacklist=[]):
     return fetch_material(random.choice(MATERIALS_NAMES))
@@ -212,9 +227,9 @@ def random_text():
     global WORDS
     return random.choice(WORDS)
 
-def create_mesh(name, verts, faces, location):
+def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")
-    mesh_data.from_pydata(verts, [], faces)
+    mesh_data.from_pydata(verts, edges, faces)
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)
     obj.location = location
@@ -232,8 +247,8 @@ def spawn_text():
 
 def wireframize(obj, emission_strength = 1):
     SCENE.objects.active = obj
-    bpy.ops.object.modifier_add(type='WIREFRAME')
-    obj.modifiers['Wireframe'].thickness = WIREFRAME_THICKNESS
+    obj.modifiers.new(name = 'wireframe', type='WIREFRAME')
+    obj.modifiers['wireframe'].thickness = WIREFRAME_THICKNESS
     make_object_emitter(obj, emission_strength)
     return obj
 
@@ -242,8 +257,8 @@ def shuffle(obj):
     obj.scale = rand_scale_vector()
     obj.rotation_euler = rand_rotation()
 
-def series(length):
-    return list(map(lambda x: (0, x, math.cos(x)), pitched_array(0.0, length, 0.1)))
+def series(length, function = math.cos):
+    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, 0.1)))
 
 def randomize_reflectors_colors():
     for r in bpy.data.groups['Reflectors'].objects:
@@ -334,6 +349,7 @@ def subdivide(object, cuts):
     bpy.ops.object.mode_set(mode='EDIT')
     for index in range(0, cuts):
         bpy.ops.mesh.subdivide(cuts)
+    bpy.ops.object.editmode_toggle()
 
 def clone(obj):
     new_obj = obj.copy()
@@ -412,6 +428,13 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
+def build_segment(location, function = series, length = 2):
+    verts = function(length)
+    edges = []
+    for v in range(0, (len(verts) - 1)):
+        edges.append([v, v+1])
+    return create_mesh('Segment ' + str(uuid.uuid1()), verts, [], location, edges)
+
 def camera_path(pitch = NUMBER_OF_FRAMES):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
@@ -429,14 +452,14 @@ def camera_path(pitch = NUMBER_OF_FRAMES):
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
-def still_routine(index = 1):
-    CAMERA.location = mathutils.Vector(INITIAL_CAMERA_LOCATION) + mathutils.Vector((round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10),round(random.uniform(-CAMERA_OFFSET, CAMERA_OFFSET), 10), round(random.uniform(-1, 1), 10)))
+def still_routine(max_index, index = 1):
+    CAMERA.location = CAMERA_PATH[int((len(CAMERA_PATH) / max_index) * index)]
+    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-25, +25)))
     randomize_reflectors_colors()
     if OCEAN:
         make_object_glossy(OCEAN[0])
     assign_material(SUBJECT, random_material())
     rotate(SUBJECT, index)
-    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-50, +50)))
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
         ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.3)
@@ -458,7 +481,6 @@ def still_routine(index = 1):
             rotate(display, index)
 
 def animation_routine(frame):
-    assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
     CAMERA.location = CAMERA_PATH[frame]
     look_at(SUBJECT)
     assign_material(SUBJECT, random_material())
@@ -468,6 +490,8 @@ def animation_routine(frame):
         ocean.modifiers['Ocean'].time += 0.5
     if OCEAN:
         make_object_glossy(OCEAN[0])
+    for particle_system in bpy.data.particles:
+        particle_system.phase_factor_random += 0.01
     SUBJECT.rotation_euler.z += math.radians(1)
     for l in bpy.data.groups['Lines'].objects:
         l.rotation_euler.x += math.radians(1)
@@ -520,8 +544,8 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
     bg_node.inputs[0].default_value = rand_color()
 
-def add_frame(collection = bpy.data.objects):
-    for obj in collection:
+def add_frame(collection = bpy.data.objects, blacklist = set([])):
+    for obj in set(collection) - blacklist:
         obj.keyframe_insert(data_path="rotation_euler", index=-1)
         obj.keyframe_insert(data_path="location", index=-1)
         obj.keyframe_insert(data_path="scale", index=-1)

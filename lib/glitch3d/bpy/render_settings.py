@@ -23,6 +23,11 @@ def render_normals():
     node_tree.links.new(enter.outputs['Normal'], multiply.inputs[1])
     node_tree.links.new(invert.outputs[0], composite.inputs[0])
 
+def isometric_camera():
+    CAMERA.location = (12, -12, 12)
+    CAMERA.rotation_euler = (54.8, 0, 45)
+    CAMERA.data.type = 'ORTHO'
+
 def render_settings(animate, mode, normals):
     SCENE.render.resolution_x = 2000
     SCENE.render.resolution_y = 2000

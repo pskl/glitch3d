@@ -34,7 +34,7 @@ module Glitch3d
     source_file = random_fixture if source_file.nil?
     print_version if args.has_key?('version')
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
-    self.class.include infer_strategy(args['mode'] || 'default')
+    self.class.include infer_strategy(args['mode'])
     @quality = args['quality'] || 'low'
     source_file = source_file
     base_file_name = source_file&.gsub(/.obj/, '')
@@ -60,7 +60,12 @@ module Glitch3d
   end
 
   def infer_strategy(mode)
-    return [ Glitch3d::Default, Glitch3d::Duplication, Glitch3d::FindAndReplace, Glitch3d::Localized, Glitch3d::None].sample if mode.nil?
+    if !mode
+      mode_chosen = [ Glitch3d::Default, Glitch3d::Duplication, Glitch3d::FindAndReplace, Glitch3d::Localized, Glitch3d::None].sample
+      puts "Defaulting to #{mode_chosen}"
+      return mode_chosen
+    end
+    puts "Using #{mode}"
     begin
       return eval("Glitch3d::#{mode.to_s.gsub(/(?:_|^)(\w)/){$1.upcase}}")
     rescue

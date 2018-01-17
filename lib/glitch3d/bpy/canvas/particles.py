@@ -16,3 +16,4 @@ bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
 cube = last_added_object('CUBE')
 assign_material(cube, random_material(['emission']))
 spawn_particles_system(SUBJECT, cube)
+
