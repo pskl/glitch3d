@@ -71,6 +71,7 @@ CAMERA_OFFSET = 1
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, 1)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
+HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 
 # Scene
 context = bpy.context
@@ -115,28 +116,30 @@ if debug == False:
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
+    x = 0.08
+    while len(camera_path(x)) <= NUMBER_OF_FRAMES:
+        x -= 0.01
+    CAMERA_PATH = camera_path(x)
+    assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
+
     if animate:
         print('ANIMATION RENDERING BEGIN')
         SCENE.frame_start = 0
         SCENE.frame_end = NUMBER_OF_FRAMES
 
-        x = 0.08
-        while len(camera_path(x)) <= NUMBER_OF_FRAMES:
-            x -= 0.01
-        CAMERA_PATH = camera_path(x)
-
         for frame in range(0, NUMBER_OF_FRAMES):
             SCENE.frame_set(frame)
             animation_routine(frame)
-            add_frame()
+            look_at(SUBJECT)
+            add_frame(bpy.data.objects, set([bpy.data.objects['fluid_container']]))
         shoot(output_name(model_path))
 
     else:
         print('STILL RENDERING BEGIN')
-        for index in range(0, int(shots_number)):
+        for index in range(0, shots_number):
             print("-------------------------- " + str(index) + " --------------------------")
             look_at(SUBJECT)
-            still_routine(index)
+            still_routine(shots_number, index)
             SCENE.frame_set(int(SCENE.frame_end/(index+1)))
             shoot(output_name(model_path, index))
 else:

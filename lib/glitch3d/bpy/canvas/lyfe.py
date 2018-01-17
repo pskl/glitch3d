@@ -37,7 +37,7 @@ def life(l):
                             x_index = (x + i + SIZE) % SIZE
                             y_index = (y + j + SIZE) % SIZE
                             z_index = (z + k + SIZE) % SIZE
-                            print("Checking: " + str((x_index, y_index, z_index)) + "for: " + str((x, y, z)))
+                            print("Checking: " + str((x_index, y_index, z_index)) + " for: " + str((x, y, z)))
                             if not( x_index == x and y_index == y and z_index == z):
                                 neighbors_alive_count += cells[x_index][y_index][z_index]
                 if ( cells[x][y][z] == 1 and (neighbors_alive_count == 2 or neighbors_alive_count == 3)):

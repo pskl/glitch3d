@@ -41,12 +41,10 @@ make_object_gradient_fabulous(m4a1, rand_color(), rand_color())
 # Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 floor = last_added_object('Plane')
+floor.name = 'Floor'
 floor.scale = (20,20,20)
 subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
-texture_object(floor)
-unwrap_model(floor)
-bpy.data.groups['Displays'].objects.link(floor)
 
 OCEAN = add_ocean(10, 20)
 
