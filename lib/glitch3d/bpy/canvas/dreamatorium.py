@@ -57,7 +57,7 @@ for j in range(0,20):
         new_line.location.z += i / 3
 
 # Add flying letters, lmao
-for index in range(1, len(WORDS)):
+for index in range(1, 5):
     new_object = spawn_text()
     bpy.data.groups['Texts'].objects.link(new_object)
     props.append(new_object)

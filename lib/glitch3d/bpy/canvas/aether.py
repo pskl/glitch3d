@@ -38,6 +38,7 @@ spawn_emitter_fuild((0,0,((RADIUS/2) - 2)),mathutils.Vector((0.5, 0.5, -2)))
 spawn_emitter_fuild((0,3,((RADIUS/2) - 2)),mathutils.Vector((0., -0.5, -0.5)))
 
 make_object_gradient_fabulous(container, rand_color(), rand_color())
+assign_material(SUBJECT, fetch_material('colorshift'))
 container.modifiers.new(name='Container Subsurf', type='SUBSURF')
 make_object_fluid_collider(SUBJECT)
 
