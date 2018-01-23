@@ -16,7 +16,6 @@ YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
-WORDS = string.ascii_lowercase
 RENDER_OUTPUT_PATHS = []
 NORMALS_RENDERING = False #(random.randint(0, 1) == 1)
 MATERIALS_NAMES = []
@@ -29,7 +28,7 @@ def fetch_material(material_name):
     new_material = bpy.data.materials[material_name].copy()
     return new_material
 
-def apply_displacement(obj):
+def apply_displacement(obj, strength = 0.2):
     subdivide(obj, 6)
     subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
     subsurf.levels = 2
@@ -38,6 +37,7 @@ def apply_displacement(obj):
     new_texture = bpy.data.textures.new(name='texture', type='IMAGE')
     new_texture.image = random_height_map()
     displace.texture = new_texture
+    displace.strength = strength
 
 def look_at(obj):
     location_camera = CAMERA.matrix_world.to_translation()
@@ -139,10 +139,10 @@ def random_material(blacklist=[]):
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
     texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
-    emission_node = material.node_tree.nodes.new('ShaderNodeEmission')
-    material.node_tree.links.new(texture_node.outputs['Color'], emission_node.inputs['Color'])
+    node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
+    material.node_tree.links.new(texture_node.outputs['Color'], node.inputs['Color'])
     texture_node.image = texture
-    assign_node_to_output(material, emission_node)
+    assign_node_to_output(material, node)
 
 def assign_node_to_output(material, new_node):
     assert material.use_nodes == True
@@ -216,6 +216,7 @@ def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
     assign_material(obj, new_material)
+    apply_displacement(display, 0.01)
 
 def duplicate_object(obj):
     new_object = obj.copy()
@@ -224,8 +225,9 @@ def duplicate_object(obj):
     return new_object
 
 def random_text():
-    global WORDS
-    return random.choice(WORDS)
+    print("new word")
+    lines = open(FIXTURES_FOLDER_PATH = path + '/../fixtures/text/strings.txt').readlines()
+    return random.sample(lines[random.randrange(len(lines))])
 
 def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")
@@ -458,11 +460,11 @@ def still_routine(max_index, index = 1):
     randomize_reflectors_colors()
     if OCEAN:
         make_object_glossy(OCEAN[0])
-    assign_material(SUBJECT, random_material())
+    assign_material(SUBJECT, random_material(['emission']))
     rotate(SUBJECT, index)
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.3)
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.1)
     if bpy.data.groups['Lines'].objects:
         for l in bpy.data.groups['Lines'].objects:
             rotation = rand_rotation()
