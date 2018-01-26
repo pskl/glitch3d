@@ -28,14 +28,14 @@ def fetch_material(material_name):
     new_material = bpy.data.materials[material_name].copy()
     return new_material
 
-def apply_displacement(obj, strength = 0.2):
-    subdivide(obj, 6)
+def apply_displacement(obj, strength = 0.2, subdivisions = 2):
+    subdivide(obj, subdivisions)
     subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
     subsurf.levels = 2
     subsurf.render_levels = 2
     displace = obj.modifiers.new(name='displace', type='DISPLACE')
     new_texture = bpy.data.textures.new(name='texture', type='IMAGE')
-    new_texture.image = random_height_map()
+    new_texture.image = random_height_map(low = True)
     displace.texture = new_texture
     displace.strength = strength
 
@@ -128,8 +128,11 @@ def random_texture():
     print("LOADING TEXTURE -> " + texture_path)
     return bpy.data.images.load(texture_path)
 
-def random_height_map():
-    path = HEIGHT_MAP_FOLDER_PATH + random.choice(os.listdir(HEIGHT_MAP_FOLDER_PATH))
+def random_height_map(low = False):
+    if low:
+        path = HEIGHT_MAP_FOLDER_PATH + 'low.png'
+    else:
+        path = HEIGHT_MAP_FOLDER_PATH + random.choice(os.listdir(HEIGHT_MAP_FOLDER_PATH))
     print("LOADING HEIGHT MAP -> " + path)
     return bpy.data.images.load(path)
 
@@ -216,7 +219,7 @@ def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
     assign_material(obj, new_material)
-    apply_displacement(display, 0.01)
+    # apply_displacement(display, 0.01)
 
 def duplicate_object(obj):
     new_object = obj.copy()
@@ -225,9 +228,8 @@ def duplicate_object(obj):
     return new_object
 
 def random_text():
-    print("new word")
-    lines = open(FIXTURES_FOLDER_PATH = path + '/../fixtures/text/strings.txt').readlines()
-    return random.sample(lines[random.randrange(len(lines))])
+    lines = open(FIXTURES_FOLDER_PATH + 'text/strings.txt').readlines()
+    return lines[random.randrange(len(lines))]
 
 def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")
@@ -259,8 +261,8 @@ def shuffle(obj):
     obj.scale = rand_scale_vector()
     obj.rotation_euler = rand_rotation()
 
-def series(length, function = math.cos):
-    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, 0.1)))
+def series(length, function, pitch):
+    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
 
 def randomize_reflectors_colors():
     for r in bpy.data.groups['Reflectors'].objects:
@@ -360,13 +362,14 @@ def clone(obj):
     SCENE.objects.link(new_obj)
     return new_obj
 
-def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4)):
+def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale = 0.5):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)
     ocean = last_added_object('CUBE')
     ocean.scale = scale
     ocean.modifiers.new(name='Ocean', type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size
     ocean.modifiers["Ocean"].resolution = resolution
+    ocean.modifiers["Ocean"].wave_scale = wave_scale
     ocean.modifiers["Ocean"].depth = depth
     make_object_glossy(ocean, rand_color())
     make_object_gradient_fabulous(ocean, rand_color(), rand_color())
@@ -397,23 +400,33 @@ def delete_useless_materials():
         if mat.name.startswith('Material'):
             bpy.data.materials.remove(mat, do_unlink=True)
 
-# Rotate hue to generate palette
+# Rotate hue to generate a somewhat harmonious palette
 def adjacent_colors(r, g, b, number):
-    angle = (360 / 5) / 360
+    angle = (360 / number) / 360 # angles are in ?
     h, l, s = colorsys.rgb_to_hls(r, g, b)
     hue_positions = []
     for i in range(number):
         hue_positions.append(angle * i)
     h = [(h + offset) % 1 for offset in hue_positions]
-    adjacent = [colorsys.hls_to_rgb(hi, l, s) for hi in h]
-    # add alpha component
-    res = list(map(lambda x: list(x), adjacent))
-    for i in res:
-        i.append(1)
-    return res
+    return [colorsys.hls_to_rgb(hi, l, s) for hi in h]
+
+# Use saturation increments to generate a color ramp palette
+def color_ramp(r, g, b, number):
+    saturation_increment = 100 / number
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    saturations = []
+    for i in range(number):
+        saturations.append(i * saturation_increment)
+    s = [(s + offset) % 1 for offset in saturations]
+    return [colorsys.hls_to_rgb(h, l, sat) for sat in s]
 
 def rand_color_palette(number):
-    return adjacent_colors(rand_color_value(), rand_color_value(), rand_color_value(), number)
+    res = list(map(lambda x: list(x), adjacent_colors(rand_color_value(), rand_color_value(), rand_color_value(), number)))
+    # add alpha component
+    for i in res:
+        i.append(1)
+    print("palette: " + str(res))
+    return res
 
 def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=random.uniform(1,3), location=ORIGIN):
     verts=[]
@@ -430,8 +443,8 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
-def build_segment(location, function = series, length = 2):
-    verts = function(length)
+def build_segment(location, function, length = 2, pitch = 0.5):
+    verts = series(length, function, pitch)
     edges = []
     for v in range(0, (len(verts) - 1)):
         edges.append([v, v+1])
@@ -442,13 +455,13 @@ def camera_path(pitch = NUMBER_OF_FRAMES):
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
     for y in pitched_array(initial_x, -initial_x, pitch):
-       res.append((initial_x, y, math.sin(0.5*y) + 0.5))
+       res.append((initial_x, y, 0.5 * math.sin(y) + 0.5))
     for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_x, math.sin(0.5*x) + 0.5))
+        res.append((x,-initial_x, 0.5 * math.sin(x) + 0.5))
     for y in pitched_array(-initial_x, initial_x, pitch):
-        res.append((-initial_x, y, math.sin(0.5*y) + 0.5))
+        res.append((-initial_x, y, 0.5 * math.sin(y) + 0.5))
     for x in pitched_array(-initial_x, initial_x, pitch):
-        res.append((x, initial_x, math.sin(0.5*x) + 0.5))
+        res.append((x, initial_x, 0.5 * math.sin(x) + 0.5))
     return res
 
 def pitched_array(minimum, maximum, pitch):
@@ -489,6 +502,7 @@ def animation_routine(frame):
     randomize_reflectors_colors()
     displace(SUBJECT)
     for ocean in OCEAN:
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
         ocean.modifiers['Ocean'].time += 0.5
     if OCEAN:
         make_object_glossy(OCEAN[0])
