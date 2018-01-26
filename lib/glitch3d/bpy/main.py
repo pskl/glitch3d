@@ -109,10 +109,10 @@ SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
 
 if debug == False:
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'particles.py'))
-    load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'particles.py'))
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
+    load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
+    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 

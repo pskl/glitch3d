@@ -15,13 +15,13 @@ container.modifiers['container'].settings.surface_subdivisions = 100
 container.modifiers['container'].settings.viscosity_exponent = 6
 container.modifiers['container'].settings.viscosity_base = 1.0
 container.modifiers['container'].settings.simulation_scale = 1
-container.location = (0, 0, 0)
+container.location = (0.0, 0.0, 17)
 
 def spawn_emitter_fuild(location, emission_vector):
   bpy.ops.mesh.primitive_uv_sphere_add(location=location)
   emitter = last_added_object('Sphere')
   emitter.cycles_visibility.camera = False
-  emitter.name = 'Fluid Emitter' + str(uuid.uuid1())
+  emitter.name = 'Fluid Emitter ' + str(uuid.uuid1())
   emitter.modifiers.new(name='emitter', type='FLUID_SIMULATION')
   emitter.modifiers['emitter'].settings.type = 'INFLOW'
   emitter.modifiers['emitter'].settings.inflow_velocity = emission_vector
@@ -34,16 +34,10 @@ def make_object_fluid_collider(obj):
     obj.modifiers['obstacle'].settings.volume_initialization = 'BOTH'
     obj.modifiers['obstacle'].settings.partial_slip_factor = 0.15
 
-spawn_emitter_fuild((0,0,((RADIUS/2) - 2)),mathutils.Vector((0.5, 0.5, -2)))
-spawn_emitter_fuild((0,3,((RADIUS/2) - 2)),mathutils.Vector((0., -0.5, -0.5)))
+spawn_emitter_fuild((0,0,((RADIUS/2) - 2)),mathutils.Vector((0.5, 0.5, -1)))
+spawn_emitter_fuild((0,3,((RADIUS/2) - 2)),mathutils.Vector((-0.5, -0.5, -1)))
 
-make_object_gradient_fabulous(container, rand_color(), rand_color())
-assign_material(SUBJECT, fetch_material('colorshift'))
-container.modifiers.new(name='Container Subsurf', type='SUBSURF')
-make_object_fluid_collider(SUBJECT)
-
-if OCEAN:
-  make_object_fluid_collider(OCEAN[1])
+assign_material(container, fetch_material('colorshift'))
 
 # Bake animation
 print("*** Baking commence *** (you might see a bunch of gibberish popping up cause baking is not supposed to be used headlessly")
