@@ -1,8 +1,7 @@
 REFLECTOR_SCALE = random.uniform(5, 8)
 REFLECTOR_STRENGTH = random.uniform(10, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-WIREFRAME_THICKNESS = random.uniform(0.0004, 0.002)
-DISPLACEMENT_AMPLITUDE = random.uniform(0.02, 0.1)
+WIREFRAME_THICKNESS = random.uniform(0.0004, 0.001)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
 ORIGIN  = (0,0,2)
@@ -17,8 +16,9 @@ GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
-NORMALS_RENDERING = False #(random.randint(0, 1) == 1)
+NORMALS_RENDERING = (random.randint(0, 1) == 1)
 MATERIALS_NAMES = []
+FUNCTIONS = [math.sin, math.cos, (lambda x: (0.5 * math.sin(0.5*x) * math.cos(x)))]
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
@@ -56,10 +56,7 @@ def shoot(filepath):
         bpy.ops.render.render(write_still=True)
 
 def output_name(model_path, index = 0):
-    if animate:
-        return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.avi'
-    else:
-        return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '.png'
+    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + ('.avi' if animate else '.png')
 
 def rotate(model_object, index):
     model_object.rotation_euler.z = math.radians(index * (360.0 / shots_number))
@@ -219,7 +216,7 @@ def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
     assign_material(obj, new_material)
-    # apply_displacement(display, 0.01)
+    displace(obj, 0.01)
 
 def duplicate_object(obj):
     new_object = obj.copy()
@@ -237,7 +234,7 @@ def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)
     obj.location = location
-    SCENE.objects.link(obj)
+    bpy.data.scenes[-1].objects.link(obj)
     return obj
 
 def spawn_text():
@@ -323,10 +320,6 @@ def build_object_line(obj, size, z_index, y_index, radius):
         new_obj.location = ((last_object_group(obj).location.x + 2 * radius), y_index, z_index)
     return res
 
-# Displace vertex by random offset
-def displace_vector(vector):
-    return mathutils.Vector((vector.x + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.y + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE), vector.z + random.uniform(-DISPLACEMENT_AMPLITUDE, DISPLACEMENT_AMPLITUDE)))
-
 # Replace vertex coordinate everywhere
 def find_and_replace(vector, target, replacement):
     return mathutils.Vector((float(str(vector.x).replace(target, replacement)), float(str(vector.y).replace(target, replacement)), float(str(vector.z).replace(target, replacement))))
@@ -340,11 +333,11 @@ def glitch(object):
     for vertex in object.data.vertices:
         vertex.co = find_and_replace(vertex.co, target, replacement)
 
-def displace(object):
+def displace(object, max_amplitude = 0.1):
     bpy.ops.object.mode_set(mode='OBJECT')
     assert object.type == 'MESH'
     for vertex in object.data.vertices:
-        vertex.co = displace_vector(vertex.co)
+        vertex.co = mathutils.Vector((vertex.co.x + random.uniform(-max_amplitude, max_amplitude), vertex.co.y + random.uniform(-max_amplitude, max_amplitude), vertex.co.z + random.uniform(-max_amplitude, max_amplitude)))
 
 def subdivide(object, cuts):
     if SCENE.objects.active != object:
@@ -421,7 +414,8 @@ def color_ramp(r, g, b, number):
     return [colorsys.hls_to_rgb(h, l, sat) for sat in s]
 
 def rand_color_palette(number):
-    res = list(map(lambda x: list(x), adjacent_colors(rand_color_value(), rand_color_value(), rand_color_value(), number)))
+    function = random.choice([color_ramp, adjacent_colors])
+    res = list(map(lambda x: list(x), function(rand_color_value(), rand_color_value(), rand_color_value(), number)))
     # add alpha component
     for i in res:
         i.append(1)
@@ -450,50 +444,22 @@ def build_segment(location, function, length = 2, pitch = 0.5):
         edges.append([v, v+1])
     return create_mesh('Segment ' + str(uuid.uuid1()), verts, [], location, edges)
 
-def camera_path(pitch = NUMBER_OF_FRAMES):
+def camera_path(pitch, function):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
     initial_x = INITIAL_CAMERA_LOCATION[0]
     for y in pitched_array(initial_x, -initial_x, pitch):
-       res.append((initial_x, y, 0.5 * math.sin(y) + 0.5))
+       res.append((initial_x, y, function(y)))
     for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_x, 0.5 * math.sin(x) + 0.5))
+        res.append((x,-initial_x, function(x)))
     for y in pitched_array(-initial_x, initial_x, pitch):
-        res.append((-initial_x, y, 0.5 * math.sin(y) + 0.5))
+        res.append((-initial_x, y, function(y)))
     for x in pitched_array(-initial_x, initial_x, pitch):
-        res.append((x, initial_x, 0.5 * math.sin(x) + 0.5))
+        res.append((x, initial_x, function(x)))
     return res
 
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
-
-def still_routine(max_index, index = 1):
-    CAMERA.location = CAMERA_PATH[int((len(CAMERA_PATH) / max_index) * index)]
-    CAMERA.rotation_euler.y += math.radians(round(random.uniform(-25, +25)))
-    randomize_reflectors_colors()
-    if OCEAN:
-        make_object_glossy(OCEAN[0])
-    assign_material(SUBJECT, random_material(['emission']))
-    rotate(SUBJECT, index)
-    for ocean in OCEAN:
-        ocean.modifiers['Ocean'].random_seed = round(random.uniform(0, 100))
-        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.1)
-    if bpy.data.groups['Lines'].objects:
-        for l in bpy.data.groups['Lines'].objects:
-            rotation = rand_rotation()
-            l.rotation_euler = rotation
-    if props:
-        for prop in props:
-            prop.location = rand_location()
-            prop.rotation_euler = rand_rotation()
-    if WIREFRAMES:
-        for obj in WIREFRAMES:
-            obj.location += mathutils.Vector((random.uniform(0,1),random.uniform(0,1),random.uniform(0,1)))
-            obj.rotation_euler = rand_rotation()
-    if bpy.data.groups['Displays'].objects:
-        for display in bpy.data.groups['Displays'].objects:
-            display.location = rand_location()
-            rotate(display, index)
 
 def animation_routine(frame):
     CAMERA.location = CAMERA_PATH[frame]
