@@ -6,13 +6,13 @@ m4a1.scale = (0.5, 0.5, 0.5)
 props.append(m4a1)
 
 # Add props
-rand_primitive = random.choice(PRIMITIVES)
-elements = build_composite_object(rand_primitive, 4, 1)
+# rand_primitive = random.choice(PRIMITIVES)
+# elements = build_composite_object(rand_primitive, 4, 1)
 
-for l1 in elements:
-    for l2 in l1:
-        for obj in l2:
-            WIREFRAMES.append(obj)
+# for l1 in elements:
+#     for l2 in l1:
+#         for obj in l2:
+#             WIREFRAMES.append(obj)
 
 # Set up virtual displays
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
@@ -32,6 +32,7 @@ display2.rotation_euler.z += math.radians(120)
 for display in bpy.data.groups['Displays'].objects:
     display.rotation_euler.x += math.radians(90)
     display.scale = DISPLAY_SCALE
+    # subdivide(display, 1)
     texture_object(display)
     unwrap_model(display)
 
@@ -57,14 +58,14 @@ OCEAN = add_ocean(10, 20)
 #         new_line.location.z += i / 3
 
 # Add flying letters, lmao
-for index in range(1, 5):
-    new_object = spawn_text()
-    bpy.data.groups['Texts'].objects.link(new_object)
-    props.append(new_object)
-    text_scale = random.uniform(0.75, 3)
-    make_object_glossy(new_object, rand_color(), 0.0)
-    new_object.scale = (text_scale, text_scale, text_scale)
-    new_object.location = rand_location()
+# for index in range(1, 5):
+#     new_object = spawn_text()
+#     bpy.data.groups['Texts'].objects.link(new_object)
+#     props.append(new_object)
+#     text_scale = random.uniform(0.75, 3)
+#     make_object_glossy(new_object, rand_color(), 0.0)
+#     new_object.scale = (text_scale, text_scale, text_scale)
+#     new_object.location = rand_location()
 
 for obj in WIREFRAMES:
     wireframize(obj)

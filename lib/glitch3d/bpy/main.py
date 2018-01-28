@@ -68,7 +68,7 @@ for primitive in PRIMITIVES:
 FISHEYE = True
 COLORS = rand_color_palette(5)
 CAMERA_OFFSET = 1
-INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, 1)
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, 3)
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
@@ -116,32 +116,36 @@ if debug == False:
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
+    # TODO: fix this absolute crap
     x = 0.08
-    while len(camera_path(x)) <= NUMBER_OF_FRAMES:
+    func = random.choice(FUNCTIONS)
+    while len(camera_path(x, func)) <= NUMBER_OF_FRAMES:
         x -= 0.01
-    CAMERA_PATH = camera_path(x)
+    CAMERA_PATH = camera_path(x, func)
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
+
+    SCENE.frame_start = 0
+    SCENE.frame_end = NUMBER_OF_FRAMES
+    for frame in range(0, NUMBER_OF_FRAMES):
+        SCENE.frame_set(frame)
+        animation_routine(frame)
+        look_at(SUBJECT)
+        add_frame(bpy.data.objects)
 
     if animate:
         print('ANIMATION RENDERING BEGIN')
-        SCENE.frame_start = 0
-        SCENE.frame_end = NUMBER_OF_FRAMES
-
-        for frame in range(0, NUMBER_OF_FRAMES):
-            SCENE.frame_set(frame)
-            animation_routine(frame)
-            look_at(SUBJECT)
-            add_frame(bpy.data.objects, set([bpy.data.objects['fluid_container']]))
-        shoot(output_name(model_path))
+        output_path = output_name(model_path)
+        print('AVI file -> ' + output_path)
+        shoot(output_path) # .avi
 
     else:
         print('STILL RENDERING BEGIN')
         for index in range(0, shots_number):
-            print("-------------------------- " + str(index) + " --------------------------")
-            look_at(SUBJECT)
-            still_routine(shots_number, index)
             SCENE.frame_set(int(SCENE.frame_end/(index+1)))
-            shoot(output_name(model_path, index))
+            output_path = output_name(model_path, index)
+            print("-------------------------- " + str(index) + " --------------------------")
+            print("PNG file -> " + output_path)
+            shoot(output_path) # .png
 else:
     look_at(SUBJECT)
     shoot(output_name(model_path))
