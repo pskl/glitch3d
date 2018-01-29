@@ -171,7 +171,9 @@ module Glitch3d
       '-a',
       initial_args['animate'].to_s.capitalize,
       '-d',
-      initial_args['debug'].to_s.capitalize
+      initial_args['debug'].to_s.capitalize,
+      '-frames',
+      initial_args['frames'] || 100.to_s
     ]
     system(*args)
   end
