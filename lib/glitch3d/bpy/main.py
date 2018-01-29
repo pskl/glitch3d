@@ -113,6 +113,7 @@ if debug == False:
     load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
     load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
     # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'frame_generator.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 

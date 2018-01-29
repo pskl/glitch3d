@@ -1,6 +1,6 @@
 # Generate a frame that you can 3D Print
 # generate line -> rotate 45 degrees -> extrude -> mirror end -> cursor to center -> mirror
-import uuid, math
+# import uuid, math
 
 def spawn_frame(segment, side = 20):
   profile = segment
@@ -19,6 +19,6 @@ def spawn_frame(segment, side = 20):
   bpy.ops.object.mode_set(mode='OBJECT')
   return profile
 
-for i in range(0, 10):
+for i in range(0, 3):
   frame = spawn_frame(build_segment((-10, -10, i),  (lambda x: (random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x))), length = 6, pitch = 1.5), side = 20)
   assign_material(frame, random_material())
