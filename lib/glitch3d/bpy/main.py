@@ -16,11 +16,15 @@ def get_args():
     parser.add_argument('-m', '--mode', help="quality mode: low | high")
     parser.add_argument('-p', '--path', help="root path of assets")
     parser.add_argument('-a', '--animate', help="render animation") # bool
+    parser.add_argument('-frames', '--frames', help="number of frames") # int
     parser.add_argument('-d', '--debug', help="render blank scene") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
 args = get_args()
+
+NUMBER_OF_FRAMES = int(args.frames)
+
 file = args.file
 mode = args.mode
 debug = (args.debug == 'True')
@@ -154,7 +158,7 @@ else:
 # Save scene as .blend file
 bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 
-print("Files rendered:")
+print("Files rendered with " + str(NUMBER_OF_FRAMES) + " in simulation:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
