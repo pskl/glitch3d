@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument('-p', '--path', help="root path of assets")
     parser.add_argument('-a', '--animate', help="render animation") # bool
     parser.add_argument('-frames', '--frames', help="number of frames") # int
+    parser.add_argument('-normals', '--normals', help="normal render") # bool
     parser.add_argument('-d', '--debug', help="render blank scene") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
@@ -24,6 +25,7 @@ def get_args():
 args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
+NORMALS_RENDERING = (args.normals == 'True')
 
 file = args.file
 mode = args.mode
@@ -71,8 +73,8 @@ for primitive in PRIMITIVES:
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
-CAMERA_OFFSET = 1
-INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, 3)
+CAMERA_OFFSET = 4
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(4, 10))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'

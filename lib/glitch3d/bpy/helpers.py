@@ -15,7 +15,6 @@ GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
-NORMALS_RENDERING = (random.randint(0, 1) == 1)
 MATERIALS_NAMES = []
 FUNCTIONS = [math.sin, math.cos, (lambda x: (0.5 * math.sin(0.5*x) * math.cos(x)))]
 
@@ -446,12 +445,13 @@ def build_segment(location, function, length = 2, pitch = 0.5):
 def camera_path(pitch, function):
     res = []
     initial_z = INITIAL_CAMERA_LOCATION[2]
+    initial_y = INITIAL_CAMERA_LOCATION[1]
     initial_x = INITIAL_CAMERA_LOCATION[0]
-    for y in pitched_array(initial_x, -initial_x, pitch):
+    for y in pitched_array(initial_y, -initial_y, pitch):
        res.append((initial_x, y, function(y)))
     for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_x, function(x)))
-    for y in pitched_array(-initial_x, initial_x, pitch):
+        res.append((x,-initial_y, function(x)))
+    for y in pitched_array(-initial_y, initial_y, pitch):
         res.append((-initial_x, y, function(y)))
     for x in pitched_array(-initial_x, initial_x, pitch):
         res.append((x, initial_x, function(x)))
