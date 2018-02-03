@@ -1,5 +1,5 @@
-REFLECTOR_SCALE = random.uniform(5, 8)
-REFLECTOR_STRENGTH = random.uniform(10, 15)
+REFLECTOR_SCALE = random.uniform(9, 10)
+REFLECTOR_STRENGTH = random.uniform(12, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
 WIREFRAME_THICKNESS = random.uniform(0.0004, 0.001)
 REPLACE_TARGET = str(random.uniform(0, 9))
@@ -81,11 +81,7 @@ def rand_location_value():
 def rand_color():
     return random.choice(COLORS)
 
-def rand_scale():
-    return round(random.uniform(0, 0.2), 10)
-
-def rand_scale_vector():
-    scale = rand_scale()
+def rand_scale_vector(scale = round(random.uniform(0, 0.2), 2)):
     return(scale, scale, scale)
 
 def unwrap_model(obj):
@@ -217,6 +213,7 @@ def texture_object(obj):
     displace(obj, 0.01)
 
 def duplicate_object(obj):
+    print("Cloning -> " + obj.name)
     new_object = obj.copy()
     new_object.data = obj.data.copy()
     SCENE.objects.link(new_object)
@@ -260,7 +257,7 @@ def series(length, function, pitch):
     return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
 
 def randomize_reflectors_colors():
-    for r in bpy.data.groups['Reflectors'].objects:
+    for r in bpy.data.groups['reflectors'].objects:
         r.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = rand_color()
 
 def add_object(obj, x, y, z, radius):
@@ -462,31 +459,30 @@ def pitched_array(minimum, maximum, pitch):
 
 def animation_routine(frame):
     CAMERA.location = CAMERA_PATH[frame]
-    look_at(SUBJECT)
+    look_at(random.choice(bpy.data.objects))
     assign_material(SUBJECT, random_material())
     randomize_reflectors_colors()
-    displace(SUBJECT)
+    # glitch(SUBJECT)
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
         ocean.modifiers['Ocean'].time += 0.5
-    if OCEAN:
-        make_object_glossy(OCEAN[0])
+        assign_material(ocean, random_material())
     for particle_system in bpy.data.particles:
         particle_system.phase_factor_random += 0.01
     SUBJECT.rotation_euler.z += math.radians(1)
-    for l in bpy.data.groups['Lines'].objects:
+    for l in bpy.data.groups['lines'].objects:
         l.rotation_euler.x += math.radians(1)
         l.rotation_euler.z += math.radians(1)
-    if props:
-        for prop in props:
-            prop.rotation_euler.x += math.radians(5)
-    if WIREFRAMES:
-        for obj in WIREFRAMES:
-            obj.location.z = math.sin(frame)
-            obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
-    if bpy.data.groups['Displays'].objects:
-        for display in bpy.data.groups['Displays'].objects:
-            display.rotation_euler.x += math.radians(2)
+        l.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+    for prop in props:
+        props.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+        prop.rotation_euler.x += math.radians(5)
+    for obj in WIREFRAMES:
+        obj.location.z = math.sin(frame)
+        obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
+    for display in bpy.data.groups['displays'].objects:
+        display.rotation_euler.x += math.radians(2)
+        display.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
 
 def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     line_data = bpy.data.curves.new(name=name,type='CURVE')
@@ -502,28 +498,6 @@ def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     line.location = location
     make_object_emitter(line, 0.8)
     return line
-
-def add_spotlight(location, intensity, radians):
-    bpy.ops.object.lamp_add(type='SPOT', radius=1.0, view_align=False, location=location)
-    spot = last_added_object('Spot')
-    spot.data.node_tree.nodes['Emission'].inputs[1].default_value = intensity
-    spot.data.spot_size = radians
-    return spot
-
-def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorption_intensity = ABSORPTION_INTENSITY):
-    assert world.use_nodes == True
-    output = world.node_tree.nodes['World Output']
-    bg_node = world.node_tree.nodes.new('ShaderNodeBackground')
-    absorption_node = world.node_tree.nodes.new('ShaderNodeVolumeAbsorption')
-    scatter_node = world.node_tree.nodes.new('ShaderNodeVolumeScatter')
-    add_shader = world.node_tree.nodes.new('ShaderNodeAddShader')
-    world.node_tree.links.new(add_shader.outputs[0], output.inputs['Volume'])
-    world.node_tree.links.new(bg_node.outputs['Background'], output.inputs['Surface'])
-    world.node_tree.links.new(scatter_node.outputs[0], add_shader.inputs[0])
-    world.node_tree.links.new(absorption_node.outputs[0], add_shader.inputs[1])
-    scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
-    absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
-    bg_node.inputs[0].default_value = rand_color()
 
 def add_frame(collection = bpy.data.objects, blacklist = set([])):
     for obj in set(collection) - blacklist:

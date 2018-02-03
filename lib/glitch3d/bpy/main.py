@@ -26,6 +26,10 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
+MODULES_ENABLED = ['abstract', 'particles']
+WIREFRAMES = []
+VORONOIED = []
+OCEAN = []
 
 file = args.file
 mode = args.mode
@@ -60,20 +64,16 @@ for mat in bpy.data.materials:
 print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
 
 # Create groups
-WIREFRAMES = []
-VORONOIED = []
-OCEAN = []
-
-for s in ['Texts', 'Lines', 'Displays', 'Reflectors']:
+for s in ['texts', 'lines', 'displays', 'reflectors']:
     bpy.data.groups.new(s)
 
-LINES = bpy.data.groups['Lines'].objects
+LINES = bpy.data.groups['lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
-CAMERA_OFFSET = 4
+CAMERA_OFFSET = 8
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(4, 10))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
@@ -115,11 +115,8 @@ SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
 
 if debug == False:
-    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'particles.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'dreamatorium.py'))
-    load_file (os.path.join(path + '/glitch3d/bpy/canvas', 'aether.py'))
-    # load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'lyfe.py'))
-    load_file(os.path.join(path + '/glitch3d/bpy/canvas', 'frame_generator.py'))
+    for module in MODULES_ENABLED:
+        load_file(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
@@ -166,6 +163,7 @@ for p in RENDER_OUTPUT_PATHS:
 
 if animate == False and debug == False:
     call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-    call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+    if shots_number > 10:
+        call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
 print('FINISHED ¯\_(ツ)_/¯')
