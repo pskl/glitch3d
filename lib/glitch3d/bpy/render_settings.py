@@ -3,6 +3,21 @@ def set_tile(size):
     SCENE.render.tile_x = size
     SCENE.render.tile_y = size
 
+def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorption_intensity = ABSORPTION_INTENSITY):
+    assert world.use_nodes == True
+    output = world.node_tree.nodes['World Output']
+    bg_node = world.node_tree.nodes.new('ShaderNodeBackground')
+    absorption_node = world.node_tree.nodes.new('ShaderNodeVolumeAbsorption')
+    scatter_node = world.node_tree.nodes.new('ShaderNodeVolumeScatter')
+    add_shader = world.node_tree.nodes.new('ShaderNodeAddShader')
+    world.node_tree.links.new(add_shader.outputs[0], output.inputs['Volume'])
+    world.node_tree.links.new(bg_node.outputs['Background'], output.inputs['Surface'])
+    world.node_tree.links.new(scatter_node.outputs[0], add_shader.inputs[0])
+    world.node_tree.links.new(absorption_node.outputs[0], add_shader.inputs[1])
+    scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
+    absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
+    bg_node.inputs[0].default_value = rand_color()
+
 def render_normals():
     SCENE.use_nodes = True
     SCENE.render.layers[0].use_pass_normal = True
