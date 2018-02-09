@@ -462,7 +462,6 @@ def animation_routine(frame):
     look_at(random.choice(bpy.data.objects))
     assign_material(SUBJECT, random_material())
     randomize_reflectors_colors()
-    # glitch(SUBJECT)
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
         ocean.modifiers['Ocean'].time += 0.5
@@ -475,7 +474,7 @@ def animation_routine(frame):
         l.rotation_euler.z += math.radians(1)
         l.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
     for prop in props:
-        props.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+        prop.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
         prop.rotation_euler.x += math.radians(5)
     for obj in WIREFRAMES:
         obj.location.z = math.sin(frame)

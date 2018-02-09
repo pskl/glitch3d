@@ -18,6 +18,14 @@ module Glitch3d
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
   BASE_BLEND_FILE_PATH = File.dirname(__FILE__) + '/../fixtures/base.blend'
 
+  ASCII_TITLE = "
+  ██████╗ ██╗     ██╗████████╗ ██████╗██╗  ██╗██████╗ ██████╗
+  ██╔════╝ ██║     ██║╚══██╔══╝██╔════╝██║  ██║╚════██╗██╔══██╗
+  ██║  ███╗██║     ██║   ██║   ██║     ███████║ █████╔╝██║  ██║
+  ██║   ██║██║     ██║   ██║   ██║     ██╔══██║ ╚═══██╗██║  ██║
+  ╚██████╔╝███████╗██║   ██║   ╚██████╗██║  ██║██████╔╝██████╔╝
+   ╚═════╝ ╚══════╝╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═════╝
+                                                               "
   def clean_model(source_file)
     self.class.include Glitch3d::None
     base_file_name = source_file.gsub(/.obj/, '')
@@ -30,6 +38,8 @@ module Glitch3d
   # @param Hash args, parameters { 'stuff' => 'shit' }
   def process_model(source_file, args)
     raise 'Make sure Blender is correctly installed' if BLENDER_EXECUTABLE_PATH.nil?
+    puts ASCII_TITLE
+    puts Glitch3d::VERSION
     return clean_model(source_file) if args['clean']
     source_file = random_fixture if source_file.nil?
     print_version if args.has_key?('version')
@@ -40,15 +50,20 @@ module Glitch3d
     base_file_name = source_file&.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '_glitched.obj'
+    puts "Target ~> #{target_file}"
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
     render(args, target_file, args['shots-number'] || 6) unless args['no-render']
   end
 
+  # Print version number
+  # @return [String, nil]
   def print_version
     puts Glitch3d::VERSION
     return nil
   end
 
+  # Fetch random model from fixtures folder
+  # @return [String]
   def random_fixture
     @fixtures_path = File.dirname(__FILE__) + '/../fixtures'
     fixtures = []
@@ -59,10 +74,12 @@ module Glitch3d
     fixtures.sample
   end
 
+  # @param mode [String] name of strategy
+  # @return [Glitch3d::Strategy]
   def infer_strategy(mode)
     if !mode
       mode_chosen = [ Glitch3d::Default, Glitch3d::Duplication, Glitch3d::FindAndReplace, Glitch3d::Localized, Glitch3d::None].sample
-      puts "Defaulting to #{mode_chosen}"
+      puts "Strategy defaulting to #{mode_chosen}"
       return mode_chosen
     end
     puts "Using #{mode}"
@@ -153,6 +170,7 @@ module Glitch3d
   end
 
   def render(initial_args, file_path, shots_number)
+
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
