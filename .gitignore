@@ -15,5 +15,6 @@
 !/fixtures/textures/*
 !/fixtures/textures/height_maps
 !/fixtures/skull.obj
+/fixtures/blendcache_base
 .DS_Store
 *.png
