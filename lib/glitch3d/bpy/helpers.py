@@ -16,7 +16,15 @@ BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
 MATERIALS_NAMES = []
-FUNCTIONS = [math.sin, math.cos, (lambda x: (0.5 * math.sin(0.5*x) * math.cos(x)))]
+FIXED_CAMERA = False
+FUNCTIONS = [
+    math.sin,
+    math.cos,
+    lambda x: (0.5 * math.sin(0.5*x) * math.cos(x)),
+    lambda x: (random.uniform(1, 10) * math.cos(x) ^ 3),
+    lambda x: (random.uniform(1, 10)),
+    lambda x: (random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x))
+]
 
 def pry():
     code.interact(local=dict(globals(), **locals()))
@@ -188,13 +196,7 @@ def make_object_emitter(obj, emission_strength = 1):
 
 def make_object_gradient_fabulous(obj, color1, color2):
     material = assign_material(obj, fetch_material('gradient_fabulous'))
-    mixer_node = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    gradient_node = material.node_tree.nodes.new('ShaderNodeTexGradient')
-    gradient_node.gradient_type = 'SPHERICAL'
-    bsdf_node = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    material.node_tree.links.new(gradient_node.outputs['Fac'], mixer_node.inputs['Fac'])
-    material.node_tree.links.new(mixer_node.outputs[0], bsdf_node.inputs['Color'])
-    assign_node_to_output(material, bsdf_node)
+    mixer_node = material.node_tree.nodes['ShaderNodeMixRGB']
     mixer_node.inputs['Color1'].default_value = color1
     mixer_node.inputs['Color2'].default_value = color2
 
@@ -252,9 +254,6 @@ def shuffle(obj):
     obj.location = rand_location()
     obj.scale = rand_scale_vector()
     obj.rotation_euler = rand_rotation()
-
-def series(length, function, pitch):
-    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
 
 def randomize_reflectors_colors():
     for r in bpy.data.groups['reflectors'].objects:
@@ -432,12 +431,25 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
 
-def build_segment(location, function, length = 2, pitch = 0.5):
-    verts = series(length, function, pitch)
+def series(length, function, pitch):
+    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
+
+def parametric_curve(fx, fy, fz):
+    fx = lambda x: math.cos(x)
+    fy = lambda y: math.sin(y) + 15
+    fz = lambda z: math.tan(z)
+    vertices = []
+    for t in pitched_array(-100, 100, 1):
+        vertices.append((fx(t), fy(t), fz(t)))
+    build_segment(ORIGIN, None, None, None, vertices, name)
+
+def build_segment(location, function, length = 2, pitch = 0.5, verts = None, name = None):
+    verts = verts if verts else series(length, function, pitch)
     edges = []
     for v in range(0, (len(verts) - 1)):
         edges.append([v, v+1])
-    return create_mesh('Segment ' + str(uuid.uuid1()), verts, [], location, edges)
+    name = name if name else 'Segment ' + str(uuid.uuid1())
+    return create_mesh(name, verts, [], location, edges)
 
 def camera_path(pitch, function):
     res = []
@@ -457,8 +469,12 @@ def camera_path(pitch, function):
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
+def cut(obj):
+    SCENE.objects.active = obj
+    bpy.ops.mesh.bisect()
+
 def animation_routine(frame):
-    CAMERA.location = CAMERA_PATH[frame]
+    CAMERA.location = CAMERA_PATH[frame] if not FIXED_CAMERA else CAMERA
     look_at(random.choice(bpy.data.objects))
     assign_material(SUBJECT, random_material())
     randomize_reflectors_colors()

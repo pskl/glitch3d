@@ -20,5 +20,5 @@ def spawn_frame(segment, side = 20):
   return profile
 
 for i in range(0, 3):
-  frame = spawn_frame(build_segment((-10, -10, i),  (lambda x: (random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x))), length = 6, pitch = 1.5), side = 20)
+  frame = spawn_frame(build_segment((-10, -10, i),  (), length = 6, pitch = 1.5), side = 20)
   assign_material(frame, random_material())

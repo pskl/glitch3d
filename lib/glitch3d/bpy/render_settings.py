@@ -42,6 +42,7 @@ def isometric_camera():
     CAMERA.location = (12, -12, 12)
     CAMERA.rotation_euler = (54.8, 0, 45)
     CAMERA.data.type = 'ORTHO'
+    FIXED_CAMERA = True
 
 def render_settings(animate, mode, normals):
     SCENE.render.resolution_x = 2000

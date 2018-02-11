@@ -50,7 +50,6 @@ subdivide(floor, int(random.uniform(3, 7)))
 displace(floor)
 
 OCEAN = add_ocean(10, 20)
-
 # Create lines as backdrop
 # LINES = bpy.data.groups['Lines']
 # for j in range(0,20):
