@@ -26,7 +26,9 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['abstract', 'particles']
+MODULES_ENABLED = ['aether']
+print("modules enabled: " + str(list(map(str, MODULES_ENABLED))))
+
 WIREFRAMES = []
 VORONOIED = []
 OCEAN = []
@@ -157,13 +159,14 @@ else:
 # Save scene as .blend file
 bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
 
-print("Files rendered with " + str(NUMBER_OF_FRAMES) + " in simulation:")
+print("Files rendered with " + str(NUMBER_OF_FRAMES) + " frames in simulation:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
-        call(["python", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+        call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
 print('FINISHED ¯\_(ツ)_/¯')
