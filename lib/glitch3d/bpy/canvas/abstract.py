@@ -3,11 +3,10 @@ base_model = SUBJECT
 
 isometric_camera()
 
-create_line('line' + str(uuid.uuid1()), series(30), 0.003, (j, -10, 2))
+curve = parametric_curve(random.choice(FUNCTIONS), random.choice(FUNCTIONS), random.choice(FUNCTIONS), 10)
+wireframize(curve, 1, 0.5)
 
-parametric_curve(random.choice(FUNCTIONS), random.choice(FUNCTIONS), random.choice(FUNCTIONS))
-
-for i in range(0, 10):
+for i in range(0, 5):
   copy = duplicate_object(base_model)
   copy.scale = rand_scale_vector(round(random.uniform(0, 3), 10))
   copy.location = rand_location()

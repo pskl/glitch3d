@@ -1,7 +1,6 @@
 REFLECTOR_SCALE = random.uniform(9, 10)
 REFLECTOR_STRENGTH = random.uniform(12, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-WIREFRAME_THICKNESS = random.uniform(0.0004, 0.001)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
 ORIGIN  = (0,0,2)
@@ -15,15 +14,18 @@ GREY = (0.2, 0.2, 0.2 ,1)
 BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
-MATERIALS_NAMES = []
 FIXED_CAMERA = False
 FUNCTIONS = [
+    lambda x: INITIAL_CAMERA_LOCATION[2],
+    lambda x: x,
     math.sin,
     math.cos,
-    lambda x: (0.5 * math.sin(0.5*x) * math.cos(x)),
-    lambda x: (random.uniform(1, 10) * math.cos(x) ^ 3),
-    lambda x: (random.uniform(1, 10)),
-    lambda x: (random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x))
+    lambda x: 0.5 * math.sin(0.5*x) * math.cos(x),
+    lambda x: random.uniform(1, 10) * math.cos(x) ** 3,
+    lambda x: random.uniform(1, 10),
+    lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x),
+    lambda x: math.sin(math.pi*x) + x + 3 * math.pi,
+    lambda x: x**3 + math.cos(x/2)
 ]
 
 def pry():
@@ -31,6 +33,7 @@ def pry():
     sys.exit("Aborting execution")
 
 def fetch_material(material_name):
+    assert material_name in MATERIALS_NAMES
     new_material = bpy.data.materials[material_name].copy()
     return new_material
 
@@ -196,7 +199,7 @@ def make_object_emitter(obj, emission_strength = 1):
 
 def make_object_gradient_fabulous(obj, color1, color2):
     material = assign_material(obj, fetch_material('gradient_fabulous'))
-    mixer_node = material.node_tree.nodes['ShaderNodeMixRGB']
+    mixer_node = material.node_tree.nodes['Mix']
     mixer_node.inputs['Color1'].default_value = color1
     mixer_node.inputs['Color2'].default_value = color2
 
@@ -212,7 +215,7 @@ def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
     assign_material(obj, new_material)
-    displace(obj, 0.01)
+    # displace(obj, 0.01)
 
 def duplicate_object(obj):
     print("Cloning -> " + obj.name)
@@ -227,26 +230,48 @@ def random_text():
 
 def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")
+    faces = faces if faces else random_faces(verts)
     mesh_data.from_pydata(verts, edges, faces)
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)
     obj.location = location
-    bpy.data.scenes[-1].objects.link(obj)
+    SCENE.objects.link(obj)
+    SCENE.objects.active = obj
+    center(obj)
     return obj
 
-def spawn_text():
+def add_faces(obj):
+    vertices = []
+    for v in obj.data.vertices:
+        vertices.append(v.co)
+    new_obj = create_mesh(obj.name, vertices, random_faces(vertices), obj.location)
+    bpy.data.objects.remove(obj, do_unlink=True)
+    return new_obj
+
+def random_faces(vertices):
+    faces = []
+    for i in range(int(len(vertices)/100)):
+        target = vertices[random.choice((range(len(vertices))))]
+        if (random.randint(0, 1) == 1):
+            faces.append(((target + 2), int(target / 6), int(target - 1), target))
+        else:
+            faces.append((int(target / 6), int(target - 1), target))
+    return faces
+
+def spawn_text(text = None):
     identifier = str(uuid.uuid1())
-    new_curve = bpy.data.curves.new(type="FONT",name="Curve - " + identifier)
+    new_curve = bpy.data.curves.new(type="FONT",name="text_curve_" + identifier)
     new_curve.extrude = 0.11
-    new_text = bpy.data.objects.new("Text - " + identifier, new_curve)
-    new_text.data.body = random_text()
+    content = text if text else random_text()
+    new_text = bpy.data.objects.new("text_" + content, new_curve)
+    new_text.data.body = content
     SCENE.objects.link(new_text)
     return new_text
 
-def wireframize(obj, emission_strength = 1):
+def wireframize(obj, emission_strength = 1, thickness = random.uniform(0.0004, 0.001)):
     SCENE.objects.active = obj
     obj.modifiers.new(name = 'wireframe', type='WIREFRAME')
-    obj.modifiers['wireframe'].thickness = WIREFRAME_THICKNESS
+    obj.modifiers['wireframe'].thickness = thickness
     make_object_emitter(obj, emission_strength)
     return obj
 
@@ -327,10 +352,10 @@ def glitch(object):
     for vertex in object.data.vertices:
         vertex.co = find_and_replace(vertex.co, target, replacement)
 
-def displace(object, max_amplitude = 0.1):
+def displace(obj, max_amplitude = 0.06):
     bpy.ops.object.mode_set(mode='OBJECT')
-    assert object.type == 'MESH'
-    for vertex in object.data.vertices:
+    assert obj.type == 'MESH'
+    for vertex in obj.data.vertices:
         vertex.co = mathutils.Vector((vertex.co.x + random.uniform(-max_amplitude, max_amplitude), vertex.co.y + random.uniform(-max_amplitude, max_amplitude), vertex.co.z + random.uniform(-max_amplitude, max_amplitude)))
 
 def subdivide(object, cuts):
@@ -358,8 +383,7 @@ def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale =
     ocean.modifiers["Ocean"].resolution = resolution
     ocean.modifiers["Ocean"].wave_scale = wave_scale
     ocean.modifiers["Ocean"].depth = depth
-    make_object_glossy(ocean, rand_color())
-    make_object_gradient_fabulous(ocean, rand_color(), rand_color())
+    assign_material(ocean, fetch_material("jello"))
     shadow = clone(ocean)
     shadow.location += mathutils.Vector((1,1,-0.4))
     wireframize(shadow)
@@ -429,19 +453,20 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([1,2,4])
     faces.append([2,3,4])
     faces.append([3,0,4])
-    return create_mesh('Pyramid ' + str(uuid.uuid1()), verts, faces, location)
+    return create_mesh('pyramid_' + str(uuid.uuid1()), verts, faces, location)
 
 def series(length, function, pitch):
     return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
 
-def parametric_curve(fx, fy, fz):
+def parametric_curve(fx, fy, fz, length):
     fx = lambda x: math.cos(x)
     fy = lambda y: math.sin(y) + 15
     fz = lambda z: math.tan(z)
+    name = 'curve_' + str(uuid.uuid1())
     vertices = []
-    for t in pitched_array(-100, 100, 1):
+    for t in pitched_array(-length, length, 1):
         vertices.append((fx(t), fy(t), fz(t)))
-    build_segment(ORIGIN, None, None, None, vertices, name)
+    return build_segment(ORIGIN, None, None, None, vertices, name)
 
 def build_segment(location, function, length = 2, pitch = 0.5, verts = None, name = None):
     verts = verts if verts else series(length, function, pitch)
@@ -488,18 +513,24 @@ def animation_routine(frame):
     for l in bpy.data.groups['lines'].objects:
         l.rotation_euler.x += math.radians(1)
         l.rotation_euler.z += math.radians(1)
-        l.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+        # l.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
     for prop in props:
-        prop.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+        prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
         prop.rotation_euler.x += math.radians(5)
     for obj in WIREFRAMES:
-        obj.location.z = math.sin(frame)
         obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
     for display in bpy.data.groups['displays'].objects:
         display.rotation_euler.x += math.radians(2)
-        display.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
+        display.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
 
-def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
+def center(obj):
+    SCENE.objects.active = obj
+    bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
+    local_bounding_box_center = 0.125 * sum((mathutils.Vector(b) for b in obj.bound_box), mathutils.Vector())
+    obj.location -= local_bounding_box_center
+    return obj
+
+def create_line(name, point_list, thickness = 0.002, location = ORIGIN):
     line_data = bpy.data.curves.new(name=name,type='CURVE')
     line_data.dimensions = '3D'
     line_data.fill_mode = 'FULL'
@@ -508,13 +539,13 @@ def create_line(name, point_list, thickness = 0.002, location = (0, -10, 0)):
     polyline.points.add(len(point_list)-1)
     for idx in range(len(point_list)):
         polyline.points[idx].co = (point_list[idx])+(1.0,)
-    line = bpy.data.objects.new('line' + str(uuid.uuid1()), line_data)
+    line = bpy.data.objects.new('line_' + str(uuid.uuid1()), line_data)
     SCENE.objects.link(line)
     line.location = location
     make_object_emitter(line, 0.8)
     return line
 
-def add_frame(collection = bpy.data.objects, blacklist = set([])):
+def add_frame(collection = bpy.data.objects, blacklist = set(BAKED)):
     for obj in set(collection) - blacklist:
         obj.keyframe_insert(data_path="rotation_euler", index=-1)
         obj.keyframe_insert(data_path="location", index=-1)
