@@ -47,7 +47,6 @@ def isometric_camera():
 def render_settings(animate, mode, normals):
     SCENE.render.resolution_x = 2000
     SCENE.render.resolution_y = 2000
-    SCENE.render.engine = 'CYCLES'
     SCENE.render.resolution_percentage = 25
     # bpy.SCENE.cycles.device = 'GPU'
     SCENE.render.image_settings.compression = 90

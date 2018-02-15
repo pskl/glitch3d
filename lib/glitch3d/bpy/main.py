@@ -26,11 +26,12 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['aether']
-print("modules enabled: " + str(list(map(str, MODULES_ENABLED))))
-
+MODULES_ENABLED = ['abstract', 'dreamatorium', 'aether']
+print("modules enabled: " + str(list(MODULES_ENABLED)))
+SCENE_NAME = "glitch3d"
 WIREFRAMES = []
 VORONOIED = []
+BAKED = []
 OCEAN = []
 
 file = args.file
@@ -60,6 +61,7 @@ load_file(os.path.join(path + '/glitch3d/bpy/helpers.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
+MATERIALS_NAMES = []
 # Fill base materials list
 for mat in bpy.data.materials:
     MATERIALS_NAMES.append(mat.name)
@@ -83,9 +85,10 @@ HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 
 # Scene
 context = bpy.context
-new_scene = bpy.data.scenes.new("Automated Render Scene")
+new_scene = bpy.data.scenes.new(SCENE_NAME)
 context.screen.scene = new_scene
 SCENE = new_scene
+SCENE.render.engine = 'CYCLES'
 
 flush_objects()
 
@@ -111,10 +114,11 @@ model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
 SUBJECT = bpy.data.objects['0_glitch3d']
 SUBJECT.select = True
-bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
+center(SUBJECT)
 SUBJECT.location = ORIGIN
 SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
+random.shuffle(list(MODULES_ENABLED))
 
 if debug == False:
     for module in MODULES_ENABLED:
@@ -124,10 +128,11 @@ if debug == False:
 
     # TODO: fix this absolute crap
     x = 0.08
-    func = random.choice(FUNCTIONS)
+    func = FUNCTIONS[0]
     while len(camera_path(x, func)) <= NUMBER_OF_FRAMES:
         x -= 0.01
     CAMERA_PATH = camera_path(x, func)
+    create_line('camera_path', CAMERA_PATH, 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
 
     SCENE.frame_start = 0
@@ -142,16 +147,17 @@ if debug == False:
         print('ANIMATION RENDERING BEGIN')
         output_path = output_name(model_path)
         print('AVI file -> ' + output_path)
-        shoot(output_path) # .avi
-
+        shoot(output_path)
     else:
         print('STILL RENDERING BEGIN')
         for index in range(0, shots_number):
+            frame_cursor = int(index * (SCENE.frame_end / shots_number))
+            print('>> FRAME #' + str(frame_cursor))
             SCENE.frame_set(int(SCENE.frame_end/(index+1)))
             output_path = output_name(model_path, index)
             print("-------------------------- " + str(index) + " --------------------------")
             print("PNG file -> " + output_path)
-            shoot(output_path) # .png
+            shoot(output_path)
 else:
     look_at(SUBJECT)
     shoot(output_name(model_path))
@@ -164,8 +170,8 @@ for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
+    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
