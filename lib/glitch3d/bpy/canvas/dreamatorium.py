@@ -1,9 +1,13 @@
 # Load props
 bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
+bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'ligthning.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
+logo = bpy.data.objects["0_glitch3d_lightning"]
+lightning.location = rand_location()
 m4a1.location = rand_location()
 m4a1.scale = (0.5, 0.5, 0.5)
 props.append(m4a1)
+props.append(lightning)
 
 # Add props
 rand_primitive = random.choice(PRIMITIVES)
