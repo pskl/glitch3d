@@ -1,13 +1,13 @@
 # Load props
 bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.obj'), use_edges=True)
-bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'ligthning.obj'), use_edges=True)
+bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'lightning.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
 logo = bpy.data.objects["0_glitch3d_lightning"]
-lightning.location = rand_location()
+logo.location = rand_location()
 m4a1.location = rand_location()
 m4a1.scale = (0.5, 0.5, 0.5)
 props.append(m4a1)
-props.append(lightning)
+props.append(logo)
 
 # Add props
 rand_primitive = random.choice(PRIMITIVES)
@@ -42,8 +42,9 @@ for display in bpy.data.groups['displays'].objects:
     texture_object(display)
     unwrap_model(display)
 
-glitch(m4a1)
-assign_material(m4a1, random_material())
+for prop in props:
+    glitch(prop)
+    assign_material(prop, random_material())
 
 # Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))

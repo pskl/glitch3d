@@ -3,6 +3,7 @@ from PIL import Image
 from PIL import ImageChops
 from PIL import ImageEnhance
 import numpy as np
+import random
 
 import sys, os, cv2
 
@@ -10,6 +11,7 @@ print("Averaging")
 path = os.environ['RENDER_PATH']
 files = [path + f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and os.path.join(path, f).endswith(".png"))]
 average_image = ''
+
 for file in files:
     image = np.asarray((Image.open(file)))
     # Extract the frame and convert to image
@@ -38,8 +40,9 @@ for file in files:
     # Darken the image slightly to prevent it getting washed out
     average_image = average_image.point(lambda p: p * 0.9)
 
-    # Show a preview of the image
-    # average_image.show()
-    average_image.save(file + "_average.png")
+    font = random.choice(range(0, 7))
+    for i in range(0, 10):
+      image = Image.fromarray(cv2.putText(np.asarray(average_image), "PSKL", (random.choice(range(10,200)), random.choice(range(10, 200))), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA))
+    image.save(file + "_average.png")
 
 average_image.save(path + "average.png")
