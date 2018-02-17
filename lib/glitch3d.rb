@@ -157,7 +157,7 @@ module Glitch3d
       f.puts model_name
       f.puts '# Boundaries: ' + boundaries.to_s
       f.puts ''
-      f.puts "g 0_glitch3d"
+      f.puts "g 0_glitch3d_#{model_name}"
       f.puts ''
       f.puts content_hash[:vertices].map(&:to_s)
       f.puts ''
