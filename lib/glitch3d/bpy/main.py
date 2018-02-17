@@ -26,7 +26,7 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['abstract', 'dreamatorium', 'aether']
+MODULES_ENABLED = ['abstract', 'dreamatorium', 'aether', 'particles']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []
@@ -45,7 +45,7 @@ shots_number = int(args.shots_number)
 #####################################
 #####################################
 
-import os, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
+import os, ntpath, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
 from subprocess import call
 
 def load_file(file_path):
@@ -112,7 +112,7 @@ render_settings(animate, mode, NORMALS_RENDERING)
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-SUBJECT = bpy.data.objects['0_glitch3d']
+SUBJECT = bpy.data.objects['0_glitch3d_' + ntpath.basename(file).replace("_glitched.obj", '')]
 SUBJECT.select = True
 center(SUBJECT)
 SUBJECT.location = ORIGIN
@@ -171,7 +171,7 @@ for p in RENDER_OUTPUT_PATHS:
 
 if animate == False and debug == False:
     # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 
