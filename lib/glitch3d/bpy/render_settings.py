@@ -46,17 +46,22 @@ def isometric_camera():
 
 def render_settings(animate, mode, normals):
     SCENE.render.resolution_x = 2000
+    SCENE.render.layers[0].use_pass_ambient_occlusion = True
     SCENE.render.resolution_y = 2000
     SCENE.render.resolution_percentage = 25
     # bpy.SCENE.cycles.device = 'GPU'
     SCENE.render.image_settings.compression = 90
     SCENE.cycles.samples = 20
     SCENE.cycles.max_bounces = 1
+    CAMERA.data.dof_distance = (SUBJECT.location - CAMERA.location).length
+    SCENE.cycles.shading_system = OSL_ENABLED
     SCENE.cycles.min_bounces = 1
     SCENE.cycles.caustics_reflective = False
     SCENE.cycles.caustics_refractive = False
     SCENE.render.image_settings.color_mode ='RGBA'
     SCENE.render.layers[0].cycles.use_denoising = True
+    SCENE.view_settings.view_transform = "Filmic"
+    SCENE.view_settings.look = "Filmic - High Contrast"
     set_tile(32)
     if normals:
         render_normals()

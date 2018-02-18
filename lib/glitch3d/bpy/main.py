@@ -92,9 +92,9 @@ SCENE.render.engine = 'CYCLES'
 
 flush_objects()
 
-camera_data = bpy.data.cameras.new(name = 'Camera')
-bpy.data.objects.new('Camera', object_data=camera_data)
-CAMERA = bpy.data.objects['Camera']
+camera_data = bpy.data.cameras.new(name = 'CAMERA')
+bpy.data.objects.new('CAMERA', object_data=camera_data)
+CAMERA = bpy.data.objects['CAMERA']
 new_scene.objects.link(CAMERA)
 SCENE.camera = CAMERA
 CAMERA.location = INITIAL_CAMERA_LOCATION
@@ -107,8 +107,6 @@ if FISHEYE:
     CAMERA.data.sensor_width = 20
     CAMERA.data.sensor_height = 20
 
-render_settings(animate, mode, NORMALS_RENDERING)
-
 # Load model
 model_path = os.path.join(file)
 bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
@@ -119,6 +117,7 @@ SUBJECT.location = ORIGIN
 SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
 random.shuffle(list(MODULES_ENABLED))
+render_settings(animate, mode, NORMALS_RENDERING)
 
 if debug == False:
     for module in MODULES_ENABLED:

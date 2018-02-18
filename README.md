@@ -6,7 +6,9 @@ You can read a bit more about where it come from [here](http://pascal.cc/blog/gl
 
 <img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/examples/demo.jpg" width="400">
 
-This gem uses the Blender Python API to produces renders headlessly. Calls made to the Blender API have been tested with versions 2.78 and 2.79.
+This gem uses the Blender Python API to produces renders headlessly and leverages the raytracing engine Cycles to get optimal renders. Calls made to the Blender API have been tested with versions 2.78 and 2.79.
+
+Cycles rendering engine does not support GLSL shaders so the shader library is using a node-based system but could be extended to serialize materials in the Open Shading Language.
 
 ## Warning
 
@@ -53,6 +55,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 - extract fixtures management from gem
 - allow fixtures to be scraped from online resources such as [Thingiverse](https://www.thingiverse.com/)
 - use Blender Compositor feature to streamline post-processing
+- use realtime Eevee engine to visualize intermediate renders
 
 ## Contributing
 
