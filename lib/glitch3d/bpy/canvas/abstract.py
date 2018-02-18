@@ -1,10 +1,11 @@
 # Create fractals of the same mesh
 base_model = SUBJECT
 
-isometric_camera()
+# isometric_camera()
 
-curve = parametric_curve(random.choice(FUNCTIONS), random.choice(FUNCTIONS), random.choice(FUNCTIONS), 10)
-wireframize(curve, 1, 0.5)
+curve = parametric_curve(random.choice(FUNCTIONS), random.choice(FUNCTIONS), random.choice(FUNCTIONS), 20)
+wireframize(curve, 1, 1)
+curve.name = 'param_curve'
 
 for i in range(0, 5):
   copy = duplicate_object(base_model)

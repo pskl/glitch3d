@@ -3,6 +3,7 @@ REFLECTOR_STRENGTH = random.uniform(12, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
 REPLACE_TARGET = str(random.uniform(0, 9))
 REPLACEMENT = str(random.uniform(0, 9))
+OSL_ENABLED = True
 ORIGIN  = (0,0,2)
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
@@ -221,6 +222,7 @@ def duplicate_object(obj):
     print("Cloning -> " + obj.name)
     new_object = obj.copy()
     new_object.data = obj.data.copy()
+    new_object.animation_data_clear()
     SCENE.objects.link(new_object)
     return new_object
 
@@ -367,13 +369,6 @@ def subdivide(object, cuts):
         bpy.ops.mesh.subdivide(cuts)
     bpy.ops.object.editmode_toggle()
 
-def clone(obj):
-    new_obj = obj.copy()
-    new_obj.data = obj.data.copy()
-    new_obj.animation_data_clear()
-    SCENE.objects.link(new_obj)
-    return new_obj
-
 def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale = 0.5):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)
     ocean = last_added_object('CUBE')
@@ -384,7 +379,7 @@ def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale =
     ocean.modifiers["Ocean"].wave_scale = wave_scale
     ocean.modifiers["Ocean"].depth = depth
     assign_material(ocean, fetch_material("jello"))
-    shadow = clone(ocean)
+    shadow = duplicate_object(ocean)
     shadow.location += mathutils.Vector((1,1,-0.4))
     wireframize(shadow)
     shadow.name = 'shadow'
@@ -494,26 +489,33 @@ def camera_path(pitch, function):
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
-def cut(obj):
-    SCENE.objects.active = obj
-    bpy.ops.mesh.bisect()
+def cut(obj, slices, thiccness = 3):
+    center(obj)
+    print("Slicing " + obj.name + " in " + str(slices) + "parts")
+    for i in range(0,slices):
+        dup = duplicate_object(obj)
+        bpy.ops.object.select_all(action='DESELECT')
+        SCENE.objects.active = dup
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.bisect(plane_co=(0,0,0),plane_no=(0,0,1),clear_outer=False,clear_inner=True)
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.bisect(plane_co=(0,0,thiccness*(1+i)),plane_no=(0,0,1),clear_outer=True,clear_inner=False)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        dup.location.z += thiccness
 
 def animation_routine(frame):
     CAMERA.location = CAMERA_PATH[frame] if not FIXED_CAMERA else CAMERA
     look_at(random.choice(bpy.data.objects))
     assign_material(SUBJECT, random_material())
     randomize_reflectors_colors()
+    SUBJECT.rotation_euler.z += math.radians(1)
     for ocean in OCEAN:
         ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
         ocean.modifiers['Ocean'].time += 0.5
         assign_material(ocean, random_material())
     for particle_system in bpy.data.particles:
         particle_system.phase_factor_random += 0.01
-    SUBJECT.rotation_euler.z += math.radians(1)
-    for l in bpy.data.groups['lines'].objects:
-        l.rotation_euler.x += math.radians(1)
-        l.rotation_euler.z += math.radians(1)
-        # l.location += mathutils.Vector((random.uniform(-5, 5), random.uniform(-5, 5), random.uniform(-5, 5)))
     for prop in props:
         prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
         prop.rotation_euler.x += math.radians(5)

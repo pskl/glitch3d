@@ -3,6 +3,7 @@ bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'm4a1.ob
 bpy.ops.import_scene.obj(filepath = os.path.join(FIXTURES_FOLDER_PATH + 'lightning.obj'), use_edges=True)
 m4a1 = bpy.data.objects['m4a1']
 logo = bpy.data.objects["0_glitch3d_lightning"]
+logo.name = 'logo'
 logo.location = rand_location()
 m4a1.location = rand_location()
 m4a1.scale = (0.5, 0.5, 0.5)
@@ -43,7 +44,6 @@ for display in bpy.data.groups['displays'].objects:
     unwrap_model(display)
 
 for prop in props:
-    glitch(prop)
     assign_material(prop, random_material())
 
 # Make floor
@@ -55,13 +55,15 @@ subdivide(floor, int(random.uniform(1, 5)))
 displace(floor)
 
 OCEAN = add_ocean(10, 20)
+
 # Create lines as backdrop
 LINES = bpy.data.groups['lines']
-for j in range(0,20):
-    for i in range(0, 20):
+for j in range(0,10):
+    for i in range(0, 10):
         new_line = create_line('line' + str(uuid.uuid1()), series(30, random.choice(FUNCTIONS), 0.3), 0.003, (j, -10, 2))
         bpy.data.groups['lines'].objects.link(new_line)
         new_line.location.z += i / 3
+        props.append(new_line)
 
 # branding
 spawn_text("PSKL")
