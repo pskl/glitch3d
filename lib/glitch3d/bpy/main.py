@@ -77,7 +77,7 @@ for primitive in PRIMITIVES:
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
-CAMERA_OFFSET = 8
+CAMERA_OFFSET = 5
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(4, 10))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
@@ -125,12 +125,7 @@ if debug == False:
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
-    # TODO: fix this absolute crap
-    x = 0.08
-    func = FUNCTIONS[0]
-    while len(camera_path(x, func)) <= NUMBER_OF_FRAMES:
-        x -= 0.01
-    CAMERA_PATH = camera_path(x, func)
+    CAMERA_PATH = camera_path()
     create_line('camera_path', CAMERA_PATH, 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
 

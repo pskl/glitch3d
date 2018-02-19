@@ -10,7 +10,6 @@ m4a1.scale = (0.5, 0.5, 0.5)
 props.append(m4a1)
 props.append(logo)
 
-# Add props
 rand_primitive = random.choice(PRIMITIVES)
 # elements = build_composite_object(rand_primitive, 4, 1)
 
@@ -19,7 +18,6 @@ rand_primitive = random.choice(PRIMITIVES)
 #         for obj in l2:
 #             WIREFRAMES.append(obj)
 
-# Set up virtual displays
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
 display1 = last_added_object('Grid')
 display1.name = 'display_1'
@@ -39,14 +37,12 @@ display2.rotation_euler.z += math.radians(120)
 for display in bpy.data.groups['displays'].objects:
     display.rotation_euler.x += math.radians(90)
     display.scale = DISPLAY_SCALE
-    # subdivide(display, 1)
     texture_object(display)
     unwrap_model(display)
 
 for prop in props:
     assign_material(prop, random_material())
 
-# Make floor
 bpy.ops.mesh.primitive_plane_add(location=(0, 0, -2))
 floor = last_added_object('Plane')
 floor.name = 'floor'
@@ -56,25 +52,22 @@ displace(floor)
 
 OCEAN = add_ocean(10, 20)
 
-# Create lines as backdrop
 LINES = bpy.data.groups['lines']
-for j in range(0,10):
-    for i in range(0, 10):
+for j in range(0, random.choice(range(5, 40))):
+    for i in range(0, random.choice(range(5, 40))):
         new_line = create_line('line' + str(uuid.uuid1()), series(30, random.choice(FUNCTIONS), 0.3), 0.003, (j, -10, 2))
         bpy.data.groups['lines'].objects.link(new_line)
         new_line.location.z += i / 3
         props.append(new_line)
 
-# branding
 spawn_text("PSKL")
 
-# Add flying letters, lmao
 for index in range(1, 5):
     new_object = spawn_text()
     bpy.data.groups['texts'].objects.link(new_object)
     props.append(new_object)
     text_scale = random.uniform(0.75, 3)
-    make_object_glossy(new_object, rand_color(), 0.0)
+    assign_material(new_object, random_material())
     new_object.scale = (text_scale, text_scale, text_scale)
     new_object.location = rand_location()
 

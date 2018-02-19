@@ -42,7 +42,7 @@ for file in files:
 
     font = random.choice(range(0, 7))
     for i in range(0, 10):
-      image = Image.fromarray(cv2.putText(np.asarray(average_image), "PSKL", (random.choice(range(10,200)), random.choice(range(10, 200))), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA))
+      image = Image.fromarray(cv2.putText(np.asarray(average_image), "PSKL", (random.choice(range(20,300)), random.choice(range(20, 300))), font, random.uniform(0.8, 3), (255, 255, 255), 1, cv2.LINE_AA))
     image.save(file + "_average.png")
 
 average_image.save(path + "average.png")

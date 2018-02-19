@@ -26,7 +26,8 @@ FUNCTIONS = [
     lambda x: random.uniform(1, 10),
     lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x),
     lambda x: math.sin(math.pi*x) + x + 3 * math.pi,
-    lambda x: x**3 + math.cos(x/2)
+    lambda x: x**3 + math.cos(x/2),
+    lambda x: random.uniform(1, 10) * math.sin(x)
 ]
 
 def pry():
@@ -110,6 +111,10 @@ def camera_rotation_string(camera):
 def camera_location_string(camera):
     return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
 
+#############
+# <materials>
+#############
+
 def assign_material(obj, material):
     flush_materials(obj.data.materials)
     if len(obj.data.materials) == 0:
@@ -155,41 +160,9 @@ def assign_node_to_output(material, new_node):
     output_node = material.node_tree.nodes['Material Output']
     material.node_tree.links.new(new_node.outputs[0], output_node.inputs['Surface'])
 
-def mix_nodes(material, node1, node2):
-    mix = material.node_tree.nodes.new('ShaderNodeMixShader')
-    material.node_tree.links.new(mix.inputs[1], node1.outputs[0])
-    material.node_tree.links.new(mix.inputs[2], node2.outputs[0])
-    assign_node_to_output(material, mix)
-
-def make_object_glossy(obj, color = (PINK), roughness = 0.2):
-    material = create_cycles_material('Glossy Material - ')
-    glossy_node = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
-    glossy_node.inputs[0].default_value = color
-    glossy_node.inputs[1].default_value = roughness
-    assign_node_to_output(material, glossy_node)
-    assign_material(obj, material)
-
 def make_object_reflector(obj):
     obj.scale = (REFLECTOR_SCALE, REFLECTOR_SCALE, REFLECTOR_SCALE)
     make_object_emitter(obj, REFLECTOR_STRENGTH)
-
-def make_texture_object_transparent(obj, color = (1,1,1,0.5), intensity = 0.25):
-    material = obj.data.materials[-1]
-    emission_node = material.node_tree.nodes['Emission']
-    trans = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-    add = material.node_tree.nodes.new('ShaderNodeMixShader')
-    material.node_tree.links.new(emission_node.outputs[0], add.inputs[0])
-    material.node_tree.links.new(trans.outputs[0], add.inputs[1])
-    material.node_tree.links.new(emission_node.outputs[0], add.inputs[0])
-    add.inputs[0].default_value = intensity
-    trans.inputs[0].default_value = color
-
-def make_object_transparent(obj):
-    material = create_cycles_material('Transparent Material - ')
-    trans = material.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-    trans.inputs[0].default_value = rand_color()
-    assign_node_to_output(material, trans)
-    assign_material(obj, material)
 
 def make_object_emitter(obj, emission_strength = 1):
     emissive_material = assign_material(obj, fetch_material('emission'))
@@ -216,49 +189,10 @@ def texture_object(obj):
     new_material = create_cycles_material()
     assign_texture_to_material(new_material, random_texture())
     assign_material(obj, new_material)
-    # displace(obj, 0.01)
 
-def duplicate_object(obj):
-    print("Cloning -> " + obj.name)
-    new_object = obj.copy()
-    new_object.data = obj.data.copy()
-    new_object.animation_data_clear()
-    SCENE.objects.link(new_object)
-    return new_object
-
-def random_text():
-    lines = open(FIXTURES_FOLDER_PATH + 'text/strings.txt').readlines()
-    return lines[random.randrange(len(lines))]
-
-def create_mesh(name, verts, faces, location, edges=[]):
-    mesh_data = bpy.data.meshes.new("mesh_data")
-    faces = faces if faces else random_faces(verts)
-    mesh_data.from_pydata(verts, edges, faces)
-    mesh_data.update()
-    obj = bpy.data.objects.new(name, mesh_data)
-    obj.location = location
-    SCENE.objects.link(obj)
-    SCENE.objects.active = obj
-    center(obj)
-    return obj
-
-def add_faces(obj):
-    vertices = []
-    for v in obj.data.vertices:
-        vertices.append(v.co)
-    new_obj = create_mesh(obj.name, vertices, random_faces(vertices), obj.location)
-    bpy.data.objects.remove(obj, do_unlink=True)
-    return new_obj
-
-def random_faces(vertices):
-    faces = []
-    for i in range(int(len(vertices)/100)):
-        target = vertices[random.choice((range(len(vertices))))]
-        if (random.randint(0, 1) == 1):
-            faces.append(((target + 2), int(target / 6), int(target - 1), target))
-        else:
-            faces.append((int(target / 6), int(target - 1), target))
-    return faces
+#############
+# </material>
+#############
 
 def spawn_text(text = None):
     identifier = str(uuid.uuid1())
@@ -307,6 +241,7 @@ def infer_primitive(obj, **kwargs):
 def group_add(group_name, obj):
     bpy.data.groups[group_name.lower().title()].objects.link(obj)
 
+# Ugly af but no other way to retrieve the last added object by bpy.ops
 def last_added_object(object_name_start):
     l = []
     for obj in bpy.data.objects:
@@ -450,45 +385,6 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('pyramid_' + str(uuid.uuid1()), verts, faces, location)
 
-def series(length, function, pitch):
-    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
-
-def parametric_curve(fx, fy, fz, length):
-    fx = lambda x: math.cos(x)
-    fy = lambda y: math.sin(y) + 15
-    fz = lambda z: math.tan(z)
-    name = 'curve_' + str(uuid.uuid1())
-    vertices = []
-    for t in pitched_array(-length, length, 1):
-        vertices.append((fx(t), fy(t), fz(t)))
-    return build_segment(ORIGIN, None, None, None, vertices, name)
-
-def build_segment(location, function, length = 2, pitch = 0.5, verts = None, name = None):
-    verts = verts if verts else series(length, function, pitch)
-    edges = []
-    for v in range(0, (len(verts) - 1)):
-        edges.append([v, v+1])
-    name = name if name else 'Segment ' + str(uuid.uuid1())
-    return create_mesh(name, verts, [], location, edges)
-
-def camera_path(pitch, function):
-    res = []
-    initial_z = INITIAL_CAMERA_LOCATION[2]
-    initial_y = INITIAL_CAMERA_LOCATION[1]
-    initial_x = INITIAL_CAMERA_LOCATION[0]
-    for y in pitched_array(initial_y, -initial_y, pitch):
-       res.append((initial_x, y, function(y)))
-    for x in pitched_array(initial_x, -initial_x, pitch):
-        res.append((x,-initial_y, function(x)))
-    for y in pitched_array(-initial_y, initial_y, pitch):
-        res.append((-initial_x, y, function(y)))
-    for x in pitched_array(-initial_x, initial_x, pitch):
-        res.append((x, initial_x, function(x)))
-    return res
-
-def pitched_array(minimum, maximum, pitch):
-    return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
-
 def cut(obj, slices, thiccness = 3):
     center(obj)
     print("Slicing " + obj.name + " in " + str(slices) + "parts")
@@ -504,26 +400,51 @@ def cut(obj, slices, thiccness = 3):
         bpy.ops.object.mode_set(mode='OBJECT')
         dup.location.z += thiccness
 
-def animation_routine(frame):
-    CAMERA.location = CAMERA_PATH[frame] if not FIXED_CAMERA else CAMERA
-    look_at(random.choice(bpy.data.objects))
-    assign_material(SUBJECT, random_material())
-    randomize_reflectors_colors()
-    SUBJECT.rotation_euler.z += math.radians(1)
-    for ocean in OCEAN:
-        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
-        ocean.modifiers['Ocean'].time += 0.5
-        assign_material(ocean, random_material())
-    for particle_system in bpy.data.particles:
-        particle_system.phase_factor_random += 0.01
-    for prop in props:
-        prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
-        prop.rotation_euler.x += math.radians(5)
-    for obj in WIREFRAMES:
-        obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
-    for display in bpy.data.groups['displays'].objects:
-        display.rotation_euler.x += math.radians(2)
-        display.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
+def duplicate_object(obj):
+    print("Cloning -> " + obj.name)
+    new_object = obj.copy()
+    new_object.data = obj.data.copy()
+    new_object.animation_data_clear()
+    SCENE.objects.link(new_object)
+    return new_object
+
+def random_text():
+    lines = open(FIXTURES_FOLDER_PATH + 'text/strings.txt').readlines()
+    return lines[random.randrange(len(lines))]
+
+def create_mesh(name, verts, faces, location, edges=[]):
+    mesh_data = bpy.data.meshes.new("mesh_data")
+    faces = faces if faces else random_faces(verts)
+    mesh_data.from_pydata(verts, edges, faces)
+    mesh_data.update()
+    obj = bpy.data.objects.new(name, mesh_data)
+    obj.location = location
+    SCENE.objects.link(obj)
+    SCENE.objects.active = obj
+    center(obj)
+    return obj
+
+def add_faces(obj):
+    vertices = []
+    for v in obj.data.vertices:
+        vertices.append(v.co)
+    new_obj = create_mesh(obj.name, vertices, random_faces(vertices), obj.location)
+    bpy.data.objects.remove(obj, do_unlink=True)
+    return new_obj
+
+def random_faces(vertices):
+    faces = []
+    for i in range(int(len(vertices)/100)):
+        target = vertices[random.choice((range(len(vertices))))]
+        if (random.randint(0, 1) == 1):
+            faces.append(((target + 2), int(target / 6), int(target - 1), target))
+        else:
+            faces.append((int(target / 6), int(target - 1), target))
+    return faces
+
+############
+# <geometry>
+############
 
 def center(obj):
     SCENE.objects.active = obj
@@ -546,6 +467,61 @@ def create_line(name, point_list, thickness = 0.002, location = ORIGIN):
     line.location = location
     make_object_emitter(line, 0.8)
     return line
+
+def series(length, function, pitch):
+    return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
+
+def parametric_curve(fx, fy, fz, length):
+    fx = lambda x: math.cos(x)
+    fy = lambda y: math.sin(y) + 15
+    fz = lambda z: math.tan(z)
+    name = 'curve_' + str(uuid.uuid1())
+    vertices = []
+    for t in pitched_array(-length, length, 1):
+        vertices.append((fx(t), fy(t), fz(t)))
+    return build_segment(ORIGIN, None, None, None, vertices, name)
+
+def build_segment(location, function, length = 2, pitch = 0.5, verts = None, name = None):
+    verts = verts if verts else series(length, function, pitch)
+    edges = []
+    for v in range(0, (len(verts) - 1)):
+        edges.append([v, v+1])
+    name = name if name else 'segment_' + str(uuid.uuid1())
+    return create_mesh(name, verts, [], location, edges)
+
+def camera_path():
+    res = []
+    radius = 5
+    fx = lambda x: radius * math.cos(x)
+    fy = lambda y: radius * math.sin(y)
+    fz = lambda z: INITIAL_CAMERA_LOCATION[2]
+    (2 * radius * math.pi) / NUMBER_OF_FRAMES
+    return list(map( lambda t: (fx(t), fy(t), fz(t)), range(0, NUMBER_OF_FRAMES)))
+
+def pitched_array(minimum, maximum, pitch):
+    return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
+# </geometry>
+
+def animation_routine(frame):
+    CAMERA.location = CAMERA_PATH[frame] if not FIXED_CAMERA else CAMERA
+    look_at(random.choice(bpy.data.objects))
+    assign_material(SUBJECT, random_material())
+    randomize_reflectors_colors()
+    SUBJECT.rotation_euler.z += math.radians(1)
+    for ocean in OCEAN:
+        ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
+        ocean.modifiers['Ocean'].time += 0.5
+        assign_material(ocean, random_material())
+    for particle_system in bpy.data.particles:
+        particle_system.phase_factor_random += 0.01
+    for prop in props:
+        prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
+        prop.rotation_euler.x += math.radians(5)
+    for obj in WIREFRAMES:
+        obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
+    for display in bpy.data.groups['displays'].objects:
+        display.rotation_euler.x += math.radians(2)
+        display.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
 
 def add_frame(collection = bpy.data.objects, blacklist = set(BAKED)):
     for obj in set(collection) - blacklist:
