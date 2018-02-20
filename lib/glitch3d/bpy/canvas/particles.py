@@ -12,8 +12,9 @@ def spawn_particles_system(base, object):
   settings.size_random = 0.5
   bpy.ops.object.duplicates_make_real()
 
-bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
-cube = last_added_object('CUBE')
-assign_material(cube, random_material(['emission']))
-spawn_particles_system(SUBJECT, cube)
+def render():
+  bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
+  cube = last_added_object('CUBE')
+  assign_material(cube, random_material(['emission']))
+  spawn_particles_system(SUBJECT, cube)
 

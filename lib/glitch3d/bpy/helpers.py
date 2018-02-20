@@ -1,35 +1,3 @@
-REFLECTOR_SCALE = random.uniform(9, 10)
-REFLECTOR_STRENGTH = random.uniform(12, 15)
-REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
-REPLACE_TARGET = str(random.uniform(0, 9))
-REPLACEMENT = str(random.uniform(0, 9))
-OSL_ENABLED = True
-ORIGIN  = (0,0,2)
-SCATTER_INTENSITY = 0.015
-ABSORPTION_INTENSITY = 0.25
-DISPLAY_SCALE = (2, 2, 2)
-PRIMITIVES = ['PYRAMID', 'CUBE']
-props = []
-YELLOW = (1, 0.7, 0.1, 1)
-GREY = (0.2, 0.2, 0.2 ,1)
-BLUE = (0.1, 0.1, 0.8, 0.4)
-PINK = (0.8, 0.2, 0.7, 1.0)
-RENDER_OUTPUT_PATHS = []
-FIXED_CAMERA = False
-FUNCTIONS = [
-    lambda x: INITIAL_CAMERA_LOCATION[2],
-    lambda x: x,
-    math.sin,
-    math.cos,
-    lambda x: 0.5 * math.sin(0.5*x) * math.cos(x),
-    lambda x: random.uniform(1, 10) * math.cos(x) ** 3,
-    lambda x: random.uniform(1, 10),
-    lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x),
-    lambda x: math.sin(math.pi*x) + x + 3 * math.pi,
-    lambda x: x**3 + math.cos(x/2),
-    lambda x: random.uniform(1, 10) * math.sin(x)
-]
-
 def pry():
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
@@ -495,12 +463,15 @@ def camera_path():
     fx = lambda x: radius * math.cos(x)
     fy = lambda y: radius * math.sin(y)
     fz = lambda z: INITIAL_CAMERA_LOCATION[2]
-    (2 * radius * math.pi) / NUMBER_OF_FRAMES
-    return list(map( lambda t: (fx(t), fy(t), fz(t)), range(0, NUMBER_OF_FRAMES)))
+    factor = (2 * math.pi / NUMBER_OF_FRAMES)
+    return list(map( lambda t: (fx(t * factor), fy(t * factor), fz(t * factor)), range(0, NUMBER_OF_FRAMES)))
 
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
+
+#############
 # </geometry>
+#############
 
 def animation_routine(frame):
     CAMERA.location = CAMERA_PATH[frame] if not FIXED_CAMERA else CAMERA

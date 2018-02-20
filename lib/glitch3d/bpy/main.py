@@ -2,7 +2,7 @@
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
 
-import argparse
+import argparse, random, math
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -33,6 +33,37 @@ WIREFRAMES = []
 VORONOIED = []
 BAKED = []
 OCEAN = []
+REFLECTOR_SCALE = random.uniform(9, 10)
+REFLECTOR_STRENGTH = random.uniform(12, 15)
+REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
+REPLACE_TARGET = str(random.uniform(0, 9))
+REPLACEMENT = str(random.uniform(0, 9))
+OSL_ENABLED = True
+ORIGIN  = (0,0,2)
+SCATTER_INTENSITY = 0.015
+ABSORPTION_INTENSITY = 0.25
+DISPLAY_SCALE = (2, 2, 2)
+PRIMITIVES = ['PYRAMID', 'CUBE']
+props = []
+YELLOW = (1, 0.7, 0.1, 1)
+GREY = (0.2, 0.2, 0.2 ,1)
+BLUE = (0.1, 0.1, 0.8, 0.4)
+PINK = (0.8, 0.2, 0.7, 1.0)
+RENDER_OUTPUT_PATHS = []
+FIXED_CAMERA = False
+FUNCTIONS = [
+    lambda x: INITIAL_CAMERA_LOCATION[2],
+    lambda x: x,
+    math.sin,
+    math.cos,
+    lambda x: 0.5 * math.sin(0.5*x) * math.cos(x),
+    lambda x: random.uniform(1, 10) * math.cos(x) ** 3,
+    lambda x: random.uniform(1, 10),
+    lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x),
+    lambda x: math.sin(math.pi*x) + x + 3 * math.pi,
+    lambda x: x**3 + math.cos(x/2),
+    lambda x: random.uniform(1, 10) * math.sin(x)
+]
 
 file = args.file
 mode = args.mode
@@ -45,12 +76,16 @@ shots_number = int(args.shots_number)
 #####################################
 #####################################
 
-import os, ntpath, bpy, datetime, random, math, mathutils, random, uuid, sys, logging, string, colorsys, code
+import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, uuid, sys, logging, string, colorsys, code
 from subprocess import call
 
 def load_file(file_path):
     # load and define function and vars in global namespace, yolo
     exec(open(file_path).read(), globals())
+
+def import_module(file_path):
+    sys.path.append(os.path.dirname(os.path.expanduser(file_path)))
+    exec("import " +  os.path.basename(file_path).replace(".py", ""))
 
 # Create directory for renders
 directory = os.path.dirname('./renders')
@@ -116,13 +151,15 @@ center(SUBJECT)
 SUBJECT.location = ORIGIN
 SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
-random.shuffle(list(MODULES_ENABLED))
+# random.shuffle(list(MODULES_ENABLED))
 render_settings(animate, mode, NORMALS_RENDERING)
 
 if debug == False:
     for module in MODULES_ENABLED:
-        load_file(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
+        import_module(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
+        exec(module + ".render()")
 
+    abstract.render(SUBJECT)
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
     CAMERA_PATH = camera_path()

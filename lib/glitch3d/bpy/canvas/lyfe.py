@@ -52,9 +52,10 @@ def life(l):
                 cells[x][y][z] = next_generation[x][y][z]
     adjust_scale()
 
-print("Synthetic life begin")
-adjust_scale()
-for l in range(DURATION):
-    SCENE.frame_set(l)
-    life(l)
+def render():
+    print("Synthetic life begin")
+    adjust_scale()
+    for l in range(DURATION):
+        SCENE.frame_set(l)
+        life(l)
 

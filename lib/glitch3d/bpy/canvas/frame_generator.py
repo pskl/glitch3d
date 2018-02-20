@@ -18,6 +18,8 @@ def spawn_frame(segment, side = 20):
   bpy.ops.object.mode_set(mode='OBJECT')
   return profile
 
-for i in range(0, 3):
-  frame = spawn_frame(build_segment((-10, -10, i),  random.choice(FUNCTIONS), length = 3, pitch = 1.5), side = 20)
-  assign_material(frame, random_material())
+
+def render():
+  for i in range(0, 3):
+    frame = spawn_frame(build_segment((-10, -10, i),  random.choice(FUNCTIONS), length = 3, pitch = 1.5), side = 20)
+    assign_material(frame, random_material())

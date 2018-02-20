@@ -1,25 +1,3 @@
-######################
-## FLUID SIMULATION ##
-######################
-SCENE.frame_end = NUMBER_OF_FRAMES
-
-RADIUS=20
-
-bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
-container = last_added_object('CUBE')
-container.name = 'fluid_container'
-container.modifiers.new(name='container', type='FLUID_SIMULATION')
-container.modifiers.new(name='smooth_container', type='SMOOTH')
-container.modifiers['container'].settings.type = 'DOMAIN'
-container.modifiers['container'].settings.generate_particles = 5
-container.modifiers['container'].settings.surface_subdivisions = 100
-container.modifiers['container'].settings.viscosity_exponent = 6
-container.modifiers['container'].settings.viscosity_base = 1.0
-container.modifiers['container'].settings.resolution = 100
-container.modifiers['container'].settings.simulation_scale = 1
-container.modifiers['container'].settings.simulation_rate = 5
-BAKED.append(container)
-
 def spawn_emitter_fuild(location, emission_vector):
   bpy.ops.mesh.primitive_uv_sphere_add(location=location)
   emitter = last_added_object('Sphere')
@@ -37,24 +15,6 @@ def make_object_fluid_collider(obj):
     obj.modifiers['obstacle'].settings.type = 'OBSTACLE'
     obj.modifiers['obstacle'].settings.volume_initialization = 'BOTH'
     obj.modifiers['obstacle'].settings.partial_slip_factor = 0.15
-
-spawn_emitter_fuild((-2,-2,10),mathutils.Vector((-0.5, -0.5, -2)))
-spawn_emitter_fuild((2,2,10),mathutils.Vector((0.5, 0.5, -2)))
-
-assign_material(container, fetch_material('colorshift'))
-
-######################
-## SMOKE SIMULATION ##
-######################
-
-bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
-container = last_added_object('CUBE')
-container.name = 'smoke_container'
-container.modifiers.new(name='container', type='SMOKE')
-container.modifiers['container'].smoke_type = 'DOMAIN'
-container.modifiers['container'].domain_settings.use_high_resolution = True
-container.modifiers['container'].domain_settings.vorticity = 5
-BAKED.append(container)
 
 def spawn_emitter_smoke(location, obj = None):
   if obj:
@@ -76,12 +36,54 @@ def make_object_smoke_collider(obj):
     obj.modifiers.new(name='obstacle', type='SMOKE')
     obj.modifiers['obstacle'].smoke_type = 'COLLISION'
 
-spawn_emitter_smoke(ORIGIN)
+def render():
+  ######################
+  ## FLUID SIMULATION ##
+  ######################
+  SCENE.frame_end = NUMBER_OF_FRAMES
 
-# Bake animation
-print("*** Baking commence *** (you might see a bunch of gibberish popping up cause baking is not supposed to be used headlessly")
-bpy.ops.ptcache.free_bake_all() # free bake cache
-bpy.ops.ptcache.bake_all(bake = True)
-print("*** Baking finished ***")
+  RADIUS=20
+
+  bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
+  container = last_added_object('CUBE')
+  container.name = 'fluid_container'
+  container.modifiers.new(name='container', type='FLUID_SIMULATION')
+  container.modifiers.new(name='smooth_container', type='SMOOTH')
+  container.modifiers['container'].settings.type = 'DOMAIN'
+  container.modifiers['container'].settings.generate_particles = 5
+  container.modifiers['container'].settings.surface_subdivisions = 100
+  container.modifiers['container'].settings.viscosity_exponent = 6
+  container.modifiers['container'].settings.viscosity_base = 1.0
+  container.modifiers['container'].settings.resolution = 100
+  container.modifiers['container'].settings.simulation_scale = 1
+  container.modifiers['container'].settings.simulation_rate = 5
+  BAKED.append(container)
+
+
+  spawn_emitter_fuild((-2,-2,10),mathutils.Vector((-0.5, -0.5, -2)))
+  spawn_emitter_fuild((2,2,10),mathutils.Vector((0.5, 0.5, -2)))
+
+  assign_material(container, fetch_material('colorshift'))
+
+  ######################
+  ## SMOKE SIMULATION ##
+  ######################
+
+  bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
+  container = last_added_object('CUBE')
+  container.name = 'smoke_container'
+  container.modifiers.new(name='container', type='SMOKE')
+  container.modifiers['container'].smoke_type = 'DOMAIN'
+  container.modifiers['container'].domain_settings.use_high_resolution = True
+  container.modifiers['container'].domain_settings.vorticity = 5
+  BAKED.append(container)
+
+  spawn_emitter_smoke(ORIGIN)
+
+  # Bake animation
+  print("*** Baking commence *** (you might see a bunch of gibberish popping up cause baking is not supposed to be used headlessly")
+  bpy.ops.ptcache.free_bake_all() # free bake cache
+  bpy.ops.ptcache.bake_all(bake = True)
+  print("*** Baking finished ***")
 
 
