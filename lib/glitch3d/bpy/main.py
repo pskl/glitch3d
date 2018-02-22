@@ -1,7 +1,6 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
-
 import argparse, random, math
 
 def get_args():
@@ -26,7 +25,7 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['abstract', 'dreamatorium', 'aether', 'particles']
+MODULES_ENABLED = ['abstract', 'aether', 'dreamatorium', 'particles']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []
@@ -83,9 +82,9 @@ def load_file(file_path):
     # load and define function and vars in global namespace, yolo
     exec(open(file_path).read(), globals())
 
-def import_module(file_path):
+def load_module_path(file_path):
+    print("loading module " + file_path)
     sys.path.append(os.path.dirname(os.path.expanduser(file_path)))
-    exec("import " +  os.path.basename(file_path).replace(".py", ""))
 
 # Create directory for renders
 directory = os.path.dirname('./renders')
@@ -156,10 +155,11 @@ render_settings(animate, mode, NORMALS_RENDERING)
 
 if debug == False:
     for module in MODULES_ENABLED:
-        import_module(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
-        exec(module + ".render()")
+        load_module_path(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
+        mod = __import__(module)
+        new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
+        new_canvas.render()
 
-    abstract.render(SUBJECT)
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
     CAMERA_PATH = camera_path()
