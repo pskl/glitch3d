@@ -10,7 +10,7 @@ This gem uses the Blender Python API to produces renders headlessly and leverage
 
 Cycles rendering engine does not support GLSL shaders so the shader library is using a node-based system but could be extended to serialize materials in the Open Shading Language.
 
-## Warning
+## :warning: Warning
 
 Setting `BLENDER_EXECUTABLE_PATH` in your environment is required. In general this gem relies on the presence of Python and Blender on the host machine. I am very aware this is not standard practice and plan to split components later down the road but this proves convenient for now.
 
@@ -34,15 +34,24 @@ Or install it yourself as:
 
 - `glitch3d file.obj`
 
-will
-Options:
+CLI Options:
 - `mode` : (localized|default|none) => glitching strategy
 - `shots-number` : integer representing the number of - images desired (with animate: false)
 - `quality` : (high: 2000 x 2000|low 200 x 200) default: low => size of the render
 - `animate` : (true) default: false => Render .avi file
-- `frame_numbers` : (default: 200) => number of frames
+- `frames` : (default: 200) => number of frames for simulation
 
-Renders (wether it is video or an image) will be output to `./renders` along with an export of the `.scene` file so that you can potentially fiddle with the existing setup.
+Renders (wether it is video or an image) will be output to `./renders` along with an export of the `.scene` file so that you can potentially fiddle with the resulting scene setup and adjust lights for instance.
+
+## Examples
+
+In your favorite terminal:
+
+`glitch3d /path/to/model.obj --quality=high --mode=none --shots-number=12 --frames=100`
+-> will fetch your .obj will and render 12 high quality visuals (in current folder under the folder called `renders`) of it without glitching it at all.
+
+`glitch3d /path/to/model.obj --animate=true --frames=1000`
+-> will render a video in .avi format long of 1000 frames
 
 ## Development
 
