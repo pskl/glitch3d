@@ -33,7 +33,7 @@ class Aether(canvas.Canvas):
     emitter.name = 'smoke_emitter_' + str(uuid.uuid1())
     emitter.modifiers.new(name='emitter', type='SMOKE')
     emitter.modifiers['emitter'].smoke_type = 'FLOW'
-    emitter.modifiers['emitter'].flow_settings.smoke_color = (rand_color_value(), rand_color_value(), rand_color_value())
+    emitter.modifiers['emitter'].flow_settings.smoke_color = (self.rand_color_value(), self.rand_color_value(), self.rand_color_value())
     emitter.modifiers['emitter'].flow_settings.temperature = 1
     emitter.scale = (3,3,3)
     return emitter
