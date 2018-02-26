@@ -25,7 +25,7 @@ args = get_args()
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['abstract', 'aether', 'dreamatorium', 'particles']
+MODULES_ENABLED = ['frame', 'lyfe', 'abstract', 'aether', 'dreamatorium', 'particles']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []
@@ -112,7 +112,7 @@ for primitive in PRIMITIVES:
 FISHEYE = True
 COLORS = rand_color_palette(5)
 CAMERA_OFFSET = 5
-INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(4, 10))
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(2, 8))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
@@ -150,7 +150,7 @@ center(SUBJECT)
 SUBJECT.location = ORIGIN
 SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
-# random.shuffle(list(MODULES_ENABLED))
+random.shuffle(list(MODULES_ENABLED))
 render_settings(animate, mode, NORMALS_RENDERING)
 
 if debug == False:
