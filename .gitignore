@@ -18,3 +18,4 @@
 /fixtures/blendcache_base
 .DS_Store
 *.png
+lib/glitch3d/bpy/canvas/__pycache__/
