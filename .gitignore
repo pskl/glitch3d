@@ -7,6 +7,7 @@
 /pkg/
 /spec/reports/
 /tmp/
+/venv/
 /renders/*
 /fixtures/models/*
 /fixtures/*.blend1
