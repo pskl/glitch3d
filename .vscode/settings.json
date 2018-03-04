@@ -1,4 +1,6 @@
 {
   "ruby.rubocop.onSave": false,
-  "editor.insertSpaces": true
+  "editor.insertSpaces": true,
+  "python.pythonPath": "${workspaceFolder}/venv/bin/python",
+  "python.linting.enabled": false
 }

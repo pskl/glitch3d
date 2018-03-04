@@ -41,8 +41,13 @@ for file in files:
     average_image = average_image.point(lambda p: p * 0.9)
 
     font = random.choice(range(0, 7))
+    if random.randint(0,1) == 1:
+      image = Image.fromarray(cv2.bitwise_not(np.asarray(average_image)))
+
     for i in range(0, 10):
-      image = Image.fromarray(cv2.putText(np.asarray(average_image), "PSKL", (random.choice(range(20,300)), random.choice(range(20, 300))), font, random.uniform(0.8, 3), (255, 255, 255), 1, cv2.LINE_AA))
+      image = Image.fromarray(cv2.putText(np.asarray(image), "PSKL", (random.choice(range(20,300)), random.choice(range(20, 300))), font, random.uniform(0.8, 3), (255, 255, 255), 1, cv2.LINE_AA))
+
+
     image.save(file + "_average.png")
 
 average_image.save(path + "average.png")
