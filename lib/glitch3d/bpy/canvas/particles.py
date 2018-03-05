@@ -5,11 +5,11 @@ canvas = __import__('canvas')
 
 class Particles(canvas.Canvas):
   def spawn_particles_system(self, base, object):
-    particles = base.modifiers.new("Particles", type='PARTICLE_SYSTEM')
+    base.modifiers.new("Particles", type='PARTICLE_SYSTEM')
     settings = bpy.data.particles[-1]
     settings.emit_from = 'VERT'
     settings.physics_type = 'NO'
-    settings.count = 10000 #default 1000
+    settings.count = 100000 #default 1000
     settings.particle_size = 0.01
     settings.render_type = 'OBJECT'
     settings.dupli_object = bpy.data.objects['Cube']
