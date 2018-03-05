@@ -1,9 +1,9 @@
 def add_spotlight(location, intensity, radians, name = 'spot'):
     bpy.ops.object.lamp_add(type='SPOT', radius=1.0, view_align=False, location=location)
-    spot = last_added_object('Spot')
+    spot = last_added_object('Spot') # default name
+    spot.name = name
     spot.data.node_tree.nodes['Emission'].inputs[1].default_value = intensity
     spot.data.spot_size = radians
-    spot.name = name
     return spot
 
 def let_there_be_light(scene):

@@ -17,12 +17,12 @@ class Dreamatorium(canvas.Canvas):
         self.props.append(logo)
 
         rand_primitive = random.choice(self.PRIMITIVES)
-        # elements = build_composite_object(rand_primitive, 4, 1)
+        elements = self.build_composite_object(rand_primitive, 4, 1)
 
-        # for l1 in elements:
-        #     for l2 in l1:
-        #         for obj in l2:
-        #             WIREFRAMES.append(obj)
+        for l1 in elements:
+            for l2 in l1:
+                for obj in l2:
+                    self.WIREFRAMES.append(obj)
 
         bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
         display1 = self.last_added_object('Grid')

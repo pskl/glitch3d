@@ -46,7 +46,7 @@ class Lyfe(canvas.Canvas):
         DURATION=self.NUMBER_OF_FRAMES
         self.SCENE.frame_start = 0
         self.SCENE.frame_end = DURATION
-        self.cubes = self.build_composite_object('CUBE', self.SIZE-1, 0.5)
+        self.cubes = self.build_composite_object('Cube', self.SIZE-1, 0.5)
 
         self.cells = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]
         self.next_generation = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]

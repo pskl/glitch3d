@@ -9,7 +9,7 @@ class Particles(canvas.Canvas):
     settings = bpy.data.particles[-1]
     settings.emit_from = 'VERT'
     settings.physics_type = 'NO'
-    settings.count = 100000 #default 1000
+    settings.count = 10000 #default 1000
     settings.particle_size = 0.01
     settings.render_type = 'OBJECT'
     settings.dupli_object = bpy.data.objects['Cube']
@@ -20,7 +20,7 @@ class Particles(canvas.Canvas):
 
   def render(self):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
-    cube = self.last_added_object('CUBE')
+    cube = self.last_added_object('Cube')
     self.assign_material(cube, self.random_material(['emission']))
     self.spawn_particles_system(self.SUBJECT, cube)
 

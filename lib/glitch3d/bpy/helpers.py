@@ -1,4 +1,5 @@
 def pry():
+    import sys
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
 
@@ -195,27 +196,32 @@ def add_object(obj, x, y, z, radius):
     return last_added_object(obj)
 
 def infer_primitive(obj, **kwargs):
-    if obj == 'CUBE':
+    if obj == 'Cube':
         bpy.ops.mesh.primitive_cube_add(radius = kwargs['radius'], location = kwargs['location'])
-    elif obj == 'ICO':
+    elif obj == 'Ico':
         bpy.ops.mesh.primitive_ico_sphere_add(location = kwargs['location'])
-    elif obj == 'CONE':
+    elif obj == 'Cone':
         bpy.ops.mesh.primitive_cone_add(location = kwargs['location'], radius1 = kwargs['radius'])
-    elif obj == 'PYRAMID':
+    elif obj == 'Pyramid':
         build_pyramid(location = kwargs['location'])
-    elif obj == 'PLANE':
+    elif obj == 'Plane':
         bpy.ops.mesh.primitive_plane_add(location = kwargs['location'], radius = kwargs['radius'])
 
 def group_add(group_name, obj):
     bpy.data.groups[group_name.lower().title()].objects.link(obj)
 
-# Ugly af but no other way to retrieve the last added object by bpy.ops
+# Ugly af but no other way to retrieve the last added object by bpy.ops (that I know of at least)
 def last_added_object(object_name_start):
     l = []
     for obj in bpy.data.objects:
-        if obj.name.startswith(object_name_start.lower().title()):
+        if obj.name.startswith(object_name_start) or obj.name.startswith(object_name_start.lower()):
             l.append(obj)
-    return l[-1]
+    try:
+        return l[-1]
+    except IndexError:
+        names = list(map(lambda x: x.name, bpy.data.objects))
+        code.interact(local=dict(globals(), **locals()))
+
 
 def last_object_group(group_name):
     return bpy.data.groups[group_name.lower().title()].objects[-1]
@@ -274,7 +280,7 @@ def subdivide(object, cuts):
 
 def add_ocean(spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale = 0.5):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)
-    ocean = last_added_object('CUBE')
+    ocean = last_added_object('Cube')
     ocean.scale = scale
     ocean.modifiers.new(name='Ocean', type='OCEAN')
     ocean.modifiers["Ocean"].spatial_size = spatial_size

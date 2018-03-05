@@ -22,10 +22,20 @@ def get_args():
     return parsed_script_args
 
 args = get_args()
+file = args.file
+mode = args.mode
+debug = (args.debug == 'True')
+path = str(args.path)
+animate = (args.animate == 'True')
+shots_number = int(args.shots_number)
+
+#####################################
+#####################################
+#####################################
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['frame', 'lyfe', 'abstract', 'aether', 'dreamatorium', 'particles']
+MODULES_ENABLED = ['frame', 'dreamatorium', 'lyfe', 'particles', 'abstract']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []
@@ -42,7 +52,7 @@ ORIGIN  = (0,0,2)
 SCATTER_INTENSITY = 0.015
 ABSORPTION_INTENSITY = 0.25
 DISPLAY_SCALE = (2, 2, 2)
-PRIMITIVES = ['PYRAMID', 'CUBE']
+PRIMITIVES = ['Pyramid', 'Cube']
 props = []
 YELLOW = (1, 0.7, 0.1, 1)
 GREY = (0.2, 0.2, 0.2 ,1)
@@ -63,17 +73,6 @@ FUNCTIONS = [
     lambda x: x**3 + math.cos(x/2),
     lambda x: random.uniform(1, 10) * math.sin(x)
 ]
-
-file = args.file
-mode = args.mode
-debug = (args.debug == 'True')
-path = str(args.path)
-animate = (args.animate == 'True')
-shots_number = int(args.shots_number)
-
-#####################################
-#####################################
-#####################################
 
 import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, uuid, sys, logging, string, colorsys, code
 from subprocess import call
@@ -205,5 +204,5 @@ if animate == False and debug == False:
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
-
 print('FINISHED ¯\_(ツ)_/¯')
+sys.exit()

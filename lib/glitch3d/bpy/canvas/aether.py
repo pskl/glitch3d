@@ -51,7 +51,7 @@ class Aether(canvas.Canvas):
     RADIUS=20
 
     bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
-    container = self.last_added_object('CUBE')
+    container = self.last_added_object('Cube')
     container.name = 'fluid_container'
     container.modifiers.new(name='container', type='FLUID_SIMULATION')
     container.modifiers.new(name='smooth_container', type='SMOOTH')
@@ -69,14 +69,14 @@ class Aether(canvas.Canvas):
     self.spawn_emitter_fuild((-2,-2,10),mathutils.Vector((-0.5, -0.5, -2)))
     self.spawn_emitter_fuild((2,2,10),mathutils.Vector((0.5, 0.5, -2)))
 
-    self.assign_material(container, self.fetch_material('colorshift'))
+    self.assign_material(container, self.random_material())
 
     ######################
     ## SMOKE SIMULATION ##
     ######################
 
     bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 17),radius=RADIUS)
-    container = self.last_added_object('CUBE')
+    container = self.last_added_object('Cube')
     container.name = 'smoke_container'
     container.modifiers.new(name='container', type='SMOKE')
     container.modifiers['container'].smoke_type = 'DOMAIN'
