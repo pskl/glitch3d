@@ -35,7 +35,7 @@ shots_number = int(args.shots_number)
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['frame', 'dreamatorium', 'lyfe', 'particles', 'abstract']
+MODULES_ENABLED = ['frame', 'dreamatorium', 'particles', 'abstract']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []

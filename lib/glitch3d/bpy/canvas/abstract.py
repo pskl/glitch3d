@@ -7,7 +7,6 @@ class Abstract(canvas.Canvas):
   def render(self):
     curve = self.parametric_curve(random.choice(self.FUNCTIONS), random.choice(self.FUNCTIONS), random.choice(self.FUNCTIONS), 20)
     base_model = self.SUBJECT
-
     # self.isometric_camera()
     self.wireframize(curve, 1, 1)
     curve.name = 'param_curve'

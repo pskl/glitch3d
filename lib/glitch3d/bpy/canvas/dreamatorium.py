@@ -45,6 +45,7 @@ class Dreamatorium(canvas.Canvas):
             display.scale = self.DISPLAY_SCALE
             self.texture_object(display)
             self.unwrap_model(display)
+            self.glitch(display)
 
         for prop in self.props:
             self.assign_material(prop, self.random_material())
