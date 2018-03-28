@@ -5,9 +5,8 @@ canvas = __import__('canvas')
 
 class Abstract(canvas.Canvas):
   def render(self):
-    curve = self.parametric_curve(random.choice(self.FUNCTIONS), random.choice(self.FUNCTIONS), random.choice(self.FUNCTIONS), 20)
+    curve = self.parametric_curve(self.rand_proba(self.FUNCTIONS), self.rand_proba(self.FUNCTIONS), self.rand_proba(self.FUNCTIONS), 20)
     base_model = self.SUBJECT
-    # self.isometric_camera()
     self.wireframize(curve, 1, 1)
     curve.name = 'param_curve'
 
@@ -22,3 +21,6 @@ class Abstract(canvas.Canvas):
       copy.rotation_euler.x += math.radians(random.choice(angles))
       copy.name = 'copy_' + str(i)
       self.assign_material(copy, self.random_material())
+
+    cut_copy = self.duplicate_object(self.SUBJECT)
+    self.cut(cut_copy)

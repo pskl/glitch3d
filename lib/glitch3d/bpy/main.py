@@ -21,6 +21,35 @@ def get_args():
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
+def chunk_it(seq, num):
+    avg = len(seq) / float(num)
+    out = []
+    last = 0.0
+    while last < len(seq):
+        out.append(seq[int(last):int(last + avg)])
+        last += avg
+    return out
+
+# Split rendering into 3 rendering layers
+def split_into_render_layers():
+    SCENE.render.layers[0].use = False
+    SCENE.cycles.film_transparent = True
+    chunks = chunk_it(bpy.data.objects, 3)
+    for chunk_index in range(len(chunks)):
+        for obj in chunks[chunk_index]:
+            obj.layers[chunk_index + 1] = True
+            obj.layers[0] = False
+    for l in SCENE.render.layers[1:3]:
+        l.use = True
+    for obj in bpy.data.objects:
+        assert obj.layers[0] == False
+        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1
+    assert SCENE.render.layers[0].use == False
+    assert SCENE.render.layers[1].use == True
+    SCENE.layers[1] = True
+    SCENE.layers[2] = True
+    SCENE.layers[3] = True
+
 args = get_args()
 file = args.file
 mode = args.mode
@@ -35,7 +64,8 @@ shots_number = int(args.shots_number)
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-MODULES_ENABLED = ['frame', 'dreamatorium', 'particles', 'abstract']
+# MODULES_ENABLED = ['aether', 'frame', 'dreamatorium', 'particles', 'abstract']
+MODULES_ENABLED = ['abstract']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 SCENE_NAME = "glitch3d"
 WIREFRAMES = []
@@ -60,21 +90,21 @@ BLUE = (0.1, 0.1, 0.8, 0.4)
 PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
 FIXED_CAMERA = False
-FUNCTIONS = [
-    lambda x: INITIAL_CAMERA_LOCATION[2],
-    lambda x: x,
-    math.sin,
-    math.cos,
-    lambda x: 0.5 * math.sin(0.5*x) * math.cos(x),
-    lambda x: random.uniform(1, 10) * math.cos(x) ** 3,
-    lambda x: random.uniform(1, 10),
-    lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x),
-    lambda x: math.sin(math.pi*x) + x + 3 * math.pi,
-    lambda x: x**3 + math.cos(x/2),
-    lambda x: random.uniform(1, 10) * math.sin(x)
-]
+FUNCTIONS = {
+    (lambda x: INITIAL_CAMERA_LOCATION[2]): 2,
+    (lambda x: x) : 2,
+    math.sin : 1,
+    math.cos : 1,
+    (lambda x: 0.5 * math.sin(0.5*x) * math.cos(x)) : 1,
+    (lambda x: random.uniform(1, 10) * math.cos(x) ** 3) : 1,
+    (lambda x: random.uniform(1, 10)) : 1,
+    (lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x)) : 1,
+    (lambda x: math.sin(math.pi*x) + x + 3 * math.pi) : 1,
+    (lambda x: x**3 + math.cos(x/2)) : 2,
+    (lambda x: random.uniform(1, 10) * math.sin(x)): 3
+}
 
-import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, uuid, sys, logging, string, colorsys, code
+import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, uuid, sys, logging, string, colorsys, code, numpy
 from subprocess import call
 
 def load_file(file_path):
@@ -118,7 +148,7 @@ HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 
 # Scene
 context = bpy.context
-new_scene = bpy.data.scenes.new(SCENE_NAME)
+new_scene = bpy.data.scenes[SCENE_NAME]
 context.screen.scene = new_scene
 SCENE = new_scene
 SCENE.render.engine = 'CYCLES'
@@ -165,6 +195,8 @@ if debug == False:
     create_line('camera_path', CAMERA_PATH, 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
 
+    split_into_render_layers()
+
     SCENE.frame_start = 0
     SCENE.frame_end = NUMBER_OF_FRAMES
     for frame in range(0, NUMBER_OF_FRAMES):
@@ -200,7 +232,7 @@ for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])

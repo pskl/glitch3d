@@ -32,5 +32,5 @@ class Frame(canvas.Canvas):
         return profile
 
     def render(self):
-        frame = self.spawn_frame(self.build_segment((-10, -10, 0),  random.choice(self.FUNCTIONS), length = 3, pitch = 1), side = 20)
+        frame = self.spawn_frame(self.build_segment((-10, -10, 0),  self.rand_proba(self.FUNCTIONS), length = 3, pitch = 1), side = 20)
         self.assign_material(frame, self.random_material())

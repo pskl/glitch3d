@@ -1,8 +1,8 @@
 # Glitch3d
 
-Glitch3d is an automated render library that uses glitching techniques applied to 3D meshes. The original intent was to focus on 3D glitching techniques and morphed into a render bot.
+Glitch3d is an automated render library that uses glitching techniques applied to 3D meshes. The original intent was to focus on 3D glitching techniques and the idea evolved into making a render bot.
 
-You can read a bit more about where it come from [here](http://pascal.cc/blog/glitches) and see it living [there](https://twitter.com/glitchdemon).
+You can read a bit more about where it comes from [here](http://pascal.cc/blog/glitches) and see it living [there](https://twitter.com/glitchdemon).
 
 <img src="https://raw.githubusercontent.com/pskl/glitch3d/master/fixtures/examples/demo.jpg" width="400">
 

@@ -20,9 +20,9 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
 
 def render_normals():
     SCENE.use_nodes = True
-    SCENE.render.layers[0].use_pass_normal = True
-    SCENE.render.layers[0].use_pass_z = False
-    SCENE.render.layers[0].use_pass_combined = False
+    SCENE.render.layers[3].use_pass_normal = True
+    SCENE.render.layers[3].use_pass_z = False
+    SCENE.render.layers[3].use_pass_combined = False
     node_tree = bpy.context.scene.node_tree
     enter = node_tree.nodes[1]
     composite = node_tree.nodes['Composite']
@@ -59,7 +59,9 @@ def render_settings(animate, mode, normals):
     SCENE.cycles.caustics_reflective = False
     SCENE.cycles.caustics_refractive = False
     SCENE.render.image_settings.color_mode ='RGBA'
-    SCENE.render.layers[0].cycles.use_denoising = True
+    SCENE.render.layers[1].cycles.use_denoising = True
+    SCENE.render.layers[2].cycles.use_denoising = True
+    SCENE.render.layers[3].cycles.use_denoising = True
     SCENE.view_settings.view_transform = "Filmic"
     SCENE.view_settings.look = "Filmic - High Contrast"
     set_tile(32)
@@ -73,4 +75,6 @@ def render_settings(animate, mode, normals):
         set_tile(64)
         SCENE.cycles.samples = 100
         SCENE.render.resolution_percentage = 100
+
+
 

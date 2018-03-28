@@ -3,6 +3,14 @@ def pry():
     code.interact(local=dict(globals(), **locals()))
     sys.exit("Aborting execution")
 
+# Hashmap with proba in values
+def rand_proba(hashmap):
+    return numpy.random.choice(
+        list(hashmap.keys()),
+        1,
+        p=list(map(lambda x: x/sum(hashmap.values()), hashmap.values()))
+    )[0]
+
 def fetch_material(material_name):
     assert material_name in MATERIALS_NAMES
     new_material = bpy.data.materials[material_name].copy()
@@ -359,20 +367,30 @@ def build_pyramid(width=random.uniform(1,3), length=random.uniform(1,3), height=
     faces.append([3,0,4])
     return create_mesh('pyramid_' + str(uuid.uuid1()), verts, faces, location)
 
-def cut(obj, slices, thiccness = 3):
+# Cuts a model horizontally into sub models like a scanner
+def cut(obj, slices = 6):
+    thiccness = obj.dimensions.z / slices
+    gap = 0.02 * obj.dimensions.z
     center(obj)
-    print("Slicing " + obj.name + " in " + str(slices) + "parts")
-    for i in range(0,slices):
+    print("Slicing " + obj.name + " in " + str(slices) + " parts " + str(thiccness) + " thicc, gap: " + str(gap))
+    base = obj.location.z - (obj.dimensions.z / 2)
+    for i in range(0,slices - 1):
         dup = duplicate_object(obj)
+        dup.name = 'cut_' + str(i)
         bpy.ops.object.select_all(action='DESELECT')
         SCENE.objects.active = dup
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.bisect(plane_co=(0,0,0),plane_no=(0,0,1),clear_outer=False,clear_inner=True)
+        bpy.ops.mesh.bisect(plane_co=(0,0,base),plane_no=(0,0,1),clear_outer=False,clear_inner=True)
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.bisect(plane_co=(0,0,thiccness*(1+i)),plane_no=(0,0,1),clear_outer=True,clear_inner=False)
+        bpy.ops.mesh.bisect(plane_co=(0,0,base + thiccness),plane_no=(0,0,1),clear_outer=True,clear_inner=False)
         bpy.ops.object.mode_set(mode='OBJECT')
-        dup.location.z += thiccness
+        base += thiccness
+        dup.location.z += i * gap
+        dup.location.x += random.uniform(-0.2,0.2)
+        dup.location.y += random.uniform(-0.2,0.2)
+    # remove original object to only let the cuts appear
+    bpy.data.objects.remove(obj)
 
 def duplicate_object(obj):
     print("Cloning -> " + obj.name)
@@ -422,6 +440,7 @@ def random_faces(vertices):
 
 def center(obj):
     SCENE.objects.active = obj
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
     bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
     local_bounding_box_center = 0.125 * sum((mathutils.Vector(b) for b in obj.bound_box), mathutils.Vector())
     obj.location -= local_bounding_box_center

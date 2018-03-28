@@ -4,9 +4,9 @@ from PIL import ImageChops
 from PIL import ImageEnhance
 import numpy as np
 import random
-import sys, os, cv2
+import sys, os, cv2, code
 
-print("Averaging 💁🏻‍♀️")
+print("Averaging and signing 💁🏻‍♀️")
 path = os.environ['RENDER_PATH']
 files = [path + f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and os.path.join(path, f).endswith(".png"))]
 
@@ -15,6 +15,7 @@ old_image = None
 
 for file in files:
     current_image = Image.open(file)
+
     # calculate the difference between this frame and the last
     diff = ImageChops.difference(current_image, old_image if old_image else current_image)
     old_image = current_image
@@ -31,11 +32,13 @@ for file in files:
     # darken the image slightly to prevent it getting washed out
     average_image = average_image.point(lambda p: p * 0.9)
 
-    # # possibly invert colors
+    # possibly invert colors
     if random.randint(0,1) == 1:
       image = Image.fromarray(cv2.bitwise_not(np.asarray(current_image)))
 
-font = random.choice(range(0, 7))
+# add signatures
 for i in range(0,5):
-  average_image = Image.fromarray(cv2.putText(np.asarray(average_image), "PSKL", (random.choice(range(20,300)), random.choice(range(20, 300))), font, random.uniform(0.8, 3), (255, 255, 255), 1, cv2.LINE_AA))
-average_image.save(path + "average.png") # save final result
+  font = random.choice(range(0, 7))
+  average_image = Image.fromarray(cv2.putText(np.asarray(average_image), random.choice(["PSKL"]), (random.choice(range(0, average_image.size[0])), random.choice(range(0, average_image.size[1]))), font, random.uniform(0.8, 3), random.choice([(255, 255, 255), (0,0,0)]), random.choice(range(1, 3)), random.choice(range(1,8))))
+
+average_image.save(path + "average.png")
