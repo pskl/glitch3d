@@ -1,7 +1,7 @@
-import uuid, sys, code, random, os, math, bpy
+import uuid, sys, code, random, os, math, bpy, canvas
 
-sys.path.append(os.path.dirname(__file__) + '/canvas.py')
-canvas = __import__('canvas')
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import helpers
 
 class Frame(canvas.Canvas):
     # generate line -> rotate 45 degrees -> extrude -> mirror end -> cursor to center -> mirror
@@ -32,5 +32,5 @@ class Frame(canvas.Canvas):
         return profile
 
     def render(self):
-        frame = self.spawn_frame(self.build_segment((-10, -10, 0),  self.rand_proba(self.FUNCTIONS), length = 3, pitch = 1), side = 20)
-        self.assign_material(frame, self.random_material())
+        frame = self.spawn_frame(helpers.build_segment((-10, -10, 0),  helpers.rand_proba(self.FUNCTIONS), length = 3, pitch = 1), side = 20)
+        helpers.assign_material(frame, helpers.random_material(self.MATERIALS_NAMES))

@@ -1,7 +1,7 @@
-import uuid, sys, code, random, os, math, bpy
+import uuid, sys, code, random, os, math, bpy, canvas
 
-sys.path.append(os.path.dirname(__file__) + '/canvas.py')
-canvas = __import__('canvas')
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import helpers
 
 class Lyfe(canvas.Canvas):
     SIZE = 5
@@ -14,7 +14,7 @@ class Lyfe(canvas.Canvas):
                         self.cubes[x][y][z].scale=(random.uniform(0.4, 0.6), random.uniform(0.4, 0.6), random.uniform(0.4, 0.6))
                     else:
                         self.cubes[x][y][z].scale=(.1,.1,.1)
-                    self.add_frame([self.cubes[x][y][z]])
+                    helpers.add_frame([self.cubes[x][y][z]], set(self.BAKED))
 
     def life(self, length):
         for x in range(self.SIZE):
@@ -46,7 +46,7 @@ class Lyfe(canvas.Canvas):
         DURATION=self.NUMBER_OF_FRAMES
         self.SCENE.frame_start = 0
         self.SCENE.frame_end = DURATION
-        self.cubes = self.build_composite_object('Cube', self.SIZE-1, 0.5)
+        self.cubes = helpers.build_composite_object('Cube', self.SIZE-1, 0.5)
 
         self.cells = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]
         self.next_generation = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]
@@ -56,7 +56,7 @@ class Lyfe(canvas.Canvas):
                 for z in range(self.SIZE):
                     self.cubes[x][y][z].scale=(.1,.1,.1)
                     self.cells[x][y][z] = random.choice(range(2))
-                    self.assign_material(self.cubes[x][y][z], self.random_material())
+                    helpers.assign_material(self.cubes[x][y][z], helpers.random_material(self.MATERIALS_NAMES))
 
         print("Synthetic life begin")
         self.adjust_scale()

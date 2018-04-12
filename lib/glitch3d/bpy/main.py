@@ -1,7 +1,7 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
-import argparse, random, math
+import argparse, random, math, os, code
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -21,35 +21,6 @@ def get_args():
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
-def chunk_it(seq, num):
-    avg = len(seq) / float(num)
-    out = []
-    last = 0.0
-    while last < len(seq):
-        out.append(seq[int(last):int(last + avg)])
-        last += avg
-    return out
-
-# Split rendering into 3 rendering layers
-def split_into_render_layers():
-    SCENE.render.layers[0].use = False
-    SCENE.cycles.film_transparent = True
-    chunks = chunk_it(bpy.data.objects, 3)
-    for chunk_index in range(len(chunks)):
-        for obj in chunks[chunk_index]:
-            obj.layers[chunk_index + 1] = True
-            obj.layers[0] = False
-    for l in SCENE.render.layers[1:3]:
-        l.use = True
-    for obj in bpy.data.objects:
-        assert obj.layers[0] == False
-        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1
-    assert SCENE.render.layers[0].use == False
-    assert SCENE.render.layers[1].use == True
-    SCENE.layers[1] = True
-    SCENE.layers[2] = True
-    SCENE.layers[3] = True
-
 args = get_args()
 file = args.file
 mode = args.mode
@@ -64,14 +35,18 @@ shots_number = int(args.shots_number)
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
-# MODULES_ENABLED = ['aether', 'frame', 'dreamatorium', 'particles', 'abstract']
-MODULES_ENABLED = ['abstract']
+
+# Randomize module usage at runtime
+MODULES_AVAILABLE = []
+canvas_path = os.path.dirname(__file__) + '/canvas'
+for f in os.listdir(canvas_path):
+    if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py':
+        MODULES_AVAILABLE.append(f[0:-3])
+MODULES_ENABLED = MODULES_AVAILABLE if debug else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
 print("modules enabled: " + str(list(MODULES_ENABLED)))
+
 SCENE_NAME = "glitch3d"
-WIREFRAMES = []
-VORONOIED = []
 BAKED = []
-OCEAN = []
 REFLECTOR_SCALE = random.uniform(9, 10)
 REFLECTOR_STRENGTH = random.uniform(12, 15)
 REFLECTOR_LOCATION_PADDING = random.uniform(10, 12)
@@ -91,6 +66,8 @@ PINK = (0.8, 0.2, 0.7, 1.0)
 RENDER_OUTPUT_PATHS = []
 FIXED_CAMERA = False
 FUNCTIONS = {
+    (lambda x: math.sin(x) * math.cos(20*x)): 4,
+    (lambda x: math.sin(x) * math.sin(20*x)): 3,
     (lambda x: INITIAL_CAMERA_LOCATION[2]): 2,
     (lambda x: x) : 2,
     math.sin : 1,
@@ -125,13 +102,14 @@ load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
 MATERIALS_NAMES = []
-# Fill base materials list
+# Fill base materials list (added to base scene as initial fixtures)
+# TODO: find a better way to serialize materials
 for mat in bpy.data.materials:
     MATERIALS_NAMES.append(mat.name)
 print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
 
 # Create groups
-for s in ['texts', 'lines', 'displays', 'reflectors']:
+for s in ['texts', 'lines', 'displays', 'reflectors', 'neons']:
     bpy.data.groups.new(s)
 
 LINES = bpy.data.groups['lines'].objects
@@ -141,10 +119,11 @@ for primitive in PRIMITIVES:
 FISHEYE = True
 COLORS = rand_color_palette(5)
 CAMERA_OFFSET = 5
-INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(2, 8))
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(-3, 8))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
+TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'text/strings.txt'
 
 # Scene
 context = bpy.context
@@ -191,8 +170,8 @@ if debug == False:
 
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
-    CAMERA_PATH = camera_path()
-    create_line('camera_path', CAMERA_PATH, 0.01, ORIGIN).name = "camera_path"
+    CAMERA_PATH = camera_path(NUMBER_OF_FRAMES)
+    create_line('camera_path', CAMERA_PATH, random.choice(COLORS), 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
 
     split_into_render_layers()
@@ -201,9 +180,9 @@ if debug == False:
     SCENE.frame_end = NUMBER_OF_FRAMES
     for frame in range(0, NUMBER_OF_FRAMES):
         SCENE.frame_set(frame)
-        animation_routine(frame)
+        animation_routine(frame, CAMERA_PATH, SUBJECT, MATERIALS_NAMES, COLORS)
         look_at(SUBJECT)
-        add_frame(bpy.data.objects)
+        add_frame(bpy.data.objects, set(BAKED))
 
     if animate:
         print('ANIMATION RENDERING BEGIN')
@@ -232,7 +211,7 @@ for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
+    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])

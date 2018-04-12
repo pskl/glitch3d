@@ -16,7 +16,7 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     world.node_tree.links.new(absorption_node.outputs[0], add_shader.inputs[1])
     scatter_node.inputs['Density'].default_value = SCATTER_INTENSITY
     absorption_node.inputs['Density'].default_value = ABSORPTION_INTENSITY
-    bg_node.inputs[0].default_value = rand_color()
+    bg_node.inputs[0].default_value = random.choice(COLORS)
 
 def render_normals():
     SCENE.use_nodes = True
@@ -30,8 +30,8 @@ def render_normals():
     add = node_tree.nodes.new('CompositorNodeMixRGB')
     multiply.blend_type = "MULTIPLY"
     add.blend_type = 'ADD'
-    add.inputs[1].default_value = rand_color()
-    multiply.inputs[1].default_value = rand_color()
+    add.inputs[1].default_value = random.choice(COLORS)
+    multiply.inputs[1].default_value = random.choice(COLORS)
     invert = node_tree.nodes.new('CompositorNodeInvert')
     node_tree.links.new(add.outputs[0], invert.inputs[1])
     node_tree.links.new(multiply.outputs[0], add.inputs[2])
@@ -45,9 +45,11 @@ def isometric_camera():
     FIXED_CAMERA = True
 
 def render_settings(animate, mode, normals):
-    SCENE.render.resolution_x = 2000
+    # SCENE.render.resolution_x = 2000
+    # SCENE.render.resolution_y = 2000
     SCENE.render.layers[0].use_pass_ambient_occlusion = True
-    SCENE.render.resolution_y = 2000
+    SCENE.render.resolution_x = 4096 # Resolution for CODAME exhibition
+    SCENE.render.resolution_y = 2160
     SCENE.render.resolution_percentage = 25
     # bpy.SCENE.cycles.device = 'GPU'
     SCENE.render.image_settings.compression = 90

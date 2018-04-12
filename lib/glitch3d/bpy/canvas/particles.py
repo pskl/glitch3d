@@ -1,7 +1,7 @@
-import bpy, sys, code, random, os, math
+import bpy, sys, code, random, os, math, canvas, operator
 
-sys.path.append(os.path.dirname(__file__) + '/canvas.py')
-canvas = __import__('canvas')
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import helpers
 
 class Particles(canvas.Canvas):
   def spawn_particles_system(self, base, object):
@@ -20,7 +20,7 @@ class Particles(canvas.Canvas):
 
   def render(self):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
-    cube = self.last_added_object('Cube')
-    self.assign_material(cube, self.random_material(['emission']))
+    cube = helpers.last_added_object('Cube')
+    helpers.assign_material(cube, helpers.random_material(list(map(operator.sub, self.MATERIALS_NAMES, ['emission']))))
     self.spawn_particles_system(self.SUBJECT, cube)
 

@@ -27,14 +27,11 @@ def let_there_be_light(scene):
   for r in [reflector1, reflector2, reflector3]:
     r.cycles_visibility.camera = False
     bpy.data.groups['reflectors'].objects.link(r)
+    make_object_reflector(r, random.choice(COLORS), REFLECTOR_SCALE, REFLECTOR_STRENGTH)
 
   reflector2.rotation_euler.x += math.radians(90)
   reflector1.rotation_euler.x += math.radians(90)
   reflector2.rotation_euler.z += math.radians(90)
-
-  make_object_reflector(reflector1)
-  make_object_reflector(reflector2)
-  make_object_reflector(reflector3)
 
   world = bpy.data.worlds.new('A Brave New World')
   world.use_nodes = True
