@@ -20,3 +20,4 @@
 .DS_Store
 *.png
 lib/glitch3d/bpy/canvas/__pycache__/
+lib/glitch3d/bpy/__pycache__/
