@@ -8,8 +8,7 @@ import sys, os, cv2, code
 
 print("Averaging and signing 💁🏻‍♀️")
 path = os.environ['RENDER_PATH']
-files = [path + f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and os.path.join(path, f).endswith(".png"))]
-
+files = sys.argv[1:]
 average_image = None
 old_image = None
 

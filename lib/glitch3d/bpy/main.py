@@ -105,7 +105,8 @@ MATERIALS_NAMES = []
 # Fill base materials list (added to base scene as initial fixtures)
 # TODO: find a better way to serialize materials
 for mat in bpy.data.materials:
-    MATERIALS_NAMES.append(mat.name)
+    if mat.name != 'emission':
+      MATERIALS_NAMES.append(mat.name)
 print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
 
 # Create groups
@@ -119,7 +120,7 @@ for primitive in PRIMITIVES:
 FISHEYE = True
 COLORS = rand_color_palette(5)
 CAMERA_OFFSET = 5
-INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(-3, 8))
+INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
@@ -211,8 +212,9 @@ for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    # call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')])
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')])
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')] + [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')] + RENDER_OUTPUT_PATHS)
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/palette.py')] + list(map(str, list(map(tuple, COLORS)))))
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 print('FINISHED ¯\_(ツ)_/¯')

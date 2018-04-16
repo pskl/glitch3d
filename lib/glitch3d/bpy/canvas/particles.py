@@ -21,6 +21,6 @@ class Particles(canvas.Canvas):
   def render(self):
     bpy.ops.mesh.primitive_cube_add(location=(0, 0, 100),radius=1)
     cube = helpers.last_added_object('Cube')
-    helpers.assign_material(cube, helpers.random_material(list(map(operator.sub, self.MATERIALS_NAMES, ['emission']))))
+    helpers.assign_material(cube, helpers.random_material(self.MATERIALS_NAMES))
     self.spawn_particles_system(self.SUBJECT, cube)
 
