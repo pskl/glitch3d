@@ -31,7 +31,7 @@ shots_number = int(args.shots_number)
 
 #####################################
 #####################################
-#####################################
+####################### ##############
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
@@ -119,6 +119,7 @@ for primitive in PRIMITIVES:
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
+# code.interact(local=dict(globals(), **locals()))
 CAMERA_OFFSET = 5
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))
 FIXTURES_FOLDER_PATH = path + '/../fixtures/'
@@ -214,7 +215,7 @@ for p in RENDER_OUTPUT_PATHS:
 if animate == False and debug == False:
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')] + [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')] + RENDER_OUTPUT_PATHS)
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/palette.py')] + list(map(str, list(map(tuple, COLORS)))))
+    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/palette.py')] + list(map(str, list(map(tuple, COLORS)))) + [os.path.join(path + '/../fixtures/fonts/helvetica_neue.ttf')])
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 print('FINISHED ¯\_(ツ)_/¯')

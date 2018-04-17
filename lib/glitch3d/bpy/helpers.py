@@ -331,6 +331,7 @@ def delete_useless_materials():
 
 # Rotate hue to generate a somewhat harmonious palette
 def adjacent_colors(r, g, b, number):
+    print("Color scheme: adjacent colors")
     angle = (360 / number) / 360 # angles are in ?
     h, l, s = colorsys.rgb_to_hls(r, g, b)
     hue_positions = []
@@ -341,13 +342,15 @@ def adjacent_colors(r, g, b, number):
 
 # Use saturation increments to generate a color ramp palette
 def color_ramp(r, g, b, number):
-    saturation_increment = 100 / number
+    print("Color scheme: color ramp")
     h, l, s = colorsys.rgb_to_hls(r, g, b)
-    saturations = []
+    res = []
     for i in range(number):
-        saturations.append(i * saturation_increment)
-    s = [(s + offset) % 1 for offset in saturations]
-    return [colorsys.hls_to_rgb(h, l, sat) for sat in s]
+        saturation = ( s + i * random.uniform(-0.1, 0.1))
+        lightness = (l + i * random.uniform(-0.1, 0.1) )
+        hue = (h + i * random.uniform(-0.1, 0.1))
+        res.append(colorsys.hls_to_rgb(h, lightness, saturation))
+    return res
 
 def rand_color_palette(number):
     function = random.choice([color_ramp, adjacent_colors])

@@ -1,4 +1,5 @@
 # Resize and compress high quality renders to be able to send it around
+# for instance the size limit on twitter is 5 Mb
 import os, sys, code
 from PIL import Image
 
