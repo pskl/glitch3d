@@ -14,27 +14,6 @@ def chunk_it(seq, num):
         last += avg
     return out
 
-# Split rendering into 3 rendering layers
-# hardcoded for now
-def split_into_render_layers():
-    bpy.context.scene.render.layers[0].use = False
-    bpy.context.scene.cycles.film_transparent = True
-    chunks = chunk_it(bpy.data.objects, 3)
-    for chunk_index in range(len(chunks)):
-        for obj in chunks[chunk_index]:
-            obj.layers[chunk_index + 1] = True
-            obj.layers[0] = False
-    for l in bpy.context.scene.render.layers[1:3]:
-        l.use = True
-    for obj in bpy.data.objects:
-        assert obj.layers[0] == False
-        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1
-    assert bpy.context.scene.render.layers[0].use == False
-    assert bpy.context.scene.render.layers[1].use == True
-    bpy.context.scene.layers[1] = True
-    bpy.context.scene.layers[2] = True
-    bpy.context.scene.layers[3] = True
-
 # Hashmap with proba in values
 def rand_proba(hashmap):
     return numpy.random.choice(
@@ -120,6 +99,21 @@ def camera_location_string(camera):
 # <materials>
 #############
 
+# create material and load .osl file from fixtures
+def assign_random_osl_material(obj, osl_path):
+    material = create_cycles_material('osl', True)
+    script_node = material.node_tree.nodes.new('ShaderNodeScript')
+    material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    script_node.mode = 'EXTERNAL'
+    osls = []
+    for f in os.listdir(osl_path):
+      if f.endswith('.osl'):
+        osls.append(f)
+    script_node.filepath = osl_path + random.choice(osls)
+    assign_node_to_output(material, script_node)
+    assign_material(obj, material)
+    return material
+
 def assign_material(obj, material):
     flush_materials(obj.data.materials)
     if len(obj.data.materials) == 0:
@@ -129,7 +123,7 @@ def assign_material(obj, material):
     return material
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
-def create_cycles_material(name = 'Object Material - ', clean=False):
+def create_cycles_material(name = 'object_material_', clean=False):
     material = bpy.data.materials.new(name + str(uuid.uuid1()))
     material.use_nodes = True
     if clean:
@@ -246,7 +240,6 @@ def last_added_object(object_name_start):
     except IndexError:
         names = list(map(lambda x: x.name, bpy.data.objects))
         code.interact(local=dict(globals(), **locals()))
-
 
 def last_object_group(group_name):
     return bpy.data.groups[group_name.lower().title()].objects[-1]
@@ -444,20 +437,36 @@ def center(obj):
     obj.location -= local_bounding_box_center
     return obj
 
+def resize(obj):
+    while obj.dimensions.y > 5:
+      obj.scale -= (0.01, 0.01, 0.01)
+
 def create_line(name, point_list, color, thickness = 0.002, location = (0,0,0)):
     line_data = bpy.data.curves.new(name=name,type='CURVE')
     line_data.dimensions = '3D'
     line_data.fill_mode = 'FULL'
+    line_data.resolution_u = 4
     line_data.bevel_depth = thickness
     polyline = line_data.splines.new('POLY')
-    polyline.points.add(len(point_list)-1)
-    for idx in range(len(point_list)):
-        polyline.points[idx].co = point_list[idx] + (1,)
-    line = bpy.data.objects.new('line_' + str(uuid.uuid1()), line_data)
+    polyline.points.add(len(point_list)-1) # splines.new return already 1 point
+    for idx, coord in enumerate(point_list):
+        x,y,z = coord
+        polyline.points[idx].co = (x, y, z, 1) # add weight
+    polyline.order_u = len(polyline.points)-1
+    polyline.use_endpoint_u = True
+    line = bpy.data.objects.new(name, line_data)
     bpy.context.scene.objects.link(line)
     line.location = location
     make_object_emitter(line, color, 1.1)
     return line
+
+def build_segment(location, function, length = 2, pitch = 0.5, name = None):
+    verts = series(length, function, pitch)
+    edges = []
+    for v in range(0, (len(verts) - 1)):
+        edges.append([v, v+1])
+    name = name if name else 'segment_' + str(uuid.uuid1())
+    return create_mesh(name, verts, [], location, edges)
 
 def series(length, function, pitch):
     return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
@@ -470,14 +479,6 @@ def parametric_curve(fx, fy, fz, time, resolution = 1):
 
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
-
-def build_segment(location, function, length = 2, pitch = 0.5, verts = None, name = None):
-    verts = verts if verts else series(length, function, pitch)
-    edges = []
-    for v in range(0, (len(verts) - 1)):
-        edges.append([v, v+1])
-    name = name if name else 'segment_' + str(uuid.uuid1())
-    return create_mesh(name, verts, [], location, edges)
 
 def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")

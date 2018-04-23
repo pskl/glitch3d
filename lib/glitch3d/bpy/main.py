@@ -31,7 +31,7 @@ shots_number = int(args.shots_number)
 
 #####################################
 #####################################
-####################### ##############
+#####################################
 
 NUMBER_OF_FRAMES = int(args.frames)
 NORMALS_RENDERING = (args.normals == 'True')
@@ -43,6 +43,7 @@ for f in os.listdir(canvas_path):
     if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py':
         MODULES_AVAILABLE.append(f[0:-3])
 MODULES_ENABLED = MODULES_AVAILABLE if debug else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
+# MODULES_ENABLED = ['fernandez', 'abstract']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 
 SCENE_NAME = "glitch3d"
@@ -161,7 +162,6 @@ SUBJECT.location = ORIGIN
 SUBJECT.modifiers.new(name='Subject Subsurf', type='SUBSURF')
 let_there_be_light(SCENE)
 random.shuffle(list(MODULES_ENABLED))
-render_settings(animate, mode, NORMALS_RENDERING)
 
 if debug == False:
     for module in MODULES_ENABLED:
@@ -170,13 +170,12 @@ if debug == False:
         new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
         new_canvas.render()
 
+    render_settings(animate, mode, NORMALS_RENDERING)
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
     CAMERA_PATH = camera_path(NUMBER_OF_FRAMES)
     create_line('camera_path', CAMERA_PATH, random.choice(COLORS), 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
-
-    split_into_render_layers()
 
     SCENE.frame_start = 0
     SCENE.frame_end = NUMBER_OF_FRAMES
@@ -214,8 +213,9 @@ for p in RENDER_OUTPUT_PATHS:
 
 if animate == False and debug == False:
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')] + [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')] + RENDER_OUTPUT_PATHS)
     call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/palette.py')] + list(map(str, list(map(tuple, COLORS)))) + [os.path.join(path + '/../fixtures/fonts/helvetica_neue.ttf')])
+    if shots_number > 1:
+      call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')] + RENDER_OUTPUT_PATHS)
     if shots_number > 10:
         call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
 print('FINISHED ¯\_(ツ)_/¯')

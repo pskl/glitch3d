@@ -19,12 +19,13 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     bg_node.inputs[0].default_value = random.choice(COLORS)
 
 def render_normals():
+    SCENE.render.engine = 'BLENDER_RENDER' # No need for raytracing if only rendering normals
     SCENE.use_nodes = True
-    SCENE.render.layers[3].use_pass_normal = True
-    SCENE.render.layers[3].use_pass_z = False
-    SCENE.render.layers[3].use_pass_combined = False
-    node_tree = bpy.context.scene.node_tree
-    enter = node_tree.nodes[1]
+    SCENE.render.layers[0].use_pass_normal = True
+    SCENE.render.layers[0].use_pass_z = False
+    SCENE.render.layers[0].use_pass_combined = False
+    node_tree = SCENE.node_tree
+    enter = node_tree.nodes.new('CompositorNodeRLayers')
     composite = node_tree.nodes['Composite']
     multiply = node_tree.nodes.new('CompositorNodeMixRGB')
     add = node_tree.nodes.new('CompositorNodeMixRGB')
@@ -44,10 +45,32 @@ def isometric_camera():
     CAMERA.data.type = 'ORTHO'
     FIXED_CAMERA = True
 
+# Split rendering into 3 rendering layers
+# hardcoded for now
+def split_into_render_layers():
+    bpy.context.scene.render.layers[0].use = False
+    bpy.context.scene.cycles.film_transparent = True
+    chunks = chunk_it(bpy.data.objects, 3)
+    for chunk_index in range(len(chunks)):
+        for obj in chunks[chunk_index]:
+            obj.layers[chunk_index + 1] = True
+            obj.layers[0] = False
+    for l in bpy.context.scene.render.layers[1:3]:
+        l.use = True
+    for obj in bpy.data.objects:
+        assert obj.layers[0] == False
+        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1
+    assert bpy.context.scene.render.layers[0].use == False
+    assert bpy.context.scene.render.layers[1].use == True
+    bpy.context.scene.layers[1] = True
+    bpy.context.scene.layers[2] = True
+    bpy.context.scene.layers[3] = True
+
 def render_settings(animate, mode, normals):
     # SCENE.render.resolution_x = 2000
     # SCENE.render.resolution_y = 2000
-    SCENE.render.layers[0].use_pass_ambient_occlusion = True
+    for layer in SCENE.render.layers:
+      layer.use_pass_ambient_occlusion = True
     SCENE.render.resolution_x = 4096 # Resolution for CODAME exhibition
     SCENE.render.resolution_y = 2160
     SCENE.render.resolution_percentage = 25
@@ -68,7 +91,9 @@ def render_settings(animate, mode, normals):
     SCENE.view_settings.look = "Filmic - High Contrast"
     set_tile(32)
     if normals:
-        render_normals()
+        render_normals() # 1 render layer
+    else:
+      split_into_render_layers()
     if animate:
         SCENE.render.image_settings.file_format='AVI_RAW'
     else:
