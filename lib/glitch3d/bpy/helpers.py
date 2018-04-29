@@ -22,10 +22,6 @@ def rand_proba(hashmap):
         p=list(map(lambda x: x/sum(hashmap.values()), hashmap.values()))
     )[0]
 
-def fetch_material(material_name):
-    new_material = bpy.data.materials[material_name].copy()
-    return new_material
-
 def apply_displacement(obj, height_map_folder, strength = 0.2, subdivisions = 2):
     subdivide(obj, subdivisions)
     subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
@@ -100,19 +96,19 @@ def camera_location_string(camera):
 #############
 
 # create material and load .osl file from fixtures
-def assign_random_osl_material(obj, osl_path):
-    material = create_cycles_material('osl', True)
-    script_node = material.node_tree.nodes.new('ShaderNodeScript')
-    material.node_tree.nodes.new('ShaderNodeOutputMaterial')
-    script_node.mode = 'EXTERNAL'
-    osls = []
+def load_osl_materials(osl_path):
     for f in os.listdir(osl_path):
       if f.endswith('.osl'):
-        osls.append(f)
-    script_node.filepath = osl_path + random.choice(osls)
-    assign_node_to_output(material, script_node)
-    assign_material(obj, material)
-    return material
+        material = create_cycles_material('osl_' + f[0:-5] + '_', True)
+        script_node = material.node_tree.nodes.new('ShaderNodeScript')
+        material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+        script_node.mode = 'EXTERNAL'
+        script_node.filepath = osl_path + f
+        assign_node_to_output(material, script_node)
+
+def fetch_material(material_name):
+    new_material = bpy.data.materials[material_name].copy()
+    return new_material
 
 def assign_material(obj, material):
     flush_materials(obj.data.materials)
@@ -121,6 +117,9 @@ def assign_material(obj, material):
     else:
         obj.data.materials[0] = material
     return material
+
+def random_material(materials_list):
+    return fetch_material(random.choice(materials_list))
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material(name = 'object_material_', clean=False):
@@ -142,9 +141,6 @@ def random_height_map(height_map_folder, low = False):
         path = height_map_folder + random.choice(os.listdir(height_map_folder))
     print("LOADING HEIGHT MAP -> " + path)
     return bpy.data.images.load(path)
-
-def random_material(materials_list):
-    return fetch_material(random.choice(materials_list))
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True
@@ -437,23 +433,39 @@ def center(obj):
     obj.location -= local_bounding_box_center
     return obj
 
-def resize(obj):
-    while obj.dimensions.y > 5:
-      obj.scale -= (0.01, 0.01, 0.01)
+def resize(obj, pace = 0.1, minimum = 3.0, maximum = 8.0):
+    assert minimum < maximum
+    assert pace  < obj.dimensions.y
+    while (obj.dimensions.y > maximum or obj.dimensions.y < minimum):
+      print(str(obj.dimensions.y))
+      if obj.dimensions.y > maximum:
+        obj.scale -= mathutils.Vector((pace, pace, pace))
+      else:
+        obj.scale += mathutils.Vector((pace, pace, pace))
+      bpy.ops.wm.redraw_timer(type='DRAW', iterations=1) # redraw
+
+def extrude(obj, thickness=0.05):
+    bpy.context.scene.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.extrude_region_move(MESH_OT_extrude_region={"mirror":False}, TRANSFORM_OT_translate={"value":(thickness, 0, 0), "constraint_orientation":'GLOBAL', "mirror":True, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False, "use_accurate":False})
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 def create_line(name, point_list, color, thickness = 0.002, location = (0,0,0)):
     line_data = bpy.data.curves.new(name=name,type='CURVE')
     line_data.dimensions = '3D'
     line_data.fill_mode = 'FULL'
-    line_data.resolution_u = 4
+    # line_data.resolution_u = 4
     line_data.bevel_depth = thickness
     polyline = line_data.splines.new('POLY')
+    # polyline = line_data.splines.new('BEZIER')
     polyline.points.add(len(point_list)-1) # splines.new return already 1 point
+    # polyline.bezier_points.add(len(point_list)-1) # splines.new return already 1 point
     for idx, coord in enumerate(point_list):
         x,y,z = coord
         polyline.points[idx].co = (x, y, z, 1) # add weight
+        # polyline.bezier_points[idx].co = (x, y, z)
     polyline.order_u = len(polyline.points)-1
-    polyline.use_endpoint_u = True
+    # polyline.use_endpoint_u = True
     line = bpy.data.objects.new(name, line_data)
     bpy.context.scene.objects.link(line)
     line.location = location
@@ -509,16 +521,13 @@ def animation_routine(frame, camera_path, subject, materials_list, colors):
     for r in bpy.data.groups['reflectors'].objects:
         r.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = random.choice(colors)
     subject.rotation_euler.z += math.radians(1)
-    # if bpy.data.objects['ocean']:
-    #     ocean = bpy.data.objects['ocean']
-    #     ocean.modifiers['Ocean'].choppiness += random.uniform(0, 0.001)
-    #     ocean.modifiers['Ocean'].time += 0.5
-    #     assign_material(ocean, random_material(materials_list))
     for particle_system in bpy.data.particles:
         particle_system.phase_factor_random += 0.01
     for prop in props:
         prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
         prop.rotation_euler.x += math.radians(5)
+    for obj in bpy.data.groups['lines'].objects:
+        shuffle(obj)
     for obj in bpy.data.groups['neons'].objects:
         obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
     for display in bpy.data.groups['displays'].objects:

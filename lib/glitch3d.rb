@@ -170,7 +170,6 @@ module Glitch3d
   end
 
   def render(initial_args, file_path, shots_number)
-
     args = [
       BLENDER_EXECUTABLE_PATH,
       '-b',
@@ -193,7 +192,11 @@ module Glitch3d
       '-frames',
       initial_args['frames'] || 200.to_s,
       '-normals',
-      initial_args['normals'].to_s.capitalize
+      initial_args['normals'].to_s.capitalize,
+      '-width',
+      initial_args['width'] || 2000.to_s,
+      '-eight',
+      initial_args['height'] || 2000.to_s
     ]
     system(*args)
   end

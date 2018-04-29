@@ -66,15 +66,12 @@ def split_into_render_layers():
     bpy.context.scene.layers[2] = True
     bpy.context.scene.layers[3] = True
 
-def render_settings(animate, mode, normals):
-    # SCENE.render.resolution_x = 2000
-    # SCENE.render.resolution_y = 2000
+def render_settings(animate, mode, normals, width, height):
     for layer in SCENE.render.layers:
       layer.use_pass_ambient_occlusion = True
-    SCENE.render.resolution_x = 4096 # Resolution for CODAME exhibition
-    SCENE.render.resolution_y = 2160
+    SCENE.render.resolution_x = width
+    SCENE.render.resolution_y = height
     SCENE.render.resolution_percentage = 25
-    # bpy.SCENE.cycles.device = 'GPU'
     SCENE.render.image_settings.compression = 90
     SCENE.cycles.samples = 20
     SCENE.cycles.max_bounces = 1

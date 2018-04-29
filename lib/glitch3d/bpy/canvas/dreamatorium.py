@@ -73,7 +73,7 @@ class Dreamatorium(canvas.Canvas):
 
         self.LINES = bpy.data.groups['lines']
         for j in range(0, random.choice(range(5, 40))):
-            for i in range(0, random.choice(range(5, 40))):
+            for i in range(0, random.choice(range(5, 10))):
                 new_line = self.create_line('line' + str(uuid.uuid1()), self.series(30, self.rand_proba(self.FUNCTIONS), 0.3), random.choice(self.COLORS), 0.003, (j, -10, 2))
                 bpy.data.groups['lines'].objects.link(new_line)
                 new_line.location.z += i / 3

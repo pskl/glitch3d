@@ -11,7 +11,7 @@ class Fernandez(canvas.Canvas):
 
   def rand_curve(self):
     return random.choice([
-      # decorated knot
+      # decorated knot (can expand to 20 units)
       [
         lambda t: math.cos( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
         lambda t: math.sin( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
@@ -44,33 +44,31 @@ class Fernandez(canvas.Canvas):
     art = self.matthew_curve(self.SUBJECT, 50)
     helpers.assign_material(art, helpers.random_material(self.MATERIALS_NAMES))
 
-  def matthew_curve(self, obj, res, scale = 0.2):
+  def matthew_curve(self, obj, time, scale = 0.2):
     fx, fy, fz = self.rand_curve()
-    verts = helpers.parametric_curve(fx, fy, fz, res, 1)
-    i = res
+    verts = helpers.parametric_curve(fx, fy, fz, time, 1)
+    i = time
+    verts = helpers.parametric_curve(fx, fy, fz, time, 1)
     while len(verts[0::self.MESH_OCCURENCE]) > self.MESH_NUMBER_LIMIT:
       i -= 10
       print(str(i))
       verts = helpers.parametric_curve(fx, fy, fz, i, 1)
-    self.SCENE.objects.active = None
+    self.SCENE.objects.active = obj
     bpy.ops.object.select_all(action='DESELECT')
     for idx, coord in enumerate(verts[0::self.MESH_OCCURENCE]):
       new_obj = helpers.duplicate_object(obj)
       new_obj.select = True
       new_obj.location = coord
-      # new_obj.location = tuple([scale*x for x in coord]) # scale down the vertices
       new_obj.scale = (0.02,0.02,0.02) if idx % 2 == 0 else (0.05, 0.05, 0.05)
       new_obj.rotation_euler.z += idx * (2 * math.pi) / len(verts)
       self.SCENE.objects.active = new_obj
     bpy.ops.object.join()
     res = self.SCENE.objects.active
     res.name = 'fernandez'
-    helpers.resize(res)
-    tracker = helpers.create_line('fernandez_tracker', verts, random.choice(self.COLORS), 0.05, location=self.ORIGIN)
     edges = []
     for v in range(0, (len(verts) - 1)):
         edges.append([v, v+1])
-    res = helpers.create_mesh('fernandez', verts, [], (0,0,0), edges)
-    tracker.rotation_euler.x += math.radians(90)
-    tracker.scale = (scale, scale, scale)
-    return tracker
+    res = helpers.create_mesh('fernandez_support', verts, [], (0,0,0), edges)
+    helpers.resize(res)
+    helpers.extrude(res)
+    return res

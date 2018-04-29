@@ -17,7 +17,9 @@ def get_args():
     parser.add_argument('-a', '--animate', help="render animation") # bool
     parser.add_argument('-frames', '--frames', help="number of frames") # int
     parser.add_argument('-normals', '--normals', help="normal render") # bool
-    parser.add_argument('-d', '--debug', help="render blank scene") # bool
+    parser.add_argument('-d', '--debug', help="render blank scene with subject for testing purposes") # bool
+    parser.add_argument('-width', '--width', help="width of render") # bool
+    parser.add_argument('-eight', '--eight', help="height of render") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
@@ -28,6 +30,8 @@ debug = (args.debug == 'True')
 path = str(args.path)
 animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
+width = int(args.width)
+height = int(args.eight)
 
 #####################################
 #####################################
@@ -102,14 +106,6 @@ load_file(os.path.join(path + '/glitch3d/bpy/helpers.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/render_settings.py'))
 load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 
-MATERIALS_NAMES = []
-# Fill base materials list (added to base scene as initial fixtures)
-# TODO: find a better way to serialize materials
-for mat in bpy.data.materials:
-    if mat.name != 'emission':
-      MATERIALS_NAMES.append(mat.name)
-print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
-
 # Create groups
 for s in ['texts', 'lines', 'displays', 'reflectors', 'neons']:
     bpy.data.groups.new(s)
@@ -127,6 +123,14 @@ FIXTURES_FOLDER_PATH = path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'text/strings.txt'
+
+print("Loading materials...")
+MATERIALS_NAMES = []
+load_osl_materials(FIXTURES_FOLDER_PATH + 'osl-shaders/')
+for mat in bpy.data.materials: # merge base scene materials + osl shaders
+    if mat.name != 'emission':
+      MATERIALS_NAMES.append(mat.name)
+print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
 
 # Scene
 context = bpy.context
@@ -170,11 +174,11 @@ if debug == False:
         new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
         new_canvas.render()
 
-    render_settings(animate, mode, NORMALS_RENDERING)
+    render_settings(animate, mode, NORMALS_RENDERING, width, height)
     print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
     CAMERA_PATH = camera_path(NUMBER_OF_FRAMES)
-    create_line('camera_path', CAMERA_PATH, random.choice(COLORS), 0.01, ORIGIN).name = "camera_path"
+    # create_line('camera_path', CAMERA_PATH, random.choice(COLORS), 0.01, ORIGIN).name = "camera_path"
     assert len(CAMERA_PATH) >= NUMBER_OF_FRAMES
 
     SCENE.frame_start = 0

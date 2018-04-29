@@ -17,7 +17,7 @@ class Abstract(canvas.Canvas):
       copy.rotation_euler.y += math.radians(random.choice(angles))
       copy.rotation_euler.x += math.radians(random.choice(angles))
       copy.name = 'copy_' + str(i)
-      helpers.assign_random_osl_material(copy, self.FIXTURES_FOLDER_PATH + 'osl-shaders/')
+      helpers.assign_material(copy, helpers.random_material(self.MATERIALS_NAMES))
 
     cut_copy = self.duplicate_object(self.SUBJECT)
     self.cut(cut_copy)
