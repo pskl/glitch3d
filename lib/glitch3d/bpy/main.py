@@ -49,9 +49,14 @@ for f in os.listdir(canvas_path):
     if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py':
         MODULES_AVAILABLE.append(f[0:-3])
 MODULES_ENABLED = MODULES_AVAILABLE if debug else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
-MODULES_ENABLED = ['fernandez', 'abstract']
+# MODULES_ENABLED = ['fernandez', 'abstract']
+
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 
+FIXTURES_FOLDER_PATH = args.assets if args.assets else path + '/../fixtures/'
+TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
+MODELS_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'models/'
+HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 SCENE_NAME = "glitch3d"
 BAKED = []
 REFLECTOR_SCALE = random.uniform(9, 10)
@@ -111,8 +116,6 @@ load_file(os.path.join(path + '/glitch3d/bpy/lighting.py'))
 # Create groups
 for s in ['texts', 'lines', 'displays', 'reflectors', 'neons']:
     bpy.data.groups.new(s)
-
-LINES = bpy.data.groups['lines'].objects
 for primitive in PRIMITIVES:
     bpy.data.groups.new(primitive.lower().title())
 
@@ -120,9 +123,6 @@ FISHEYE = True
 COLORS = rand_color_palette(5)
 CAMERA_OFFSET = 5
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))
-FIXTURES_FOLDER_PATH = args.assets if arg.assets else path + '/../fixtures/'
-TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
-HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'text/strings.txt'
 
 print("Loading materials...")
@@ -172,6 +172,7 @@ if debug == False:
     for module in MODULES_ENABLED:
         load_module_path(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
         mod = __import__(module)
+        # code.interact(local=dict(globals(), **locals()))
         new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
         new_canvas.render()
 

@@ -277,7 +277,7 @@ def glitch(obj):
         for vertex in obj.data.vertices:
             vertex.co = find_and_replace(vertex.co, target, replacement)
     elif obj.type == 'CURVE':
-        for p in obj.data.splines.active.bezier_points:
+        for p in obj.data.splines.active.points:
             max_amplitude = 0.5
             p.co.z += random.uniform(-max_amplitude, max_amplitude)
     else:

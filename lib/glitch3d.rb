@@ -65,7 +65,7 @@ module Glitch3d
   # Fetch random model from fixtures folder
   # @return [String]
   def random_fixture
-    @fixtures_path = File.dirname(__FILE__) + '/../fixtures'
+    @fixtures_path = File.dirname(__FILE__) + '/../fixtures/models'
     fixtures = []
     Dir.foreach(@fixtures_path) do |item|
       next if item == '.' or item == '..' or item.end_with?('_glitched.obj') or !item.end_with?('.obj')

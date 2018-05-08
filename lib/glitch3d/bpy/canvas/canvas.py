@@ -15,5 +15,6 @@ class Canvas(object):
 
   __metaclass__  = abc.ABCMeta
   @abc.abstractmethod
+
   def render(self):
-      "render something here"
+      "add additional elements to the main canvas and animate them here"

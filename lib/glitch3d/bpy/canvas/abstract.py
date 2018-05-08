@@ -24,8 +24,8 @@ class Abstract(canvas.Canvas):
 
   def load_random_obj(self):
     objs = []
-    for f in os.listdir(self.FIXTURES_FOLDER_PATH):
+    for f in os.listdir(self.MODELS_FOLDER_PATH):
       if f.endswith('.obj') and not f.endswith('_glitched.obj'):
         objs.append(f)
-    bpy.ops.import_scene.obj(filepath = self.FIXTURES_FOLDER_PATH + random.choice(objs), use_edges=True)
+    bpy.ops.import_scene.obj(filepath = self.MODELS_FOLDER_PATH + random.choice(objs), use_edges=True)
     return bpy.context.selected_objects[0]
