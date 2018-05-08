@@ -20,6 +20,7 @@ def get_args():
     parser.add_argument('-d', '--debug', help="render blank scene with subject for testing purposes") # bool
     parser.add_argument('-width', '--width', help="width of render") # bool
     parser.add_argument('-eight', '--eight', help="height of render") # bool
+    parser.add_argument('-assets', '--assets', help="user assets path") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
@@ -33,6 +34,7 @@ shots_number = int(args.shots_number)
 width = int(args.width)
 height = int(args.eight)
 
+# TODO: add proper args validation cycle
 #####################################
 #####################################
 #####################################
@@ -47,7 +49,7 @@ for f in os.listdir(canvas_path):
     if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py':
         MODULES_AVAILABLE.append(f[0:-3])
 MODULES_ENABLED = MODULES_AVAILABLE if debug else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
-# MODULES_ENABLED = ['fernandez', 'abstract']
+MODULES_ENABLED = ['fernandez', 'abstract']
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 
 SCENE_NAME = "glitch3d"
@@ -116,10 +118,9 @@ for primitive in PRIMITIVES:
 
 FISHEYE = True
 COLORS = rand_color_palette(5)
-# code.interact(local=dict(globals(), **locals()))
 CAMERA_OFFSET = 5
 INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))
-FIXTURES_FOLDER_PATH = path + '/../fixtures/'
+FIXTURES_FOLDER_PATH = args.assets if arg.assets else path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
 TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'text/strings.txt'
