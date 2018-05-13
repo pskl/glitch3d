@@ -190,13 +190,15 @@ module Glitch3d
       '-d',
       initial_args['debug'].to_s.capitalize,
       '-frames',
-      initial_args['frames'] || 200.to_s,
+      initial_args['frames'] || 100.to_s,
       '-normals',
       initial_args['normals'].to_s.capitalize,
       '-width',
       initial_args['width'] || 2000.to_s,
       '-eight',
-      initial_args['height'] || 2000.to_s
+      initial_args['height'] || 2000.to_s,
+      '-canvas',
+      initial_args['canvas'] || nil.to_s
     ]
     system(*args)
   end

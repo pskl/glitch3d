@@ -19,15 +19,10 @@ class Sphere(canvas.Canvas):
     jprc = 0.0
     phi = 0.0
     theta = 0.0
-    # Animation variables.
     currframe = 0
     fcount = 10
     invfcount = 1.0 / (fcount - 1)
     frange = bpy.context.scene.frame_end - bpy.context.scene.frame_start
-    if frange == 0:
-        bpy.context.scene.frame_end = 150
-        bpy.context.scene.frame_start = 0
-        frange = 150
     fincr = ceil(frange * invfcount)
     # Animate center of the sphere.
     center = Vector((0.0, 0.0, 0.0))
@@ -75,55 +70,18 @@ class Sphere(canvas.Canvas):
             currot = startrot
             center = startcenter
             for f in range(0, fcount, 1):
-                fprc = f * invfcount
+                fprc = f / (fcount - 1)
                 osc = abs(sin(TWOPI * fprc))
                 bpy.context.scene.frame_set(currframe)
-                # Animate location.
-                self.vecrotate(TWOPI * fprc, axis, pt, rotpt)
                 center = startcenter.lerp(stopcenter, osc)
-                rotpt = rotpt + center
-                current.location = rotpt
+                current.location = helpers.rotate_vector(TWOPI * fprc, axis, pt)
                 current.keyframe_insert(data_path='location')
-                # Animate rotation.
                 currot = startrot.slerp(stoprot, jprc * fprc)
                 current.rotation_euler = currot.to_euler()
                 current.keyframe_insert(data_path='rotation_euler')
-                # Animate color.
                 mat.diffuse_color = colorsys.hsv_to_rgb(jprc, osc, 1.0)
                 mat.keyframe_insert(data_path='diffuse_color')
                 currframe += fincr
-
-  def vecrotate(self, angle, axis, vin, vout):
-    # Assume axis is a unit vector.
-    # Find squares of each axis component.
-    xsq = axis.x * axis.x
-    ysq = axis.y * axis.y
-    zsq = axis.z * axis.z
-    cosa = cos(angle)
-    sina = sin(angle)
-    complcos = 1.0 - cosa
-    complxy = complcos * axis.x * axis.y
-    complxz = complcos * axis.x * axis.z
-    complyz = complcos * axis.y * axis.z
-    sinx = sina * axis.x
-    siny = sina * axis.y
-    sinz = sina * axis.z
-    # Construct the x-axis (i).
-    ix = complcos * xsq + cosa
-    iy = complxy + sinz
-    iz = complxz - siny
-    # Construct the y-axis (j).
-    jx = complxy - sinz
-    jy = complcos * ysq + cosa
-    jz = complyz + sinx
-    # Construct the z-axis (k).
-    kx = complxz + siny
-    ky = complyz - sinx
-    kz = complcos * zsq + cosa
-    vout.x = ix * vin.x + jx * vin.y + kx * vin.z
-    vout.y = iy * vin.x + jy * vin.y + ky * vin.z
-    vout.z = iz * vin.x + jz * vin.y + kz * vin.z
-    return vout
 
   def vecrotatex(self, angle, vin, vout):
     cosa = cos(angle)
