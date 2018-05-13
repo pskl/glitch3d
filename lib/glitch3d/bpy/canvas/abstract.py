@@ -1,31 +1,25 @@
-import sys, code, random, os, math, canvas, bpy
+import sys, code, random, os, math, canvas, bpy, mathutils
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import helpers
 
 class Abstract(canvas.Canvas):
   def render(self):
-    base_model = self.SUBJECT
-
+    copies = []
     for i in range(0, 10):
-      copy = self.load_random_obj()
-      copy.scale = helpers.rand_scale_vector(round(random.uniform(0, 1), 10))
-      copy.location = helpers.rand_location()
+      copy = helpers.load_random_obj(self.MODELS_FOLDER_PATH)
       angles = [-90, 90, 0]
-      self.props.append(copy)
-      copy.rotation_euler.z += math.radians(random.choice(angles))
-      copy.rotation_euler.y += math.radians(random.choice(angles))
-      copy.rotation_euler.x += math.radians(random.choice(angles))
-      copy.name = 'copy_' + str(i)
+      copy.rotation_euler = mathutils.Vector((math.radians(random.choice(angles)), math.radians(random.choice(angles)), math.radians(random.choice(angles))))
+      copies.append(copy)
+      copy.name = "copy_abstract_piece_" + str(i)
+      helpers.resize(copy)
       helpers.assign_material(copy, helpers.random_material(self.MATERIALS_NAMES))
 
-    cut_copy = self.duplicate_object(self.SUBJECT)
-    self.cut(cut_copy)
+    self.SUBJECT.location.y += random.uniform(1, 2)
+    helpers.cut(helpers.duplicate_object(self.SUBJECT))
 
-  def load_random_obj(self):
-    objs = []
-    for f in os.listdir(self.MODELS_FOLDER_PATH):
-      if f.endswith('.obj') and not f.endswith('_glitched.obj'):
-        objs.append(f)
-    bpy.ops.import_scene.obj(filepath = self.MODELS_FOLDER_PATH + random.choice(objs), use_edges=True)
-    return bpy.context.selected_objects[0]
+    for f in range(self.NUMBER_OF_FRAMES):
+      bpy.context.scene.frame_set(f)
+      for copy in copies:
+        helpers.shuffle(copy, self.CANVAS_BOUNDARY)
+      helpers.add_frame(copies, ['location'])

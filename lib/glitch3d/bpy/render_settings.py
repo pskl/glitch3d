@@ -1,8 +1,3 @@
-# Square wall art resolution: 10200x10200 (threadless, society6)
-def set_tile(size):
-    SCENE.render.tile_x = size
-    SCENE.render.tile_y = size
-
 def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorption_intensity = ABSORPTION_INTENSITY):
     assert world.use_nodes == True
     output = world.node_tree.nodes['World Output']
@@ -19,12 +14,12 @@ def make_world_volumetric(world, scatter_intensity = SCATTER_INTENSITY, absorpti
     bg_node.inputs[0].default_value = random.choice(COLORS)
 
 def render_normals():
-    SCENE.render.engine = 'BLENDER_RENDER' # No need for raytracing if only rendering normals
-    SCENE.use_nodes = True
-    SCENE.render.layers[0].use_pass_normal = True
-    SCENE.render.layers[0].use_pass_z = False
-    SCENE.render.layers[0].use_pass_combined = False
-    node_tree = SCENE.node_tree
+    bpy.context.scene.render.engine = 'BLENDER_RENDER' # No need for raytracing if only rendering normals
+    bpy.context.scene.use_nodes = True
+    bpy.context.scene.render.layers[0].use_pass_normal = True
+    bpy.context.scene.render.layers[0].use_pass_z = False
+    bpy.context.scene.render.layers[0].use_pass_combined = False
+    node_tree = bpy.context.scene.node_tree
     enter = node_tree.nodes.new('CompositorNodeRLayers')
     composite = node_tree.nodes['Composite']
     multiply = node_tree.nodes.new('CompositorNodeMixRGB')
@@ -46,20 +41,18 @@ def isometric_camera():
     FIXED_CAMERA = True
 
 # Split rendering into 3 rendering layers
-# hardcoded for now
 def split_into_render_layers():
     bpy.context.scene.render.layers[0].use = False
-    bpy.context.scene.cycles.film_transparent = True
     chunks = chunk_it(bpy.data.objects, 3)
     for chunk_index in range(len(chunks)):
         for obj in chunks[chunk_index]:
             obj.layers[chunk_index + 1] = True
             obj.layers[0] = False
-    for l in bpy.context.scene.render.layers[1:3]:
+    for l in bpy.context.scene.render.layers[1:4]:
         l.use = True
     for obj in bpy.data.objects:
         assert obj.layers[0] == False
-        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1
+        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1 # Only 1 layer activated
     assert bpy.context.scene.render.layers[0].use == False
     assert bpy.context.scene.render.layers[1].use == True
     bpy.context.scene.layers[1] = True
@@ -67,38 +60,40 @@ def split_into_render_layers():
     bpy.context.scene.layers[3] = True
 
 def render_settings(animate, mode, normals, width, height):
-    for layer in SCENE.render.layers:
+    for layer in bpy.context.scene.render.layers:
       layer.use_pass_ambient_occlusion = True
-    SCENE.render.resolution_x = width
-    SCENE.render.resolution_y = height
-    SCENE.render.resolution_percentage = 25
-    SCENE.render.image_settings.compression = 90
-    SCENE.cycles.samples = 20
-    SCENE.cycles.max_bounces = 1
+    bpy.context.scene.render.resolution_x = width
+    bpy.context.scene.render.resolution_y = height
+    bpy.context.scene.render.resolution_percentage = 25
+    bpy.context.scene.render.image_settings.compression = 90
+    bpy.context.scene.cycles.samples = 20
+    bpy.context.scene.cycles.max_bounces = 1
     CAMERA.data.dof_distance = (SUBJECT.location - CAMERA.location).length
-    SCENE.cycles.shading_system = OSL_ENABLED
-    SCENE.cycles.min_bounces = 1
-    SCENE.cycles.caustics_reflective = False
-    SCENE.cycles.caustics_refractive = False
-    SCENE.render.image_settings.color_mode ='RGBA'
-    SCENE.render.layers[1].cycles.use_denoising = True
-    SCENE.render.layers[2].cycles.use_denoising = True
-    SCENE.render.layers[3].cycles.use_denoising = True
-    SCENE.view_settings.view_transform = "Filmic"
-    SCENE.view_settings.look = "Filmic - High Contrast"
-    set_tile(32)
+    bpy.context.scene.cycles.shading_system = OSL_ENABLED
+    bpy.context.scene.cycles.min_bounces = 1
+    bpy.context.scene.cycles.caustics_reflective = False
+    bpy.context.scene.cycles.caustics_refractive = False
+    bpy.context.scene.cycles.film_transparent = True
+    bpy.context.scene.render.image_settings.color_mode ='RGBA'
+    # if debug == False:
+    #   for l in bpy.context.scene.render.layers:
+    #     l.cyles.use_denoising = True
+    bpy.context.scene.view_settings.view_transform = "Filmic"
+    bpy.context.scene.view_settings.look = "Filmic - High Contrast"
+    tile_size = int(width / 50)
+    bpy.context.scene.render.tile_x = tile_size
+    bpy.context.scene.render.tile_y = tile_size
     if normals:
         render_normals() # 1 render layer
     else:
       split_into_render_layers()
     if animate:
-        SCENE.render.image_settings.file_format='AVI_RAW'
+        bpy.context.scene.render.image_settings.file_format='AVI_RAW'
     else:
-        SCENE.render.image_settings.file_format='PNG'
+        bpy.context.scene.render.image_settings.file_format='PNG'
     if mode == 'high':
-        set_tile(64)
-        SCENE.cycles.samples = 100
-        SCENE.render.resolution_percentage = 100
+        bpy.context.scene.cycles.samples = 100
+        bpy.context.scene.render.resolution_percentage = 100
 
 
 

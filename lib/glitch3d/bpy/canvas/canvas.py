@@ -1,5 +1,6 @@
 import abc
-
+# 1) each canvas is responsible to animate the objects it spawns
+# 2) the only common base object between all canvases is the subject of the photoset
 class Canvas(object):
   def __init__(self, locals_copy):
     self.locals_copy = locals_copy

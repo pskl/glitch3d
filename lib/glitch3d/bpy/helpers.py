@@ -1,8 +1,8 @@
 import sys, code, random, os, math, bpy, numpy, uuid, mathutils
 
-def pry():
+def pry(globs=globals(), locs=locals()):
     import sys
-    code.interact(local=dict(globals(), **locals()))
+    code.interact(local=dict(globs, **locs))
     sys.exit("Aborting execution")
 
 def chunk_it(seq, num):
@@ -13,6 +13,11 @@ def chunk_it(seq, num):
         out.append(seq[int(last):int(last + avg)])
         last += avg
     return out
+
+def add_frame(collection, data_paths):
+    for obj in collection:
+        for path in data_paths:
+          obj.keyframe_insert(data_path=path, index=-1)
 
 # Hashmap with proba in values
 def rand_proba(hashmap):
@@ -41,7 +46,7 @@ def look_at(obj):
     CAMERA.rotation_euler = rot_quat.to_euler()
 
 def shoot(filepath):
-    print('Camera now at location: ' + camera_location_string(CAMERA) + ' / rotation: ' + camera_rotation_string(CAMERA))
+    print('Camera now at location: ' + str(CAMERA.location) + ' / rotation: ' + str(CAMERA.rotation_euler))
     bpy.context.scene.render.filepath = filepath
     if animate:
         bpy.ops.render.render(animation=animate, write_still=True)
@@ -52,30 +57,15 @@ def shoot(filepath):
 def output_name(model_path, index = 0):
     return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + ('.avi' if animate else '.png')
 
-def rotate(model_object, index):
-    model_object.rotation_euler.z = math.radians(index * (360.0 / shots_number))
-
 # RGB 0 -> 1
 def rand_color_value():
     return random.uniform(0, 255) / 255
 
-def rand_location():
-    return (rand_location_value(), rand_location_value(), rand_location_value())
+def rand_location(boundary):
+    return (random.uniform(-boundary, boundary), random.uniform(-boundary, boundary), random.uniform(-boundary, boundary))
 
 def rand_rotation():
-    return (rand_rotation_value(), rand_rotation_value(), rand_rotation_value())
-
-def rand_rotation_value():
-    return round(math.radians(random.uniform(0, 60), 10))
-
-def rand_rotation():
-    return (random.uniform(0, 20), random.uniform(0, 20), random.uniform(0, 20))
-
-def rand_location_value():
-    return round(random.uniform(-4, 4), 10)
-
-def rand_scale_vector(scale = round(random.uniform(0, 0.2), 2)):
-    return (scale, scale, scale)
+    return (math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)))
 
 def unwrap_model(obj):
     if obj.name.startswith('Camera') or obj.name.startswith('Text') or obj.name.startswith('Cube'):
@@ -85,12 +75,6 @@ def unwrap_model(obj):
     bpy.ops.uv.unwrap()
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def camera_rotation_string(camera):
-    return str(int(camera.rotation_euler.x)) + ' ' + str(int(camera.rotation_euler.y)) + ' ' + str(int(camera.rotation_euler.z))
-
-def camera_location_string(camera):
-    return str(int(camera.location.x)) + ' ' + str(int(camera.location.y)) + ' ' + str(int(camera.location.z))
-
 #############
 # <materials>
 #############
@@ -99,7 +83,7 @@ def camera_location_string(camera):
 def load_osl_materials(osl_path):
     for f in os.listdir(osl_path):
       if f.endswith('.osl'):
-        material = create_cycles_material('osl_' + f[0:-5] + '_', True)
+        material = create_cycles_material('osl_' + f[0:-4] + '_', True)
         script_node = material.node_tree.nodes.new('ShaderNodeScript')
         material.node_tree.nodes.new('ShaderNodeOutputMaterial')
         script_node.mode = 'EXTERNAL'
@@ -199,16 +183,16 @@ def wireframize(obj, color, emission_strength = 1, thickness = random.uniform(0.
     make_object_emitter(obj, color, emission_strength)
     return obj
 
-def shuffle(obj):
-    obj.location = rand_location()
-    obj.scale = rand_scale_vector()
+# randomize location and rotation of an object
+def shuffle(obj, boundary):
+    obj.location = rand_location(boundary)
     obj.rotation_euler = rand_rotation()
 
 def add_object(obj, x, y, z, radius):
-    infer_primitive(obj, location=(x, y, z), radius=radius)
-    bpy.data.groups['neons'].objects.link(last_added_object(obj))
-    group_add(obj, last_added_object(obj))
-    return last_added_object(obj)
+    new_obj = infer_primitive(obj, location=(x, y, z), radius=radius)
+    bpy.data.groups['neons'].objects.link(new_obj)
+    group_add(obj, new_obj)
+    return new_obj
 
 def infer_primitive(obj, **kwargs):
     if obj == 'Cube':
@@ -218,24 +202,13 @@ def infer_primitive(obj, **kwargs):
     elif obj == 'Cone':
         bpy.ops.mesh.primitive_cone_add(location = kwargs['location'], radius1 = kwargs['radius'])
     elif obj == 'Pyramid':
-        build_pyramid(location = kwargs['location'])
+        return build_pyramid(location = kwargs['location'])
     elif obj == 'Plane':
         bpy.ops.mesh.primitive_plane_add(location = kwargs['location'], radius = kwargs['radius'])
+    return bpy.context.object
 
 def group_add(group_name, obj):
     bpy.data.groups[group_name.lower().title()].objects.link(obj)
-
-# Ugly af but no other way to retrieve the last added object by bpy.ops (that I know of at least)
-def last_added_object(object_name_start):
-    l = []
-    for obj in bpy.data.objects:
-        if obj.name.startswith(object_name_start) or obj.name.startswith(object_name_start.lower()):
-            l.append(obj)
-    try:
-        return l[-1]
-    except IndexError:
-        names = list(map(lambda x: x.name, bpy.data.objects))
-        code.interact(local=dict(globals(), **locals()))
 
 def last_object_group(group_name):
     return bpy.data.groups[group_name.lower().title()].objects[-1]
@@ -289,10 +262,10 @@ def displace(obj, max_amplitude = 0.06):
     for vertex in obj.data.vertices:
         vertex.co = mathutils.Vector((vertex.co.x + random.uniform(-max_amplitude, max_amplitude), vertex.co.y + random.uniform(-max_amplitude, max_amplitude), vertex.co.z + random.uniform(-max_amplitude, max_amplitude)))
 
-def subdivide(object, cuts):
-    if bpy.context.scene.objects.active != object:
-        bpy.context.scene.objects.active = object
-    assert bpy.context.scene.objects.active == object
+def subdivide(obj, cuts):
+    if bpy.context.scene.objects.active != obj:
+        bpy.context.scene.objects.active = obj
+    assert bpy.context.scene.objects.active == obj
     bpy.ops.object.mode_set(mode='EDIT')
     for index in range(0, cuts):
         bpy.ops.mesh.subdivide(cuts)
@@ -374,7 +347,7 @@ def cut(obj, slices = 10):
     base = obj.location.z - (obj.dimensions.z / 2)
     for i in range(0,slices - 1):
         dup = duplicate_object(obj)
-        dup.name = 'cut_' + str(i)
+        dup.name = 'subcut_' + obj.name + '_' + str(i)
         bpy.ops.object.select_all(action='DESELECT')
         bpy.context.scene.objects.active = dup
         bpy.ops.object.mode_set(mode='EDIT')
@@ -398,6 +371,11 @@ def duplicate_object(obj):
     # assign_material(new_object, obj.data.materials[-1])
     bpy.context.scene.objects.link(new_object)
     return new_object
+
+def load_random_obj(path):
+    objs = [f for f in os.listdir(path) if f.endswith('.obj') and not f.endswith('_glitched.obj')]
+    bpy.ops.import_scene.obj(filepath = path + random.choice(objs), use_edges=True)
+    return bpy.context.selected_objects[0]
 
 def random_text(file_path):
     lines = open(file_path).readlines()
@@ -433,16 +411,18 @@ def center(obj):
     obj.location -= local_bounding_box_center
     return obj
 
-def resize(obj, pace = 0.1, minimum = 3.0, maximum = 8.0):
+def resize(obj, pace = 0.05, minimum = 3.0, maximum = 8.0):
+    print("Resizing: " + obj.name)
     assert minimum < maximum
-    assert pace  < obj.dimensions.y
-    while (obj.dimensions.y > maximum or obj.dimensions.y < minimum):
-      print(str(obj.dimensions.y))
-      if obj.dimensions.y > maximum:
-        obj.scale -= mathutils.Vector((pace, pace, pace))
-      else:
-        obj.scale += mathutils.Vector((pace, pace, pace))
-      bpy.ops.wm.redraw_timer(type='DRAW', iterations=1) # redraw
+    obj.scale = (1,1,1)
+    scale_multiplier =  max(obj.dimensions) / (maximum - minimum)
+    if max(obj.dimensions) > maximum:
+      init_scale = obj.scale
+      obj.scale = init_scale - init_scale * scale_multiplier # downscale
+      if obj.scale.x < 0:
+        obj.scale = init_scale * scale_multiplier
+    else:
+      obj.scale = obj.scale + obj.scale * scale_multiplier # upscale
 
 def extrude(obj, thickness=0.05):
     bpy.context.scene.objects.active = obj
@@ -483,12 +463,6 @@ def build_segment(location, function, length = 2, pitch = 0.5, name = None):
 def series(length, function, pitch):
     return list(map(lambda x: (0, x, function(x)), pitched_array(0.0, length, pitch)))
 
-def parametric_curve(fx, fy, fz, time, resolution = 1):
-    vertices = []
-    for t in pitched_array(0, time, resolution):
-        vertices.append((fx(t), fy(t), fz(t)))
-    return vertices
-
 def pitched_array(minimum, maximum, pitch):
     return list(map(lambda x: (minimum + pitch * x), range(int((maximum - minimum) / pitch))))
 
@@ -510,32 +484,40 @@ def camera_path(frame_number, radius = 5):
     factor = (2 * math.pi / NUMBER_OF_FRAMES)
     return list(map( lambda t: (fx(t * factor), fy(t * factor),  INITIAL_CAMERA_LOCATION[2]), range(0, NUMBER_OF_FRAMES)))
 
+# Rotate vector
+def rotate_vector(angle, axis, vin):
+    # Assume axis is a unit vector.
+    # Find squares of each axis component.
+    xsq = axis.x * axis.x
+    ysq = axis.y * axis.y
+    zsq = axis.z * axis.z
+    cosa = math.cos(angle)
+    sina = math.sin(angle)
+    complcos = 1.0 - cosa
+    complxy = complcos * axis.x * axis.y
+    complxz = complcos * axis.x * axis.z
+    complyz = complcos * axis.y * axis.z
+    sinx = sina * axis.x
+    siny = sina * axis.y
+    sinz = sina * axis.z
+    # Construct the x-axis (i).
+    ix = complcos * xsq + cosa
+    iy = complxy + sinz
+    iz = complxz - siny
+    # Construct the y-axis (j).
+    jx = complxy - sinz
+    jy = complcos * ysq + cosa
+    jz = complyz + sinx
+    # Construct the z-axis (k).
+    kx = complxz + siny
+    ky = complyz - sinx
+    kz = complcos * zsq + cosa
+    vout = mathutils.Vector((0.0, 0.0, 0.0))
+    vout.x = ix * vin.x + jx * vin.y + kx * vin.z
+    vout.y = iy * vin.x + jy * vin.y + ky * vin.z
+    vout.z = iz * vin.x + jz * vin.y + kz * vin.z
+    return vout
+
 #############
 # </geometry>
 #############
-
-def animation_routine(frame, camera_path, subject, materials_list, colors):
-    bpy.context.scene.camera.location = camera_path[frame]
-    look_at(random.choice(bpy.data.objects))
-    assign_material(subject, random_material(materials_list))
-    for r in bpy.data.groups['reflectors'].objects:
-        r.data.materials[-1].node_tree.nodes['Emission'].inputs[0].default_value = random.choice(colors)
-    subject.rotation_euler.z += math.radians(1)
-    for particle_system in bpy.data.particles:
-        particle_system.phase_factor_random += 0.01
-    for prop in props:
-        prop.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
-        prop.rotation_euler.x += math.radians(5)
-    for obj in bpy.data.groups['lines'].objects:
-        shuffle(obj)
-    for obj in bpy.data.groups['neons'].objects:
-        obj.rotation_euler.rotate(mathutils.Euler((math.radians(1), math.radians(1), math.radians(1)), 'XYZ'))
-    for display in bpy.data.groups['displays'].objects:
-        display.rotation_euler.x += math.radians(2)
-        display.location += mathutils.Vector((random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)))
-
-def add_frame(collection, exceptions):
-    for obj in set(collection) - exceptions:
-        obj.keyframe_insert(data_path="rotation_euler", index=-1)
-        obj.keyframe_insert(data_path="location", index=-1)
-        obj.keyframe_insert(data_path="scale", index=-1)

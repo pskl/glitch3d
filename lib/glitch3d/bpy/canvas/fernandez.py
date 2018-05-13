@@ -7,53 +7,46 @@ import helpers
 
 class Fernandez(canvas.Canvas):
   MESH_NUMBER_LIMIT = 200 # otherwise Blender crashes
-  MESH_OCCURENCE = 4 # 1 mesh every X point of the curve
+  MESH_OCCURENCE = 2 # 1 mesh every X point of the curve
 
-  def rand_curve(self):
-    return random.choice([
-      # decorated knot (can expand to 20 units)
-      [
-        lambda t: math.cos( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
-        lambda t: math.sin( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
-        lambda t: 0.2 * math.sin( 9 * t * math.pi * 2 )
-      ],
-      # another knot like structure
-      [
-        lambda t: 10 * (math.cos(t) + math.cos(3 * t)) + math.cos(2 * t) + math.cos(4 * t),
-        lambda t: 6 * math.sin(t) + 10 * math.sin(3 * t),
-        lambda t: 4 * math.sin(3 * t) * math.sin(5 * t / 2) + 4 * math.sin(4 * t) - 2 * math.sin(6 * t)
-      ],
-      # Some weird sphere like structure (contained within a 1x1x1 cube)
-      [
-        lambda x: math.sin(x) * math.cos(20*x),
-        lambda x: math.sin(x) * math.sin(20*x),
-        lambda t: math.cos(t)
-      ],
-      # Some weird funnel like structure (contained within a 1x1x1 cube)
-      [
-        lambda x: math.sin(x) * math.cos(20*x),
-        lambda x: math.sin(x) * math.sin(20*x),
-        lambda t: math.sin(t)
-      ]
-    ])
+  FUNCTIONS = [
+    # decorated knot (can expand to 20 units)
+    [
+      lambda t: math.cos( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
+      lambda t: math.sin( 2 * t * math.pi * 2 ) * ( 1 + 0.45 * math.cos( 3 * t * math.pi * 2 ) + 0.4 * math.cos( 9 * t * math.pi * 2 ) ),
+      lambda t: 0.2 * math.sin( 9 * t * math.pi * 2 )
+    ],
+    # another knot like structure
+    [
+      lambda t: 10 * (math.cos(t) + math.cos(3 * t)) + math.cos(2 * t) + math.cos(4 * t),
+      lambda t: 6 * math.sin(t) + 10 * math.sin(3 * t),
+      lambda t: 4 * math.sin(3 * t) * math.sin(5 * t / 2) + 4 * math.sin(4 * t) - 2 * math.sin(6 * t)
+    ],
+    # Some weird sphere like structure (contained within a 1x1x1 cube)
+    [
+      lambda t: math.sin(t) * math.cos(20*t),
+      lambda t: math.sin(t) * math.sin(20*t),
+      lambda t: math.cos(t)
+    ],
+    # Some weird funnel like structure (contained within a 1x1x1 cube)
+    [
+      lambda t: math.sin(t) * math.cos(20*t),
+      lambda t: math.sin(t) * math.sin(20*t),
+      lambda t: math.sin(t)
+    ]
+  ]
 
   def render(self):
-    rand_curve = helpers.create_line('rand_curve', helpers.parametric_curve(helpers.rand_proba(self.FUNCTIONS), helpers.rand_proba(self.FUNCTIONS), self.rand_proba(self.FUNCTIONS), 100, 100), random.choice(self.COLORS))
-    rand_curve.scale = (2,2,2)
-    helpers.glitch(rand_curve)
     art = self.matthew_curve(self.SUBJECT, 50)
     helpers.assign_material(art, helpers.random_material(self.MATERIALS_NAMES))
 
+  def rand_curve(self):
+    return random.choice(self.FUNCTIONS)
+
   def matthew_curve(self, obj, time, scale = 0.2):
     fx, fy, fz = self.rand_curve()
-    verts = helpers.parametric_curve(fx, fy, fz, time, 1)
-    i = time
-    verts = helpers.parametric_curve(fx, fy, fz, time, 1)
-    while len(verts[0::self.MESH_OCCURENCE]) > self.MESH_NUMBER_LIMIT:
-      i -= 10
-      print(str(i))
-      verts = helpers.parametric_curve(fx, fy, fz, i, 1)
-    self.SCENE.objects.active = obj
+    verts =  [(fx(t), fy(t), fz(t)) for t in helpers.pitched_array(0, time, 1)]
+    bpy.context.scene.objects.active = obj
     bpy.ops.object.select_all(action='DESELECT')
     for idx, coord in enumerate(verts[0::self.MESH_OCCURENCE]):
       new_obj = helpers.duplicate_object(obj)
@@ -61,14 +54,14 @@ class Fernandez(canvas.Canvas):
       new_obj.location = coord
       new_obj.scale = (0.02,0.02,0.02) if idx % 2 == 0 else (0.05, 0.05, 0.05)
       new_obj.rotation_euler.z += idx * (2 * math.pi) / len(verts)
-      self.SCENE.objects.active = new_obj
+      bpy.context.scene.objects.active = new_obj
     bpy.ops.object.join()
-    res = self.SCENE.objects.active
+    res = bpy.context.object
     res.name = 'fernandez'
-    edges = []
-    for v in range(0, (len(verts) - 1)):
-        edges.append([v, v+1])
-    res = helpers.create_mesh('fernandez_support', verts, [], (0,0,0), edges)
     helpers.resize(res)
+    helpers.center(res)
+    res = helpers.create_mesh('fernandez_support', verts, [], (0,0,0),  [[v, v+1] for v in range(0, (len(verts) - 1))])
+    helpers.resize(res)
+    helpers.center(obj)
     helpers.extrude(res)
     return res
