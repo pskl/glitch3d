@@ -170,6 +170,9 @@ for module in MODULES_ENABLED:
 render_settings(animate, mode, NORMALS_RENDERING, width, height)
 print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
+if bpy.context.scene.rigidbody_world:
+  bpy.ops.rigidbody.bake_to_keyframes(frame_start=0, frame_end=NUMBER_OF_FRAMES)
+
 CAMERA_PATH = camera_path(NUMBER_OF_FRAMES)
 
 for frame in range(0, NUMBER_OF_FRAMES):
@@ -204,11 +207,11 @@ for p in RENDER_OUTPUT_PATHS:
     print(p)
 
 if animate == False and debug == False:
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py')] + [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
-    call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/palette.py')] + list(map(str, list(map(tuple, COLORS)))) + [os.path.join(path + '/../fixtures/fonts/helvetica_neue.ttf')])
+    run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py'), [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
+    run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'), list(map(str, list(map(tuple, COLORS)))) + [os.path.join(path + '/../fixtures/fonts/helvetica_neue.ttf')])
     if shots_number > 1:
-      call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/average.py')] + RENDER_OUTPUT_PATHS)
+      run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/average.py'), RENDER_OUTPUT_PATHS)
     if shots_number > 10:
-        call(["python3", os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py')])
+      run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
 print('FINISHED ¯\_(ツ)_/¯')
 sys.exit()

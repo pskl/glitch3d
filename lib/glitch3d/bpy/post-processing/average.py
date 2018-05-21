@@ -4,7 +4,7 @@ from PIL import ImageChops
 from PIL import ImageEnhance
 import numpy as np
 import random
-import sys, os, cv2, code
+import sys, os, cv2, code, uuid
 
 print("Averaging and signing 💁🏻‍♀️")
 path = os.environ['RENDER_PATH']
@@ -35,9 +35,8 @@ for file in files:
     if random.randint(0,1) == 1:
       image = Image.fromarray(cv2.bitwise_not(np.asarray(current_image)))
 
-# add signatures
-for i in range(0,5):
-  font = random.choice(range(0, 7))
-  average_image = Image.fromarray(cv2.putText(np.asarray(average_image), random.choice(["PSKL"]), (random.choice(range(0, average_image.size[0])), random.choice(range(0, average_image.size[1]))), font, random.uniform(0.8, 3), random.choice([(255, 255, 255), (0,0,0)]), random.choice(range(1, 3)), random.choice(range(1,8))))
+# add signature
+font = random.choice(range(0, 7))
+average_image = Image.fromarray(cv2.putText(np.asarray(average_image), random.choice(["PSKL"]), (random.choice(range(0, average_image.size[0])), random.choice(range(0, average_image.size[1]))), font, random.uniform(0.8, 3), random.choice([(255, 255, 255), (0,0,0)]), random.choice(range(1, 3)), random.choice(range(1,8))))
 
-average_image.save(path + "average.png")
+average_image.save(path + "average_" + str(uuid.uuid1()) + ".png")

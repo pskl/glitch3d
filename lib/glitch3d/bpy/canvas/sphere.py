@@ -11,6 +11,7 @@ class Sphere(canvas.Canvas):
   def render(self):
     diameter = 8.0
     sz = 2.125 / diameter
+    base_object = helpers.infer_primitive(random.choice(self.PRIMITIVES), location = (100, 100, 100), radius=sz)
     latitude = 16
     longitude = latitude * 2
     invlatitude = 1.0 / (latitude - 1)
@@ -19,11 +20,7 @@ class Sphere(canvas.Canvas):
     jprc = 0.0
     phi = 0.0
     theta = 0.0
-    currframe = 0
-    fcount = 10
-    invfcount = 1.0 / (fcount - 1)
-    frange = bpy.context.scene.frame_end - bpy.context.scene.frame_start
-    fincr = ceil(frange * invfcount)
+    invfcount = 1.0 / (self.NUMBER_OF_FRAMES - 1)
     # Animate center of the sphere.
     center = Vector((0.0, 0.0, 0.0))
     startcenter = Vector((0.0, -4.0, 0.0))
@@ -41,47 +38,40 @@ class Sphere(canvas.Canvas):
     for i in range(0, latitude, 1):
         iprc = i * invlatitude
         phi = pi * (i + 1) * invlatitude
-        sinphi = sin(phi)
-        cosphi = cos(phi)
-        rad = 0.01 + sz * abs(sinphi) * 0.99
-        pt.z = cosphi * diameter
+        rad = 0.01 + sz * abs(sin(phi)) * 0.99
+        pt.z = cos(phi) * diameter
         for j in range(0, longitude, 1):
             jprc = j * invlongitude
             theta = TWOPI * j / longitude
-            sintheta = sin(theta)
-            costheta = cos(theta)
-            pt.y = center.y + sinphi * sintheta * diameter
-            pt.x = center.x + sinphi * costheta * diameter
-            bpy.ops.mesh.primitive_cube_add(location=pt, radius=rad)
-            current = bpy.context.object
-            current.name = 'Cube ({0:0>2d}, {1:0>2d})'.format(i, j)
+            pt.y = center.y + sin(phi) * sin(theta) * diameter
+            pt.x = center.x + sin(phi) * cos(theta) * diameter
+            current = helpers.duplicate_object(base_object)
+            current.location = pt
+            current.name = 'Object ({0:0>2d}, {1:0>2d})'.format(i, j)
             current.data.name = 'Mesh ({0:0>2d}, {1:0>2d})'.format(i, j)
             current.rotation_euler = (0.0, phi, theta)
-            mat = bpy.data.materials.new(name='Material ({0:0>2d}, {1:0>2d})'.format(i, j))
-            mat.diffuse_color = colorsys.hsv_to_rgb(jprc, 1.0 - iprc, 1.0)
-            current.data.materials.append(mat)
-            self.vecrotatex(theta, baseaxis, axis)
-            currframe = bpy.context.scene.frame_start
+            helpers.assign_material(current, helpers.random_material(self.MATERIALS_NAMES))
+            axis = self.vecrotatex(theta, baseaxis)
             currot = startrot
             center = startcenter
-            for f in range(0, fcount, 1):
-                fprc = f / (fcount - 1)
+            for f in range(0, self.NUMBER_OF_FRAMES, 1):
+                fprc = f / (self.NUMBER_OF_FRAMES - 1)
                 osc = abs(sin(TWOPI * fprc))
-                bpy.context.scene.frame_set(currframe)
+                bpy.context.scene.frame_set(f)
                 center = startcenter.lerp(stopcenter, osc)
                 current.location = helpers.rotate_vector(TWOPI * fprc, axis, pt)
                 current.keyframe_insert(data_path='location')
                 currot = startrot.slerp(stoprot, jprc * fprc)
                 current.rotation_euler = currot.to_euler()
                 current.keyframe_insert(data_path='rotation_euler')
-                mat.diffuse_color = colorsys.hsv_to_rgb(jprc, osc, 1.0)
-                mat.keyframe_insert(data_path='diffuse_color')
-                currframe += fincr
 
-  def vecrotatex(self, angle, vin, vout):
-    cosa = cos(angle)
-    sina = sin(angle)
+  # Rotate vector by a given angle from a starting vector and return a new vector
+  # Trigonometry:
+  #  x' = x cos θ − y sin θ
+  #  y' = x sin θ + y cos θ
+  def vecrotatex(self, angle, vin):
+    vout = Vector((0.0, 0.0, 0.0))
     vout.x = vin.x
-    vout.y = cosa * vin.y - sina * vin.z
-    vout.z = cosa * vin.z + sina * vin.y
+    vout.y = cos(angle) * vin.y - sin(angle) * vin.z
+    vout.z = cos(angle) * vin.z + sin(angle) * vin.y
     return vout

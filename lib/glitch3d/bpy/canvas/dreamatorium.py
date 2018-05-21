@@ -9,7 +9,7 @@ class Dreamatorium(canvas.Canvas):
         bpy.ops.import_scene.obj(filepath = os.path.join(self.MODELS_FOLDER_PATH + 'lightning.obj'), use_edges=True)
         logo = bpy.context.selected_objects[0]
         logo.location = self.rand_location(self.CANVAS_BOUNDARY)
-        props.append(logo)
+        # props.append(logo)
 
         bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
         display1 = bpy.context.object
@@ -63,6 +63,8 @@ class Dreamatorium(canvas.Canvas):
             helpers.shuffle(prop, self.CANVAS_BOUNDARY)
             helpers.assign_material(prop, helpers.random_material(self.MATERIALS_NAMES))
 
+        # helpers.add_rigid_body([ocean], type='PASSIVE')
+        # helpers.add_rigid_body([logo])
 
     def add_ocean(self, spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale = 0.5):
         bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)
@@ -73,10 +75,6 @@ class Dreamatorium(canvas.Canvas):
         ocean.modifiers["Ocean"].resolution = resolution
         ocean.modifiers["Ocean"].wave_scale = wave_scale
         ocean.modifiers["Ocean"].depth = depth
-        helpers.assign_material(ocean, helpers.fetch_material("jello"))
-        shadow = helpers.duplicate_object(ocean)
-        shadow.location += mathutils.Vector((1,1,-0.4))
-        helpers.wireframize(shadow, random.choice(self.COLORS))
-        shadow.name = 'shadow'
+        helpers.wireframize(ocean, random.choice(self.COLORS))
         ocean.name = 'ocean'
         return ocean

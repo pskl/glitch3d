@@ -8,6 +8,9 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import helpers
 
 class Metaballs(canvas.Canvas):
+
+  TYPES =  ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+
   def render(self):
     diameter = 8.0
     sz = 2.125 / diameter
@@ -23,12 +26,13 @@ class Metaballs(canvas.Canvas):
     center = Vector((0.0, 0.0, 0.0))
     baseaxis = Vector((0.0, 1.0, 0.0))
     axis = Vector((0.0, 0.0, 0.0))
-    elemtypes = ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+    metaball_type = random.choice(self.TYPES)
     mbdata = bpy.data.metaballs.new('SphereData')
     mbdata.render_resolution = 0.075
-    mbdata.resolution = 0.2
+    mbdata.resolution = 0.1
     mbobj = bpy.data.objects.new("Sphere", mbdata)
     bpy.context.scene.objects.link(mbobj)
+    helpers.assign_material(mbobj, helpers.random_material(self.MATERIALS_NAMES))
     for i in range(0, latitude, 1):
         phi = pi * (i + 1) * invlatitude
         pt.z = cos(phi) * diameter
@@ -36,7 +40,7 @@ class Metaballs(canvas.Canvas):
             theta = TWOPI * j / longitude
             pt.y = center.y + sin(phi) * sin(theta) * diameter
             pt.x = center.x + sin(phi) * cos(theta) * diameter
-            mbelm = mbdata.elements.new(type=elemtypes[0])
+            mbelm = mbdata.elements.new(type=metaball_type)
             mbelm.co = (latitude, longitude, 6)
             mbelm.radius = 0.15 + sz * abs(sin(phi)) * 1.85
             mbelm.stiffness = 1.0

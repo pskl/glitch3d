@@ -8,7 +8,6 @@ import helpers
 
 class Waves(canvas.Canvas):
   def render(self):
-    # Number of cubes.
     count = 16
     # Size of grid.
     extents = 8.0
@@ -17,6 +16,7 @@ class Waves(canvas.Canvas):
     # Size of each cube.
     # The height of each cube will be animated, so we'll specify the minimum and maximum scale.
     sz = (extents / count) - padding
+    base_object = helpers.infer_primitive(random.choice(self.PRIMITIVES), location = (100, 100, 100), radius=sz)
     minsz = sz * 0.25
     maxsz = sz * extents
     diffsz = maxsz - minsz
@@ -39,17 +39,7 @@ class Waves(canvas.Canvas):
     normdist = 0.0
     maxdist = sqrt(2 * extents * extents)
     # For animation, track current frame, specify desired number of key frames.
-    currframe = 0
-    fcount = 10
-    invfcount = 1.0 / (fcount - 1)
-    # If the default frame range is 0, then default to 1 .. 150.
-    frange = bpy.context.scene.frame_end - bpy.context.scene.frame_start
-    if frange == 0:
-      bpy.context.scene.frame_end = 150
-      bpy.context.scene.frame_start = 0
-      frange = 150
-    # Number of keyframes per frame.
-    fincr = ceil(frange * invfcount)
+    invfcount = 1.0 / (self.NUMBER_OF_FRAMES - 1)
     # For generating the wave.
     offset = 0.0
     angle = 0.0
@@ -71,24 +61,16 @@ class Waves(canvas.Canvas):
         # Remap the normalized distance to a range -PI .. PI
         normdist = sqrt(rise + run) / maxdist
         offset = -TWOPI * normdist + pi
-        # Add grid world position to cube local position.
-        bpy.ops.mesh.primitive_cube_add(location=(centerx + x, centery + y, centerz), radius=sz)
-        # Remember and rename the current object being edited.
-        current = bpy.context.object
-        current.name = 'Cube ({0:0>2d}, {1:0>2d})'.format(k, j)
+        current = helpers.duplicate_object(base_object)
+        current.location = (centerx + x, centery + y, centerz)
+        current.name = 'Object ({0:0>2d}, {1:0>2d})'.format(k, j)
         current.data.name = 'Mesh ({0:0>2d}, {1:0>2d})'.format(k, j)
-        # Create a material and add it to the current object.
-        mat = bpy.data.materials.new(name='Material ({0:0>2d}, {1:0>2d})'.format(k, j))
-        mat.diffuse_color = colorsys.hsv_to_rgb(normdist, 0.875, 1.0)
-        current.data.materials.append(mat)
-        # Track the current key frame.
-        currframe = bpy.context.scene.frame_start
-        for f in range(0, fcount, 1):
+        for f in range(0, self.NUMBER_OF_FRAMES, 1):
           # Convert the keyframe into an angle.
           fprc = f * invfcount
           angle = TWOPI * fprc
           # Set the scene to the current frame.
-          bpy.context.scene.frame_set(currframe)
+          bpy.context.scene.frame_set(f)
           # Change the scale.
           # sin returns a value in the range -1 .. 1. abs changes the range to 0 .. 1.
           # The values are remapped to the desired scale with min + percent * (max - min).
@@ -96,4 +78,3 @@ class Waves(canvas.Canvas):
           # Insert the key frame for the scale property.
           current.keyframe_insert(data_path='scale', index=2)
           # Advance by the keyframe increment to the next keyframe.
-          currframe += fincr

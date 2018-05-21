@@ -1,9 +1,13 @@
 import sys, code, random, os, math, bpy, numpy, uuid, mathutils
 
 def pry(globs=globals(), locs=locals()):
-    import sys
     code.interact(local=dict(globs, **locs))
     sys.exit("Aborting execution")
+
+def run_python3(path, argv = []):
+    result = call(["python3", path] + argv) # security problem here
+    if result != 0:
+      raise RuntimeError(argv)
 
 def chunk_it(seq, num):
     avg = len(seq) / float(num)
@@ -368,7 +372,6 @@ def duplicate_object(obj):
     new_object.data = obj.data.copy()
     new_object.animation_data_clear()
     new_object.cycles_visibility.camera = True
-    # assign_material(new_object, obj.data.materials[-1])
     bpy.context.scene.objects.link(new_object)
     return new_object
 
@@ -520,4 +523,22 @@ def rotate_vector(angle, axis, vin):
 
 #############
 # </geometry>
+#############
+
+
+#############
+# <physics>
+#############
+
+def add_rigid_body(objs=[], type = 'ACTIVE', mass=2.0):
+  for obj in objs:
+    obj.select = True
+  bpy.ops.rigidbody.objects_add(type='ACTIVE')
+  for obj in objs:
+    if type == 'ACTIVE':
+      obj.rigid_body.mass = mass
+    obj.rigid_body.collision_shape = 'MESH'
+
+#############
+# </physics>
 #############
