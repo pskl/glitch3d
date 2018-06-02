@@ -167,7 +167,7 @@ for module in MODULES_ENABLED:
     new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
     new_canvas.render()
 
-render_settings(animate, mode, NORMALS_RENDERING, width, height)
+render_settings(animate, mode, NORMALS_RENDERING, width, height, debug)
 print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
 
 if bpy.context.scene.rigidbody_world:

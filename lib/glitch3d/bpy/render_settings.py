@@ -41,7 +41,9 @@ def isometric_camera():
     FIXED_CAMERA = True
 
 # Split rendering into 3 rendering layers
-def split_into_render_layers():
+def split_into_render_layers(debug=False):
+    if debug:
+      return None
     bpy.context.scene.render.layers[0].use = False
     chunks = chunk_it(bpy.data.objects, 3)
     for chunk_index in range(len(chunks)):
@@ -59,7 +61,7 @@ def split_into_render_layers():
     bpy.context.scene.layers[2] = True
     bpy.context.scene.layers[3] = True
 
-def render_settings(animate, mode, normals, width, height):
+def render_settings(animate, mode, normals, width, height, debug):
     for layer in bpy.context.scene.render.layers:
       layer.use_pass_ambient_occlusion = True
     bpy.context.scene.render.resolution_x = width
@@ -86,7 +88,7 @@ def render_settings(animate, mode, normals, width, height):
     if normals:
         render_normals() # 1 render layer
     else:
-      split_into_render_layers()
+      split_into_render_layers(debug)
     if animate:
         bpy.context.scene.render.image_settings.file_format='AVI_RAW'
     else:

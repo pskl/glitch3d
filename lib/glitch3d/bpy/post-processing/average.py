@@ -9,6 +9,7 @@ import sys, os, cv2, code, uuid
 print("Averaging and signing 💁🏻‍♀️")
 path = os.environ['RENDER_PATH']
 files = sys.argv[1:]
+print("Will average the following files: " + str(files))
 average_image = None
 old_image = None
 

@@ -1,13 +1,11 @@
-import sys, code, random, os, math, bpy, numpy, uuid, mathutils
+import sys, code, random, os, math, bpy, numpy, uuid, mathutils, subprocess
 
 def pry(globs=globals(), locs=locals()):
     code.interact(local=dict(globs, **locs))
     sys.exit("Aborting execution")
 
 def run_python3(path, argv = []):
-    result = call(["python3", path] + argv) # security problem here
-    if result != 0:
-      raise RuntimeError(argv)
+    subprocess.run(["python3", path] + argv, check=True)
 
 def chunk_it(seq, num):
     avg = len(seq) / float(num)
