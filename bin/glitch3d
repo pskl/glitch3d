@@ -10,7 +10,7 @@ args = Hash[ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/)] if args.nil?
 args.default = false
 
 if ARGV[0] && !ARGV[0].start_with?('--')
- source_file = ARGV[0]
+  source_file = ARGV[0]
 else
   source_file = nil
 end

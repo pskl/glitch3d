@@ -43,23 +43,31 @@ def isometric_camera():
 # Split rendering into 3 rendering layers
 def split_into_render_layers(debug=False):
     if debug:
+      bpy.context.scene.render.layers[0].use = False
+      bpy.context.scene.render.layers[1].use = True
+      bpy.context.scene.render.layers[2].use = False
+      bpy.context.scene.render.layers[3].use = False
+      for obj in bpy.data.objects:
+        obj.layers[0] = False
+        obj.layers[1] = True
       return None
-    bpy.context.scene.render.layers[0].use = False
-    chunks = chunk_it(bpy.data.objects, 3)
-    for chunk_index in range(len(chunks)):
-        for obj in chunks[chunk_index]:
-            obj.layers[chunk_index + 1] = True
-            obj.layers[0] = False
-    for l in bpy.context.scene.render.layers[1:4]:
-        l.use = True
-    for obj in bpy.data.objects:
-        assert obj.layers[0] == False
-        assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1 # Only 1 layer activated
-    assert bpy.context.scene.render.layers[0].use == False
-    assert bpy.context.scene.render.layers[1].use == True
-    bpy.context.scene.layers[1] = True
-    bpy.context.scene.layers[2] = True
-    bpy.context.scene.layers[3] = True
+    else:
+      bpy.context.scene.render.layers[0].use = False
+      chunks = chunk_it(bpy.data.objects, 3)
+      for chunk_index in range(len(chunks)):
+          for obj in chunks[chunk_index]:
+              obj.layers[chunk_index + 1] = True
+              obj.layers[0] = False
+      for l in bpy.context.scene.render.layers[1:4]:
+          l.use = True
+      for obj in bpy.data.objects:
+          assert obj.layers[0] == False
+          assert len([i for i, x in enumerate(list(obj.layers)) if x]) == 1 # Only 1 layer activated
+      assert bpy.context.scene.render.layers[0].use == False
+      assert bpy.context.scene.render.layers[1].use == True
+      bpy.context.scene.layers[1] = True
+      bpy.context.scene.layers[2] = True
+      bpy.context.scene.layers[3] = True
 
 def render_settings(animate, mode, normals, width, height, debug):
     for layer in bpy.context.scene.render.layers:
@@ -77,12 +85,13 @@ def render_settings(animate, mode, normals, width, height, debug):
     bpy.context.scene.cycles.caustics_refractive = False
     bpy.context.scene.cycles.film_transparent = True
     bpy.context.scene.render.image_settings.color_mode ='RGBA'
-    # if debug == False:
-    #   for l in bpy.context.scene.render.layers:
-    #     l.cyles.use_denoising = True
+    if not debug:
+      bpy.context.scene.render.layers[1].cycles.use_denoising = True
+      bpy.context.scene.render.layers[2].cycles.use_denoising = True
+      bpy.context.scene.render.layers[3].cycles.use_denoising = True
     bpy.context.scene.view_settings.view_transform = "Filmic"
     bpy.context.scene.view_settings.look = "Filmic - High Contrast"
-    tile_size = int(width / 50)
+    tile_size = int(width / 30)
     bpy.context.scene.render.tile_x = tile_size
     bpy.context.scene.render.tile_y = tile_size
     if normals:

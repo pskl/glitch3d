@@ -5,12 +5,9 @@ from PIL import Image
 
 print("Optimizing size of files")
 
-path = os.environ['RENDER_PATH']
-
-res_x = int(sys.argv[1])
-res_y = int(sys.argv[2])
-files = sys.argv[3:]
-
+res_x = bpy.context.scene.render.resolution_x
+res_y = bpy.context.scene.render.resolution_y
+files = RENDER_OUTPUT_PATHS
 for img in files:
   print("file being optimized -> " + img)
   image = Image.open(img)

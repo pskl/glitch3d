@@ -6,14 +6,13 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
-COLORS = sys.argv[1: -2]
 SLOT_WIDTH = 400
 img = Image.new('RGBA', (len(COLORS) * SLOT_WIDTH, SLOT_WIDTH), (255,255,255,255))
 draw_context = ImageDraw.Draw(img)
-font =  ImageFont.truetype(sys.argv[-1], 20)
+font =  ImageFont.truetype(FONT_FOLDER_PATH + 'helvetica_neue.ttf', 20)
 
-for idx, color in enumerate(COLORS):
-  actual_color = list((map(lambda x: int(x * 255), make_tuple(color))))
+for idx, color in enumerate(map(tuple, COLORS)):
+  actual_color = list((map(lambda x: int(x * 255), color)))
   draw_context.rectangle((((SLOT_WIDTH * idx), 0), (SLOT_WIDTH * idx + SLOT_WIDTH, SLOT_WIDTH)), fill=tuple(actual_color), outline=None)
   draw_context.text((SLOT_WIDTH * idx, 10), str(actual_color), font=font, fill=(255,255,255,255))
 

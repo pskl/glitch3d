@@ -11,7 +11,7 @@ def get_args():
     parser.add_argument('-f', '--file', help="obj file to render")
     parser.add_argument('-n', '--shots-number', help="number of shots desired")
     parser.add_argument('-m', '--mode', help="quality mode: low | high")
-    parser.add_argument('-p', '--path', help="root path of assets")
+    parser.add_argument('-p', '--path', help="root path of gem assets")
     parser.add_argument('-a', '--animate', help="render animation") # bool
     parser.add_argument('-frames', '--frames', help="number of frames") # int
     parser.add_argument('-normals', '--normals', help="normal render") # bool
@@ -20,6 +20,7 @@ def get_args():
     parser.add_argument('-eight', '--eight', help="height of render") # int
     parser.add_argument('-assets', '--assets', help="user assets path") # string
     parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
+    parser.add_argument('-post', '--post-process', help="post-processing") # bool
     parsed_script_args, _ = parser.parse_known_args(script_args)
     return parsed_script_args
 
@@ -32,6 +33,7 @@ animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
 width = int(args.width)
 height = int(args.eight)
+post_process = (args.post_process == 'True')
 
 # TODO: add proper args validation cycle
 #####################################
@@ -44,6 +46,7 @@ NORMALS_RENDERING = (args.normals == 'True')
 # Randomize module usage at runtime or pick selection from arguments
 canvas_path = os.path.dirname(__file__) + '/canvas'
 MODULES_AVAILABLE = args.canvas.split(",") if args.canvas else [ f[0:-3] for f in os.listdir(canvas_path) if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py']
+MODULES_AVAILABLE = [] if debug else MODULES_AVAILABLE
 MODULES_ENABLED = MODULES_AVAILABLE if debug or args.canvas else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
 print("modules enabled: " + str(list(MODULES_ENABLED)))
 
@@ -51,6 +54,7 @@ FIXTURES_FOLDER_PATH = args.assets if args.assets else path + '/../fixtures/'
 TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
 MODELS_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'models/'
 HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
+FONT_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'fonts/'
 SCENE_NAME = "glitch3d"
 REFLECTOR_SCALE = random.uniform(9, 10)
 REFLECTOR_STRENGTH = random.uniform(12, 15)
@@ -96,6 +100,8 @@ def load_file(file_path):
 def load_module_path(file_path):
     print("loading module " + file_path)
     sys.path.append(os.path.dirname(os.path.expanduser(file_path)))
+
+sys.path.append(os.environ['PYTHON_MODULES_PATH'])
 
 # Create directory for renders
 directory = os.path.dirname('./renders')
@@ -150,6 +156,10 @@ if FISHEYE:
     CAMERA.data.cycles.fisheye_fov = 2.5
     CAMERA.data.sensor_width = 20
     CAMERA.data.sensor_height = 20
+
+#####################################
+#####################################
+#####################################
 
 # Load model
 model_path = os.path.join(file)
@@ -206,12 +216,12 @@ print("Files rendered with " + str(NUMBER_OF_FRAMES) + " frames in simulation:")
 for p in RENDER_OUTPUT_PATHS:
     print(p)
 
-if animate == False and debug == False:
-    run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py'), [ str(bpy.context.scene.render.resolution_x), str(bpy.context.scene.render.resolution_y) ] + RENDER_OUTPUT_PATHS)
-    run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'), list(map(str, list(map(tuple, COLORS)))) + [os.path.join(path + '/../fixtures/fonts/helvetica_neue.ttf')])
+if post_process:
+    load_file(os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py'))
     if shots_number > 1:
-      run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/average.py'), RENDER_OUTPUT_PATHS)
-    if shots_number > 10:
-      run_python3(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
+      load_file(os.path.join(path + '/glitch3d/bpy/post-processing/average.py'))
+      if shots_number > 10:
+        load_file(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
+    load_file(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'))
 print('FINISHED ¯\_(ツ)_/¯')
 sys.exit()

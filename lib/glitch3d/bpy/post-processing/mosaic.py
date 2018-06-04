@@ -3,7 +3,7 @@ import os, sys
 from PIL import Image
 
 path = os.environ['RENDER_PATH']
-files = [path + f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and os.path.join(path, f).endswith(".png"))]
+files = RENDER_OUTPUT_PATHS
 images = list(map(Image.open, files))
 widths, heights = zip(*(i.size for i in images))
 

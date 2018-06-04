@@ -1,14 +1,12 @@
-# Use Pillow fork with Python3
+import sys
 from PIL import Image
 from PIL import ImageChops
 from PIL import ImageEnhance
 import numpy as np
-import random
-import sys, os, cv2, code, uuid
+import random, os, cv2, code, uuid
 
 print("Averaging and signing 💁🏻‍♀️")
-path = os.environ['RENDER_PATH']
-files = sys.argv[1:]
+files = RENDER_OUTPUT_PATHS
 print("Will average the following files: " + str(files))
 average_image = None
 old_image = None
@@ -40,4 +38,4 @@ for file in files:
 font = random.choice(range(0, 7))
 average_image = Image.fromarray(cv2.putText(np.asarray(average_image), random.choice(["PSKL"]), (random.choice(range(0, average_image.size[0])), random.choice(range(0, average_image.size[1]))), font, random.uniform(0.8, 3), random.choice([(255, 255, 255), (0,0,0)]), random.choice(range(1, 3)), random.choice(range(1,8))))
 
-average_image.save(path + "average_" + str(uuid.uuid1()) + ".png")
+average_image.save(os.environ['RENDER_PATH'] + "average_" + str(uuid.uuid1()) + ".png")

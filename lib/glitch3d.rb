@@ -198,7 +198,9 @@ module Glitch3d
       '-eight',
       initial_args['height'] || 2000.to_s,
       '-canvas',
-      initial_args['canvas'] || nil.to_s
+      initial_args['canvas'] || nil.to_s,
+      '--post-process',
+      initial_args['post-process'].to_s.capitalize
     ]
     system(*args)
   end
