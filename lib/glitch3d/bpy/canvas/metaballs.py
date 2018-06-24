@@ -12,6 +12,7 @@ class Metaballs(canvas.Canvas):
   TYPES =  ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
 
   def render(self):
+    return None
     diameter = 8.0
     sz = 2.125 / diameter
     latitude = 16

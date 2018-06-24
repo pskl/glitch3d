@@ -199,9 +199,13 @@ module Glitch3d
       initial_args['height'] || 2000.to_s,
       '-canvas',
       initial_args['canvas'] || nil.to_s,
+      '-assets',
+      initial_args['assets'] || nil.to_s,
       '--post-process',
-      initial_args['post-process'].to_s.capitalize
+      initial_args['post-process'].to_s.capitalize,
+      '--python-exit-code',
+      1.to_s
     ]
-    system(*args)
+    raise "bpy run failed" unless system(*args)
   end
 end

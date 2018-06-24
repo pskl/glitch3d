@@ -42,7 +42,7 @@ class Dreamatorium(canvas.Canvas):
                 props.append(new_line)
 
         ocean = self.add_ocean(10, 20)
-        helpers.apply_displacement(ocean, self.HEIGHT_MAP_FOLDER_PATH)
+        # helpers.apply_displacement(ocean, self.HEIGHT_MAP_FOLDER_PATH)
 
         for index in range(1, 5):
             new_object = helpers.spawn_text(self.TEXT_FILE_PATH)

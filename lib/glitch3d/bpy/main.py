@@ -2,55 +2,56 @@
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
 import sys, argparse, random, math, os, code
-try:
-  def get_args():
-    parser = argparse.ArgumentParser()
-    _, all_arguments = parser.parse_known_args()
-    double_dash_index = all_arguments.index('--')
-    script_args = all_arguments[double_dash_index + 1: ]
-    parser.add_argument('-f', '--file', help="obj file to render")
-    parser.add_argument('-n', '--shots-number', help="number of shots desired")
-    parser.add_argument('-m', '--mode', help="quality mode: low | high")
-    parser.add_argument('-p', '--path', help="root path of gem assets")
-    parser.add_argument('-a', '--animate', help="render animation") # bool
-    parser.add_argument('-frames', '--frames', help="number of frames") # int
-    parser.add_argument('-normals', '--normals', help="normal render") # bool
-    parser.add_argument('-d', '--debug', help="render blank scene with subject for testing purposes") # bool
-    parser.add_argument('-width', '--width', help="width of render") # int
-    parser.add_argument('-eight', '--eight', help="height of render") # int
-    parser.add_argument('-assets', '--assets', help="user assets path") # string
-    parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
-    parser.add_argument('-post', '--post-process', help="post-processing") # bool
-    parsed_script_args, _ = parser.parse_known_args(script_args)
-    return parsed_script_args
 
-  args = get_args()
-  file = args.file
-  mode = args.mode
-  debug = (args.debug == 'True')
-  path = str(args.path)
-  animate = (args.animate == 'True')
-  shots_number = int(args.shots_number)
-  width = int(args.width)
-  height = int(args.eight)
-  post_process = (args.post_process == 'True')
+def get_args():
+  parser = argparse.ArgumentParser()
+  _, all_arguments = parser.parse_known_args()
+  double_dash_index = all_arguments.index('--')
+  script_args = all_arguments[double_dash_index + 1: ]
+  parser.add_argument('-f', '--file', help="obj file to render")
+  parser.add_argument('-n', '--shots-number', help="number of shots desired")
+  parser.add_argument('-m', '--mode', help="quality mode: low | high")
+  parser.add_argument('-p', '--path', help="root path of gem assets")
+  parser.add_argument('-a', '--animate', help="render animation") # bool
+  parser.add_argument('-frames', '--frames', help="number of frames") # int
+  parser.add_argument('-normals', '--normals', help="normal render") # bool
+  parser.add_argument('-d', '--debug', help="render blank scene with subject for testing purposes") # bool
+  parser.add_argument('-width', '--width', help="width of render") # int
+  parser.add_argument('-eight', '--eight', help="height of render") # int
+  parser.add_argument('-assets', '--assets', help="user assets path") # string
+  parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
+  parser.add_argument('-post', '--post-process', help="post-processing") # bool
+  parsed_script_args, _ = parser.parse_known_args(script_args)
+  return parsed_script_args
+
+args = get_args()
+file = args.file
+mode = args.mode
+debug = (args.debug == 'True')
+path = str(args.path)
+animate = (args.animate == 'True')
+shots_number = int(args.shots_number)
+width = int(args.width)
+height = int(args.eight)
+post_process = (args.post_process == 'True')
+assets = args.assets
 
   # TODO: add proper args validation cycle
   #####################################
   #####################################
   #####################################
 
+try:
   NUMBER_OF_FRAMES = int(args.frames)
   NORMALS_RENDERING = (args.normals == 'True')
 
   # Randomize module usage at runtime or pick selection from arguments
   canvas_path = os.path.dirname(__file__) + '/canvas'
   MODULES_AVAILABLE = args.canvas.split(",") if args.canvas else [ f[0:-3] for f in os.listdir(canvas_path) if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py']
-  MODULES_AVAILABLE = [] if debug else MODULES_AVAILABLE
   MODULES_ENABLED = MODULES_AVAILABLE if debug or args.canvas else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
   print("modules enabled: " + str(list(MODULES_ENABLED)))
 
-  FIXTURES_FOLDER_PATH = args.assets if args.assets else path + '/../fixtures/'
+  FIXTURES_FOLDER_PATH = assets if assets else path + '/../fixtures/'
   TEXTURE_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'textures/'
   MODELS_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'models/'
   HEIGHT_MAP_FOLDER_PATH = FIXTURES_FOLDER_PATH + 'height_maps/'
@@ -227,4 +228,6 @@ try:
   sys.exit(0)
 
 except Exception as e:
-  sys.exit(1)
+  if debug:
+    raise e # See error
+  sys.exit(1) # Just return 1 error code in production
