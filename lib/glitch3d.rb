@@ -6,6 +6,8 @@ require 'glitch3d/objects/face'
 Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each { |file| require file }
 
 module Glitch3d
+  class ProcessError < StandardError; end
+
   VERTEX_GLITCH_ITERATION_RATIO = 0.1
   VERTEX_GLITCH_OFFSET = 1
 
@@ -203,9 +205,11 @@ module Glitch3d
       initial_args['assets'] || nil.to_s,
       '--post-process',
       initial_args['post-process'].to_s.capitalize,
+      '--webhook',
+      initial_args['webhook'] || nil.to_s,
       '--python-exit-code',
       1.to_s
     ]
-    raise "bpy run failed" unless system(*args)
+    raise(ProcessError, "bpy run failed") unless system(*args)
   end
 end

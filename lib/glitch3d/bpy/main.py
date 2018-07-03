@@ -1,7 +1,7 @@
 # Rendering script
 # Run by calling the blender executable with -b -P <script_name>
 # Use `pry()` to pry into the script
-import sys, argparse, random, math, os, code
+import sys, argparse, random, math, os, code, requests
 
 def get_args():
   parser = argparse.ArgumentParser()
@@ -21,6 +21,7 @@ def get_args():
   parser.add_argument('-assets', '--assets', help="user assets path") # string
   parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
   parser.add_argument('-post', '--post-process', help="post-processing") # bool
+  parser.add_argument('-webhook', '--webhook', help="webhook url") # string
   parsed_script_args, _ = parser.parse_known_args(script_args)
   return parsed_script_args
 
@@ -35,6 +36,7 @@ width = int(args.width)
 height = int(args.eight)
 post_process = (args.post_process == 'True')
 assets = args.assets
+webhook = args.webhook
 
   # TODO: add proper args validation cycle
   #####################################
@@ -228,6 +230,8 @@ try:
   sys.exit(0)
 
 except Exception as e:
+  if webhook:
+    requests.post(webhook, data={'error': str(e)})
   if debug:
     raise e # See error
   sys.exit(1) # Just return 1 error code in production
