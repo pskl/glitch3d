@@ -7,7 +7,7 @@ import helpers
 
 class Fernandez(canvas.Canvas):
   MESH_NUMBER_LIMIT = 200 # otherwise Blender crashes
-  MESH_OCCURENCE = 2 # 1 mesh every X point of the curve
+  MESH_OCCURENCE = 1 # 1 mesh every X point of the curve
 
   FUNCTIONS = [
     # decorated knot (can expand to 20 units)
@@ -38,14 +38,13 @@ class Fernandez(canvas.Canvas):
 
   def render(self):
     art = self.matthew_curve(self.SUBJECT, 50)
-    helpers.assign_material(art, helpers.random_material(self.MATERIALS_NAMES))
 
   def rand_curve(self):
     return random.choice(self.FUNCTIONS)
 
   def matthew_curve(self, obj, time, scale = 0.2):
     fx, fy, fz = self.rand_curve()
-    verts =  [(fx(t), fy(t), fz(t)) for t in helpers.pitched_array(0, time, 1)]
+    verts =  [(fx(t), fy(t), fz(t)) for t in helpers.pitched_array(0, time, 0.2)]
     bpy.context.scene.objects.active = obj
     bpy.ops.object.select_all(action='DESELECT')
     for idx, coord in enumerate(verts[0::self.MESH_OCCURENCE]):
@@ -57,11 +56,15 @@ class Fernandez(canvas.Canvas):
       bpy.context.scene.objects.active = new_obj
     bpy.ops.object.join()
     res = bpy.context.object
+
     res.name = 'fernandez'
     helpers.resize(res)
     helpers.center(res)
-    res = helpers.create_mesh('fernandez_support', verts, [], (0,0,0),  [[v, v+1] for v in range(0, (len(verts) - 1))])
-    helpers.resize(res)
-    helpers.center(obj)
-    helpers.extrude(res)
+    helpers.decimate(res)
+    helpers.assign_material(res, helpers.random_material(self.MATERIALS_NAMES))
+    support = helpers.create_mesh('fernandez_support', verts, [], (0,0,0),  [[v, v+1] for v in range(0, (len(verts) - 1))])
+    helpers.resize(support)
+    helpers.center(support)
+    helpers.extrude(support)
+    helpers.assign_material(res, helpers.random_material(self.MATERIALS_NAMES))
     return res

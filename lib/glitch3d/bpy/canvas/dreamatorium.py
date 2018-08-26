@@ -8,7 +8,7 @@ class Dreamatorium(canvas.Canvas):
         props = []
         bpy.ops.import_scene.obj(filepath = os.path.join(self.MODELS_FOLDER_PATH + 'lightning.obj'), use_edges=True)
         logo = bpy.context.selected_objects[0]
-        logo.location = self.rand_location(self.CANVAS_BOUNDARY)
+        logo.location = helpers.rand_location(self.CANVAS_BOUNDARY)
         # props.append(logo)
 
         bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
@@ -48,7 +48,7 @@ class Dreamatorium(canvas.Canvas):
             new_object = helpers.spawn_text(self.TEXT_FILE_PATH)
             bpy.data.groups['texts'].objects.link(new_object)
             props.append(new_object)
-            self.assign_material(new_object, helpers.random_material(self.MATERIALS_NAMES))
+            helpers.assign_material(new_object, helpers.random_material(self.MATERIALS_NAMES))
             text_scale = random.uniform(0.75, 3)
             new_object.scale = (text_scale, text_scale, text_scale)
             new_object.location = helpers.rand_location(self.CANVAS_BOUNDARY)

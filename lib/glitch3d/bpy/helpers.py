@@ -37,6 +37,12 @@ def apply_displacement(obj, height_map_folder, strength = 0.2, subdivisions = 2)
     displace.texture = new_texture
     displace.strength = strength
 
+def decimate(obj):
+  modifier = obj.modifiers.new(name='decimate', type='DECIMATE')
+  modifier.decimate_type = 'DISSOLVE'
+  bpy.context.scene.objects.active = obj
+  bpy.ops.object.modifier_apply(modifier="decimate")
+
 def look_at(obj):
     location_camera = CAMERA.matrix_world.to_translation()
     location_object = obj.matrix_world.to_translation()
@@ -60,7 +66,9 @@ def output_name(model_path, index = 0):
 def rand_color_value():
     return random.uniform(0, 255) / 255
 
-def rand_location(boundary):
+def rand_location(boundary, positive = False):
+    if positive:
+      return (random.uniform(0, boundary), random.uniform(0, boundary), random.uniform(0, boundary))
     return (random.uniform(-boundary, boundary), random.uniform(-boundary, boundary), random.uniform(-boundary, boundary))
 
 def rand_rotation():
@@ -380,47 +388,51 @@ def random_text(file_path):
     return lines[random.randrange(len(lines))]
 
 def add_faces(obj):
-    vertices = []
-    for v in obj.data.vertices:
-        vertices.append(v.co)
-    new_obj = create_mesh(obj.name, vertices, random_faces(vertices), obj.location)
-    bpy.data.objects.remove(obj, do_unlink=True)
-    return new_obj
+  vertices = []
+  for v in obj.data.vertices:
+      vertices.append(v.co)
+  new_obj = create_mesh(obj.name, vertices, random_faces(vertices), obj.location)
+  bpy.data.objects.remove(obj, do_unlink=True)
+  return new_obj
 
 def random_faces(vertices):
-    faces = []
-    for i in range(int(len(vertices)/100)):
-        target = vertices[random.choice((range(len(vertices))))]
-        if (random.randint(0, 1) == 1):
-            faces.append(((target + 2), int(target / 6), int(target - 1), target))
-        else:
-            faces.append((int(target / 6), int(target - 1), target))
-    return faces
+  faces = []
+  for i in range(int(len(vertices)/100)):
+      target = vertices[random.choice((range(len(vertices))))]
+      if (random.randint(0, 1) == 1):
+          faces.append(((target + 2), int(target / 6), int(target - 1), target))
+      else:
+          faces.append((int(target / 6), int(target - 1), target))
+  return faces
 
 ############
 # <geometry>
 ############
 
 def center(obj):
-    bpy.context.scene.objects.active = obj
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
-    bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
-    local_bounding_box_center = 0.125 * sum((mathutils.Vector(b) for b in obj.bound_box), mathutils.Vector())
-    obj.location -= local_bounding_box_center
-    return obj
+  bpy.context.scene.objects.active = obj
+  bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+  bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
+  local_bounding_box_center = 0.125 * sum((mathutils.Vector(b) for b in obj.bound_box), mathutils.Vector())
+  obj.location -= local_bounding_box_center
+  obj.location = (0, 0, 0)
+  return obj
 
-def resize(obj, pace = 0.05, minimum = 3.0, maximum = 8.0):
-    print("Resizing: " + obj.name)
-    assert minimum < maximum
-    obj.scale = (1,1,1)
-    scale_multiplier =  max(obj.dimensions) / (maximum - minimum)
-    if max(obj.dimensions) > maximum:
-      init_scale = obj.scale
-      obj.scale = init_scale - init_scale * scale_multiplier # downscale
-      if obj.scale.x < 0:
-        obj.scale = init_scale * scale_multiplier
-    else:
-      obj.scale = obj.scale + obj.scale * scale_multiplier # upscale
+def resize(obj, minimum = 4.0, maximum = 8.0):
+  print("Resizing: " + obj.name)
+  init_scale = obj.scale
+  assert minimum < maximum
+  scale_multiplier =init_scale.x / (max(obj.dimensions) / (maximum - minimum))
+  if max(obj.dimensions) > maximum:
+    print("Downscaling by:" + str(scale_multiplier))
+    while max(obj.dimensions) > maximum:
+      obj.scale = init_scale + mathutils.Vector((- scale_multiplier, - scale_multiplier, - scale_multiplier))
+      bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
+  elif max(obj.dimensions) < minimum:
+    print("Upscaling by:" + str(scale_multiplier))
+    while max(obj.dimensions) < minimum:
+      obj.scale = obj.scale + mathutils.Vector((scale_multiplier, scale_multiplier, scale_multiplier))
+      bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
 
 def extrude(obj, thickness=0.05):
     bpy.context.scene.objects.active = obj
