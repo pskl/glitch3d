@@ -15,6 +15,7 @@ module Glitch3d
   FACE_GLITCH_OFFSET = 0.5
   BOUNDARY_LIMIT = 3 # Contain model within BOUNDARY_LIMITxBOUNDARY_LIMITxBOUNDARY_LIMIT cube
   CHUNK_SIZE=20
+  DEFAULT_SHOTS_NUMBER = 4
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
@@ -54,7 +55,7 @@ module Glitch3d
     target_file = base_file_name + '_glitched.obj'
     puts "Target ~> #{target_file}"
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
-    render(args, target_file, args['shots-number'] || 6) unless args['no-render']
+    render(args, target_file, args['shots-number'] || DEFAULT_SHOTS_NUMBER) unless args['no-render']
   end
 
   # Print version number

@@ -10,6 +10,13 @@ This gem uses the Blender Python API to produces renders headlessly and leverage
 
 Cycles rendering engine does not support GLSL shaders so the shader library is using a node-based system but could be extended to serialize materials in the Open Shading Language.
 
+## Overview of the process
+
+1) the subject model (main argument of the cli call) is altered by one of the available 'glitching' strategies
+2) the base Blender scene is loaded and the subject is loaded and ajusted
+3) random canvas objects are picked up and drawn across the scene
+4) actual render begins and the scene is animated in each frame
+
 ## :warning: Warning
 
 Setting `BLENDER_EXECUTABLE_PATH` in your environment is required. In general this gem relies on the presence of Python and Blender on the host machine. I am very aware this is not standard practice and plan to split components later down the road but this proves convenient for now.
@@ -35,11 +42,14 @@ Or install it yourself as:
 - `glitch3d file.obj`
 
 CLI Options:
-- `mode` : (localized|default|none) => glitching strategy
-- `shots-number` : integer representing the number of - images desired (with animate: false)
-- `quality` : (high: 2000 x 2000|low 200 x 200) default: low => size of the render
-- `animate` : (true) default: false => Render .avi file
-- `frames` : (default: 200) => number of frames for simulation
+- `mode`: (localized|default|none) default: randomized => glitching strategy (how the subject model is altered)
+- `shots-number`: default: 4 => the number of images desired (only taken into account if `animate` is false)
+- `quality`: (high|low) default: low => size of the render (low is 200x200 pixels and high is 2000x2000 pixels)
+- `animate`: (true|false) default: false => enables render of .avi file
+- `frames`: default: 200 => number of frames for the simulation
+- `assets`: default: nil => URI to an asset folder that has the following subfolders: `/osl-shaders` `/fonts` `/text` `/textures` `/height_maps` `/models`
+- `debug`: (true|false) default: false => allows to re-raise errors from canvas specific code (otherwise the program just exits with status code 1)
+- `webhook`: default: nil => url of endpoint to post potential error data to (useful for debugging)
 
 Renders (wether it is video or an image) will be output to `./renders` along with an export of the `.scene` file so that you can potentially fiddle with the resulting scene setup and adjust lights for instance.
 
@@ -61,10 +71,11 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Roadmap
 
-- extract fixtures management from gem
-- allow fixtures to be scraped from online resources such as [Thingiverse](https://www.thingiverse.com/)
-- use Blender Compositor feature to streamline post-processing
-- use realtime Eevee engine to visualize intermediate renders
+- [x] extract fixtures management from gem
+- [x] allow fixtures to be scraped from online resources such as [Thingiverse](https://www.thingiverse.com/)
+- [ ] use Blender Compositor feature to streamline post-processing
+- [ ] use realtime Eevee engine to visualize intermediate renders
+- [ ] support more 3D file formats (fbx, etc)
 
 ## Contributing
 
