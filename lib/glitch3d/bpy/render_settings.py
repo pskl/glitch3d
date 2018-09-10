@@ -79,6 +79,7 @@ def render_settings(animate, mode, normals, width, height, debug):
     bpy.context.scene.cycles.samples = 20
     bpy.context.scene.cycles.max_bounces = 1
     CAMERA.data.dof_distance = (SUBJECT.location - CAMERA.location).length
+    CAMERA.data.dof_object = SUBJECT
     bpy.context.scene.cycles.shading_system = OSL_ENABLED
     bpy.context.scene.cycles.min_bounces = 1
     bpy.context.scene.cycles.caustics_reflective = False

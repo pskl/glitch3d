@@ -38,10 +38,10 @@ post_process = (args.post_process == 'True')
 assets = args.assets
 webhook = args.webhook
 
-  # TODO: add proper args validation cycle
-  #####################################
-  #####################################
-  #####################################
+# TODO: add proper args validation cycle
+#####################################
+#####################################
+#####################################
 
 try:
   NUMBER_OF_FRAMES = int(args.frames)

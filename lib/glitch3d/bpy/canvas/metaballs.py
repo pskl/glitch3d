@@ -14,7 +14,7 @@ class Metaballs(canvas.Canvas):
   def render(self):
     diameter = 8.0
     sz = 2.125 / diameter
-    latitude = 16
+    latitude = 10
     longitude = latitude * 2
     invlatitude = 1.0 / (latitude - 1)
     current_frame = 0
@@ -27,10 +27,10 @@ class Metaballs(canvas.Canvas):
     baseaxis = Vector((0.0, 1.0, 0.0))
     axis = Vector((0.0, 0.0, 0.0))
     metaball_type = random.choice(self.TYPES)
-    mbdata = bpy.data.metaballs.new('SphereData')
+    mbdata = bpy.data.metaballs.new('meta_balls')
     mbdata.render_resolution = 0.075
     mbdata.resolution = 0.1
-    mbobj = bpy.data.objects.new("Sphere", mbdata)
+    mbobj = bpy.data.objects.new("meta_bollocks", mbdata)
     bpy.context.scene.objects.link(mbobj)
     helpers.assign_material(mbobj, helpers.random_material(self.MATERIALS_NAMES))
     for i in range(0, latitude, 1):

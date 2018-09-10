@@ -13,7 +13,6 @@ class Lyfe(canvas.Canvas):
           for b in a:
             for c in b:
               c.location += mathutils.Vector((self.SIZE/2, self.SIZE/2, self.SIZE/2))
-        # code.interact(local=dict(globals(), **locals()))
         self.cells = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]
         self.next_generation = [[[ 0 for i in range(self.SIZE)] for k in range(self.SIZE)] for j in range(self.SIZE)]
 
@@ -52,7 +51,6 @@ class Lyfe(canvas.Canvas):
                                 x_index = (x + i + self.SIZE) % self.SIZE
                                 y_index = (y + j + self.SIZE) % self.SIZE
                                 z_index = (z + k + self.SIZE) % self.SIZE
-                                # code.interact(local=dict(globals(), **locals()))
                                 if not( x_index == x and y_index == y and z_index == z):
                                     neighbors_alive_count += self.cells[x_index][y_index][z_index]
                     if self.cells[x][y][z] == 1 and neighbors_alive_count > 6:

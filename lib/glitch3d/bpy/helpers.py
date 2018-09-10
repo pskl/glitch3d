@@ -109,8 +109,9 @@ def assign_material(obj, material):
         obj.data.materials[0] = material
     return material
 
-def random_material(materials_list):
-    return fetch_material(random.choice(materials_list))
+def random_material(materials_list, blacklist = [ 'Smoke Domain Material' ]):
+    eligible_materials = list(set(materials_list) - set(blacklist))
+    return fetch_material(random.choice(eligible_materials))
 
 # Returns a new Cycles material with default DiffuseBsdf node linked to output
 def create_cycles_material(name = 'object_material_', clean=False):
@@ -424,12 +425,12 @@ def resize(obj, minimum = 4.0, maximum = 8.0):
   assert minimum < maximum
   scale_multiplier =init_scale.x / (max(obj.dimensions) / (maximum - minimum))
   if max(obj.dimensions) > maximum:
-    print("Downscaling by:" + str(scale_multiplier))
+    print("Downscaling by: " + str(scale_multiplier))
     while max(obj.dimensions) > maximum:
       obj.scale = init_scale + mathutils.Vector((- scale_multiplier, - scale_multiplier, - scale_multiplier))
       bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
   elif max(obj.dimensions) < minimum:
-    print("Upscaling by:" + str(scale_multiplier))
+    print("Upscaling by: " + str(scale_multiplier))
     while max(obj.dimensions) < minimum:
       obj.scale = obj.scale + mathutils.Vector((scale_multiplier, scale_multiplier, scale_multiplier))
       bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
@@ -439,6 +440,7 @@ def extrude(obj, thickness=0.05):
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.extrude_region_move(MESH_OT_extrude_region={"mirror":False}, TRANSFORM_OT_translate={"value":(thickness, 0, 0), "constraint_orientation":'GLOBAL', "mirror":True, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False, "use_accurate":False})
     bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
 
 def create_line(name, point_list, color, thickness = 0.002, location = (0,0,0)):
     line_data = bpy.data.curves.new(name=name,type='CURVE')
@@ -478,7 +480,7 @@ def pitched_array(minimum, maximum, pitch):
 
 def create_mesh(name, verts, faces, location, edges=[]):
     mesh_data = bpy.data.meshes.new("mesh_data")
-    faces = faces if len(faces) == 0 else random_faces(verts)
+    faces = faces if (len(faces) == 0 or len(faces) > 0) else random_faces(verts)
     mesh_data.from_pydata(verts, edges, faces)
     mesh_data.update()
     obj = bpy.data.objects.new(name, mesh_data)

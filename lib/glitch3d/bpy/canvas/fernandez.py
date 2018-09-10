@@ -1,6 +1,6 @@
 # Matthew Plummer Fernandez hommage
 # Draw interesting parametric curves and instantiate meshes on its path
-import sys, code, random, os, math, bpy, canvas
+import sys, code, random, os, math, bpy, canvas, mathutils
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import helpers
@@ -37,7 +37,18 @@ class Fernandez(canvas.Canvas):
   ]
 
   def render(self):
+    base_particle = helpers.infer_primitive(random.choice(self.PRIMITIVES), location = (100, 100, 100), radius=1)
     art = self.matthew_curve(self.SUBJECT, 50)
+    self.spawn_particles_system(art, base_particle)
+
+    for f in range(self.NUMBER_OF_FRAMES):
+      bpy.context.scene.frame_set(f)
+      art.particle_systems["ParticleSystem"].seed += 1
+      settings = bpy.data.particles[-1]
+      settings.particle_size += 0.005
+      art.scale += mathutils.Vector((0.02,0.02,0.02))
+      helpers.add_frame([art], ['particle_systems["ParticleSystem"].seed', 'scale'])
+      helpers.add_frame([settings], ['particle_size'])
 
   def rand_curve(self):
     return random.choice(self.FUNCTIONS)
@@ -56,7 +67,6 @@ class Fernandez(canvas.Canvas):
       bpy.context.scene.objects.active = new_obj
     bpy.ops.object.join()
     res = bpy.context.object
-
     res.name = 'fernandez'
     helpers.resize(res)
     helpers.center(res)
@@ -66,5 +76,19 @@ class Fernandez(canvas.Canvas):
     helpers.resize(support)
     helpers.center(support)
     helpers.extrude(support)
-    helpers.assign_material(res, helpers.random_material(self.MATERIALS_NAMES))
+    helpers.assign_material(support, helpers.random_material(self.MATERIALS_NAMES))
     return res
+
+  def spawn_particles_system(self, base, obj):
+    base.modifiers.new("Particles", type='PARTICLE_SYSTEM')
+    settings = bpy.data.particles[-1]
+    settings.emit_from = 'VERT'
+    settings.physics_type = 'NO'
+    settings.count = 2000 # default 1000
+    settings.particle_size = 0.01
+    settings.render_type = 'OBJECT'
+    settings.dupli_object = obj
+    settings.show_unborn = True
+    settings.use_dead = True
+    settings.size_random = 0.5
+    bpy.ops.object.duplicates_make_real()

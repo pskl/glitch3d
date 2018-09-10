@@ -9,7 +9,7 @@ class Aether(canvas.Canvas):
     ######################
     ## SMOKE SIMULATION ##
     ######################
-    bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0),radius=RADIUS)
+    bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 4.0),radius=RADIUS)
     container = bpy.context.object
     container.name = 'smoke_container'
     container.modifiers.new(name='container', type='SMOKE')
