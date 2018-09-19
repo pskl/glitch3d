@@ -129,7 +129,7 @@ try:
 
   print("Loading materials...")
   MATERIALS_NAMES = []
-  load_osl_materials(FIXTURES_FOLDER_PATH + 'osl-shaders/')
+  load_osl_materials(FIXTURES_FOLDER_PATH + 'osl_shaders/')
   for mat in bpy.data.materials: # merge base scene materials + osl shaders
       if mat.name != 'emission':
         MATERIALS_NAMES.append(mat.name)

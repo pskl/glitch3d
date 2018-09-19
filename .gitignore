@@ -20,4 +20,4 @@
 *.png
 lib/glitch3d/bpy/canvas/__pycache__/
 lib/glitch3d/bpy/__pycache__/
-fixtures/osl-shaders/*.oso
+fixtures/osl_shaders/*.oso

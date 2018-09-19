@@ -47,7 +47,7 @@ CLI Options:
 - `quality`: (high|low) default: low => size of the render (low is 200x200 pixels and high is 2000x2000 pixels)
 - `animate`: (true|false) default: false => enables render of .avi file
 - `frames`: default: 200 => number of frames for the simulation
-- `assets`: default: nil => URI to an asset folder that has the following subfolders: `/osl-shaders` `/fonts` `/text` `/textures` `/height_maps` `/models`
+- `assets`: default: nil => URI to an asset folder that has the following subfolders: `/osl_shaders` `/fonts` `/text` `/textures` `/height_maps` `/models`
 - `debug`: (true|false) default: false => allows to re-raise errors from canvas specific code (otherwise the program just exits with status code 1)
 - `webhook`: default: nil => url of endpoint to post potential error data to (useful for debugging)
 
