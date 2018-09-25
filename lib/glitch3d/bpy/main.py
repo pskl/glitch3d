@@ -125,7 +125,7 @@ try:
   COLORS = rand_color_palette(5)
   CAMERA_OFFSET = 5
   INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))
-  TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'text/strings.txt'
+  TEXT_FILE_PATH = FIXTURES_FOLDER_PATH + 'texts/strings.txt'
 
   print("Loading materials...")
   MATERIALS_NAMES = []
