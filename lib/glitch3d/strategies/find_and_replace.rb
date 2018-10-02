@@ -1,26 +1,29 @@
 # frozen_string_literal: true
 module Glitch3d
   module FindAndReplace
-    def alter_vertices(vertices_objects_array)
-      @target = rand(9).to_s
-      @replacement = rand(9).to_s
-      vertices_objects_array.each do |v|
-        find_and_replace(v)
+    class << self
+      def alter_vertices(vertices_objects_array)
+        @target = rand(9).to_s
+        @replacement = rand(9).to_s
+        vertices_objects_array.each do |v|
+          find_and_replace(v)
+        end
+        vertices_objects_array
       end
-      vertices_objects_array
-    end
 
-    def alter_faces(faces_objects_array, vertices_objects_array)
-      faces_objects_array.sample(3) do |face|
-        face.v1 = rand(0..vertices_objects_array.size - 1)
+      def alter_faces(faces_objects_array, vertices_objects_array)
+        (FACE_GLITCH_ITERATION_RATIO * faces_objects_array.count)
+        faces_objects_array.sample(3) do |face|
+          face.v1 = rand(0..vertices_objects_array.size - 1)
+        end
+        faces_objects_array
       end
-      faces_objects_array
-    end
 
-    def find_and_replace(vertex)
-      vertex.x = vertex.x.to_s.tr(@target, @replacement).to_f
-      vertex.y = vertex.y.to_s.tr(@target, @replacement).to_f
-      vertex.z = vertex.z.to_s.tr(@target, @replacement).to_f
+      def find_and_replace(vertex)
+        vertex.x = vertex.x.to_s.tr(@target, @replacement).to_f
+        vertex.y = vertex.y.to_s.tr(@target, @replacement).to_f
+        vertex.z = vertex.z.to_s.tr(@target, @replacement).to_f
+      end
     end
   end
 end

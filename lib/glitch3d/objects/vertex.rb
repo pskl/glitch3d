@@ -50,7 +50,7 @@ class Vertex
   # Pass functions like :negative? or :positive?
   def self.subset(x:, y:, z:, vertex_list:)
     vertex_list.select do |vertex|
-      vertex.x.send(x) && vertex.y.send(y) && vertex.y.send(z)
+      vertex.x.send(x) || vertex.y.send(y) || vertex.y.send(z)
     end
   end
 end

@@ -8,18 +8,35 @@ Dir[File.dirname(__FILE__) + '/glitch3d/strategies/*.rb'].each { |file| require 
 module Glitch3d
   class ProcessError < StandardError; end
 
-  VERTEX_GLITCH_ITERATION_RATIO = 0.1
-  VERTEX_GLITCH_OFFSET = 1
+  VERTEX_GLITCH_ITERATION_RATIO = 0.0001.freeze
+  VERTEX_GLITCH_OFFSET = 1.freeze
 
-  FACE_GLITCH_ITERATION_RATIO = 0.1
-  FACE_GLITCH_OFFSET = 0.5
-  BOUNDARY_LIMIT = 3 # Contain model within BOUNDARY_LIMITxBOUNDARY_LIMITxBOUNDARY_LIMIT cube
-  CHUNK_SIZE=20
-  DEFAULT_SHOTS_NUMBER = 4
+  FACE_GLITCH_ITERATION_RATIO = 0.0001.freeze
+  FACE_GLITCH_OFFSET = 0.5.freeze
+  BOUNDARY_LIMIT = 3.freeze # Contain model within BOUNDARY_LIMITxBOUNDARY_LIMITxBOUNDARY_LIMIT cube
+  CHUNK_SIZE = 20.freeze
+  DEFAULT_SHOTS_NUMBER = 4.freeze
+  STRATEGIES = [
+    Glitch3d::Default,
+    Glitch3d::Duplication,
+    Glitch3d::FindAndReplace,
+    Glitch3d::Localized,
+    Glitch3d::None
+  ].freeze
 
   BLENDER_EXECUTABLE_PATH = ENV['BLENDER_EXECUTABLE_PATH'].freeze
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
   BASE_BLEND_FILE_PATH = File.dirname(__FILE__) + '/../fixtures/base.blend'
+  BENCHMARK_ARGS = {
+    'quality' => 'low',
+    'normals' => false,
+    'width' => 1000.to_s,
+    'height' => 1000.to_s,
+    'debug' => 'true',
+    'canvas' => 'empty',
+    'animate' => 'false',
+    'post-process' => 'false'
+  }
 
   ASCII_TITLE = "
   ██████╗ ██╗     ██╗████████╗ ██████╗██╗  ██╗██████╗ ██████╗
@@ -37,6 +54,19 @@ module Glitch3d
     create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
   end
 
+  def benchmark_strategies(source_file, base_file_name, model_name)
+    STRATEGIES.each do |s|
+      new_model_name = model_name + "_#{s.to_s.downcase.gsub(/::/, '_')}"
+      target_file = new_model_name + '_glitched.obj'
+      create_glitched_file(
+        glitch(read_source(source_file), s),
+        target_file,
+        new_model_name
+      )
+      render(BENCHMARK_ARGS, target_file, 1)
+    end
+  end
+
   # @param String source_file, 3d model file to take as input
   # @param Hash args, parameters { 'stuff' => 'shit' }
   def process_model(source_file, args)
@@ -47,14 +77,18 @@ module Glitch3d
     source_file = random_fixture if source_file.nil?
     print_version if args.has_key?('version')
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
-    self.class.include infer_strategy(args['mode'])
     @quality = args['quality'] || 'low'
     source_file = source_file
     base_file_name = source_file&.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '_glitched.obj'
     puts "Target ~> #{target_file}"
-    create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
+    return benchmark_strategies(source_file, base_file_name, model_name) if args['benchmark']
+    create_glitched_file(
+      glitch(read_source(source_file), infer_strategy(args['mode'])),
+      target_file,
+      model_name
+    )
     render(args, target_file, args['shots-number'] || DEFAULT_SHOTS_NUMBER) unless args['no-render']
   end
 
@@ -81,7 +115,7 @@ module Glitch3d
   # @return [Glitch3d::Strategy]
   def infer_strategy(mode)
     if !mode
-      mode_chosen = [ Glitch3d::Default, Glitch3d::Duplication, Glitch3d::FindAndReplace, Glitch3d::Localized, Glitch3d::None].sample
+      mode_chosen = STRATEGIES.sample
       puts "Strategy defaulting to #{mode_chosen}"
       return mode_chosen
     end
@@ -136,15 +170,11 @@ module Glitch3d
     faces_list
   end
 
-  def glitch(file_hash_content)
+  def glitch(file_hash_content, strategy)
     {
-      vertices: alter_vertices(file_hash_content[:vertices]),
-      faces: alter_faces(file_hash_content[:faces], file_hash_content[:vertices])
+      vertices: strategy.public_send(:alter_vertices, file_hash_content[:vertices]),
+      faces: strategy.public_send(:alter_faces, file_hash_content[:faces], file_hash_content[:vertices])
     }
-  end
-
-  def random_element(array)
-    array[rand(0..array.size - 1)]
   end
 
   def create_glitched_file(content_hash, target_file, model_name)

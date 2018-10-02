@@ -60,7 +60,7 @@ def shoot(filepath):
         bpy.ops.render.render(write_still=True)
 
 def output_name(model_path, index = 0):
-    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + ('.avi' if animate else '.png')
+    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + '_' + ('.avi' if animate else '.png')
 
 # RGB 0 -> 1
 def rand_color_value():

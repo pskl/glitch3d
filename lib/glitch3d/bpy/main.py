@@ -93,7 +93,7 @@ try:
       (lambda x: random.uniform(1, 10) * math.sin(x)): 3
   }
 
-  import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, uuid, sys, logging, string, colorsys, code, numpy
+  import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, sys, logging, string, colorsys, code, numpy
   from subprocess import call
 
   def load_file(file_path):
@@ -167,7 +167,8 @@ try:
   # Load model
   model_path = os.path.join(file)
   bpy.ops.import_scene.obj(filepath = model_path, use_edges=True)
-  SUBJECT = bpy.data.objects['0_glitch3d_' + ntpath.basename(file).replace("_glitched.obj", '')]
+  SUBJECT_NAME = '0_glitch3d_' + ntpath.basename(file).replace("_glitched.obj", '')
+  SUBJECT = bpy.data.objects[SUBJECT_NAME]
   SUBJECT.select = True
   center(SUBJECT)
   SUBJECT.location = ORIGIN
