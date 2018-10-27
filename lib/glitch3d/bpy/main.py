@@ -22,6 +22,7 @@ def get_args():
   parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
   parser.add_argument('-post', '--post-process', help="post-processing") # bool
   parser.add_argument('-webhook', '--webhook', help="webhook url") # string
+  parser.add_argument('-seed', '--seed', help="random seed") # int
   parsed_script_args, _ = parser.parse_known_args(script_args)
   return parsed_script_args
 
@@ -46,6 +47,7 @@ webhook = args.webhook
 try:
   NUMBER_OF_FRAMES = int(args.frames)
   NORMALS_RENDERING = (args.normals == 'True')
+  random.seed = args.seed
 
   # Randomize module usage at runtime or pick selection from arguments
   canvas_path = os.path.dirname(__file__) + '/canvas'
@@ -227,7 +229,7 @@ try:
         if shots_number > 10:
           load_file(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
       load_file(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'))
-  print('FINISHED ¯\_(ツ)_/¯')
+  print('FINISHED ¯\_(ツ)_/¯ with seed: ' + random.seed)
   sys.exit(0)
 
 except Exception as e:

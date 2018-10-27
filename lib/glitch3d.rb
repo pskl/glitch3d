@@ -28,11 +28,11 @@ module Glitch3d
   RENDERING_SCRIPT_PATH = File.dirname(__FILE__) + '/glitch3d/bpy/main.py'
   BASE_BLEND_FILE_PATH = File.dirname(__FILE__) + '/../fixtures/base.blend'
   BENCHMARK_ARGS = {
-    'quality' => 'low',
+    'quality' => 'high',
     'normals' => false,
     'width' => 1000.to_s,
     'height' => 1000.to_s,
-    'debug' => 'true',
+    'debug' => 'false',
     'canvas' => 'empty',
     'animate' => 'false',
     'post-process' => 'false'
@@ -55,14 +55,23 @@ module Glitch3d
   end
 
   def benchmark_strategies(source_file, base_file_name, model_name)
+    require 'benchmark'
+    Benchmark.bm do |x|
+      STRATEGIES.each do |s|
+        new_model_name = model_name + "_#{s.to_s.downcase.gsub(/::/, '_')}"
+        target_file = new_model_name + '_glitched.obj'
+        x.report s do
+          create_glitched_file(
+            glitch(read_source(source_file), s),
+            target_file,
+            new_model_name
+          )
+        end
+      end
+    end
     STRATEGIES.each do |s|
       new_model_name = model_name + "_#{s.to_s.downcase.gsub(/::/, '_')}"
       target_file = new_model_name + '_glitched.obj'
-      create_glitched_file(
-        glitch(read_source(source_file), s),
-        target_file,
-        new_model_name
-      )
       render(BENCHMARK_ARGS, target_file, 1)
     end
   end
@@ -71,13 +80,15 @@ module Glitch3d
   # @param Hash args, parameters { 'stuff' => 'shit' }
   def process_model(source_file, args)
     raise 'Make sure Blender is correctly installed' if BLENDER_EXECUTABLE_PATH.nil?
+    @seed = args['seed'] ? args['seed'].to_i : rand(1000)
+    srand @seed
+    puts "Random seed: #{@seed}"
     puts ASCII_TITLE
     puts Glitch3d::VERSION
     return clean_model(source_file) if args['clean']
     source_file = random_fixture if source_file.nil?
     print_version if args.has_key?('version')
     raise 'Set Blender executable path in your env variables before using glitch3d' if BLENDER_EXECUTABLE_PATH.nil?
-    @quality = args['quality'] || 'low'
     source_file = source_file
     base_file_name = source_file&.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
@@ -179,7 +190,6 @@ module Glitch3d
 
   def create_glitched_file(content_hash, target_file, model_name)
     boundaries = Vertex.boundaries(content_hash[:vertices])
-    puts boundaries.to_s
     while rescale_needed?(boundaries)
       content_hash[:vertices] = Vertex.rescale(content_hash[:vertices], (boundaries.flatten.map(&:abs).max.abs - BOUNDARY_LIMIT).abs)
       boundaries = Vertex.boundaries(content_hash[:vertices])
@@ -215,7 +225,7 @@ module Glitch3d
       '-n',
       shots_number.to_s,
       '-m',
-      @quality,
+      initial_args['quality'] || 'low',
       '-p',
       File.dirname(__FILE__).to_s,
       '-a',
@@ -238,6 +248,8 @@ module Glitch3d
       initial_args['post-process'].to_s.capitalize,
       '--webhook',
       initial_args['webhook'] || nil.to_s,
+      '--seed',
+      @seed.to_s,
       '--python-exit-code',
       1.to_s
     ]

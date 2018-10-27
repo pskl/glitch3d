@@ -50,6 +50,7 @@ CLI Options:
 - `assets`: default: nil => URI to an asset folder that has the following subfolders: `/osl_shaders` `/fonts` `/texts` `/textures` `/height_maps` `/models`
 - `debug`: (true|false) default: false => allows to re-raise errors from canvas specific code (otherwise the program just exits with status code 1)
 - `webhook`: default: nil => url of endpoint to post potential error data to (useful for debugging)
+- `seed`: default: rand(1000) => randomness seed that you can pass to the generator to reproduce a specific render result (useful for debugging and refining a canvas result)
 
 Renders (wether it is video or an image) will be output to `./renders` along with an export of the `.scene` file so that you can potentially fiddle with the resulting scene setup and adjust lights for instance.
 
