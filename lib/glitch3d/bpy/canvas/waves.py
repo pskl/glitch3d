@@ -8,7 +8,7 @@ import helpers
 
 class Waves(canvas.Canvas):
 
-  COUNT=10
+  COUNT=5
 
   def render(self):
     count = self.COUNT

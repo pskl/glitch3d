@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import helpers
 
 class Fernandez(canvas.Canvas):
-  MESH_NUMBER_LIMIT = 200 # otherwise Blender crashes
   MESH_OCCURENCE = 1 # 1 mesh every X point of the curve
 
   FUNCTIONS = [
@@ -38,7 +37,7 @@ class Fernandez(canvas.Canvas):
 
   def render(self):
     base_particle = helpers.infer_primitive(random.choice(self.PRIMITIVES), location = (100, 100, 100), radius=1)
-    art = self.matthew_curve(self.SUBJECT, 50)
+    art = self.matthew_curve(self.SUBJECT, 20)
     self.spawn_particles_system(art, base_particle)
 
     for f in range(self.NUMBER_OF_FRAMES):

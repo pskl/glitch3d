@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import helpers
 
 class Lyfe(canvas.Canvas):
-    SIZE = 5
+    SIZE = 4
 
     def render(self):
         self.cubes = helpers.build_composite_object('Cube', self.SIZE-1, 0.5)

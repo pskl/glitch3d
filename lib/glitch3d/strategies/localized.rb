@@ -29,7 +29,7 @@ module Glitch3d
       end
 
       def random_particularity
-        [:positive?, :negative?, :zero?].sample
+        [:positive?, :negative?].sample
       end
 
       def target(vertices_objects_array)

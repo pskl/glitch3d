@@ -253,6 +253,6 @@ module Glitch3d
       '--python-exit-code',
       1.to_s
     ]
-    raise(ProcessError, "bpy run failed") unless system(*args)
+    raise(ProcessError, "bpy run failed, enable --debug=true for Python debugging") unless system(*args)
   end
 end

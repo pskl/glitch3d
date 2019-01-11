@@ -9,7 +9,7 @@ class Dreamatorium(canvas.Canvas):
         bpy.ops.import_scene.obj(filepath = os.path.join(self.MODELS_FOLDER_PATH + 'lightning.obj'), use_edges=True)
         logo = bpy.context.selected_objects[0]
         logo.location = helpers.rand_location(self.CANVAS_BOUNDARY)
-        # props.append(logo)
+        props.append(logo)
 
         bpy.ops.mesh.primitive_grid_add(x_subdivisions=100, y_subdivisions=100, location=(0, 6, 2))
         display1 = bpy.context.object
@@ -42,7 +42,6 @@ class Dreamatorium(canvas.Canvas):
                 props.append(new_line)
 
         ocean = self.add_ocean(10, 20)
-        # helpers.apply_displacement(ocean, self.HEIGHT_MAP_FOLDER_PATH)
 
         for index in range(1, 5):
             new_object = helpers.spawn_text(self.TEXT_FILE_PATH)
@@ -62,9 +61,6 @@ class Dreamatorium(canvas.Canvas):
           for prop in props:
             helpers.shuffle(prop, self.CANVAS_BOUNDARY)
             helpers.assign_material(prop, helpers.random_material(self.MATERIALS_NAMES))
-
-        # helpers.add_rigid_body([ocean], type='PASSIVE')
-        # helpers.add_rigid_body([logo])
 
     def add_ocean(self, spatial_size, resolution, depth = 100, scale=(4,4,4), wave_scale = 0.5):
         bpy.ops.mesh.primitive_cube_add(location=(0, 0, -0.4),radius=1)

@@ -5,7 +5,7 @@ import helpers
 
 class Aether(canvas.Canvas):
   def render(self):
-    RADIUS=5
+    RADIUS=3
     ######################
     ## SMOKE SIMULATION ##
     ######################

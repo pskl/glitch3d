@@ -51,7 +51,7 @@ try:
 
   # Randomize module usage at runtime or pick selection from arguments
   canvas_path = os.path.dirname(__file__) + '/canvas'
-  MODULES_AVAILABLE = args.canvas.split(",") if args.canvas else [ f[0:-3] for f in os.listdir(canvas_path) if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py']
+  MODULES_AVAILABLE = args.canvas.split(",") if args.canvas else [ f[0:-3] for f in os.listdir(canvas_path) if os.path.isfile(os.path.join(canvas_path, f)) and f != 'canvas.py' and f != 'empty.py']
   MODULES_ENABLED = MODULES_AVAILABLE if debug or args.canvas else random.sample(MODULES_AVAILABLE, int(random.uniform(0, len(MODULES_AVAILABLE)) + 1))
   print("modules enabled: " + str(list(MODULES_ENABLED)))
 
@@ -123,7 +123,7 @@ try:
   for primitive in PRIMITIVES:
       bpy.data.groups.new(primitive.lower().title())
 
-  FISHEYE = True
+  FISHEYE = random.sample([True, False], 1)
   COLORS = rand_color_palette(5)
   CAMERA_OFFSET = 5
   INITIAL_CAMERA_LOCATION = (CAMERA_OFFSET, CAMERA_OFFSET, random.uniform(0, 8))

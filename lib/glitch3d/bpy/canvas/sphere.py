@@ -9,7 +9,7 @@ import helpers
 
 class Sphere(canvas.Canvas):
   def render(self):
-    diameter = 8.0
+    diameter = 4.0
     sz = 2.125 / diameter
     base_object = helpers.infer_primitive(random.choice(self.PRIMITIVES), location = (100, 100, 100), radius=sz)
     latitude = 16
