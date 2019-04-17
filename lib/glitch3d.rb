@@ -47,11 +47,10 @@ module Glitch3d
    ╚═════╝ ╚══════╝╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═════╝
                                                                "
   def clean_model(source_file)
-    self.class.include Glitch3d::None
     base_file_name = source_file.gsub(/.obj/, '')
     model_name = File.basename(source_file, '.obj')
     target_file = base_file_name + '.obj'
-    create_glitched_file(glitch(read_source(source_file)), target_file, model_name)
+    create_glitched_file(glitch(read_source(source_file), Glitch3d::None), target_file, model_name)
   end
 
   def benchmark_strategies(source_file, base_file_name, model_name)

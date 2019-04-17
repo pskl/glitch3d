@@ -47,7 +47,7 @@ webhook = args.webhook
 try:
   NUMBER_OF_FRAMES = int(args.frames)
   NORMALS_RENDERING = (args.normals == 'True')
-  random.seed = args.seed
+  random.seed = int(args.seed)
 
   # Randomize module usage at runtime or pick selection from arguments
   canvas_path = os.path.dirname(__file__) + '/canvas'
