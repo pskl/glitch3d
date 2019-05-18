@@ -15,7 +15,7 @@ def get_args():
   parser.add_argument('-a', '--animate', help="render animation") # bool
   parser.add_argument('-frames', '--frames', help="number of frames") # int
   parser.add_argument('-normals', '--normals', help="normal render") # bool
-  parser.add_argument('-d', '--debug', help="render blank scene with subject for testing purposes") # bool
+  parser.add_argument('-d', '--debug', help="enables to see the error that may occur") # bool
   parser.add_argument('-width', '--width', help="width of render") # int
   parser.add_argument('-eight', '--eight', help="height of render") # int
   parser.add_argument('-assets', '--assets', help="user assets path") # string
@@ -229,7 +229,7 @@ try:
         if shots_number > 10:
           load_file(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
       load_file(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'))
-  print('FINISHED ¯\_(ツ)_/¯ with seed: ' + random.seed)
+  print('FINISHED ¯\_(ツ)_/¯ with seed: ' + str(random.seed))
   sys.exit(0)
 
 except Exception as e:
