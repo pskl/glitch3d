@@ -20,7 +20,6 @@ def get_args():
   parser.add_argument('-eight', '--eight', help="height of render") # int
   parser.add_argument('-assets', '--assets', help="user assets path") # string
   parser.add_argument('-canvas', '--canvas', help="selection of canvas modules by name") # string
-  parser.add_argument('-post', '--post-process', help="post-processing") # bool
   parser.add_argument('-webhook', '--webhook', help="webhook url") # string
   parser.add_argument('-seed', '--seed', help="random seed") # int
   parsed_script_args, _ = parser.parse_known_args(script_args)
@@ -35,7 +34,6 @@ animate = (args.animate == 'True')
 shots_number = int(args.shots_number)
 width = int(args.width)
 height = int(args.eight)
-post_process = (args.post_process == 'True')
 assets = args.assets
 webhook = args.webhook
 
@@ -222,13 +220,6 @@ try:
   for p in RENDER_OUTPUT_PATHS:
       print(p)
 
-  if post_process:
-      load_file(os.path.join(path + '/glitch3d/bpy/post-processing/optimize.py'))
-      if shots_number > 1:
-        load_file(os.path.join(path + '/glitch3d/bpy/post-processing/average.py'))
-        if shots_number > 10:
-          load_file(os.path.join(path + '/glitch3d/bpy/post-processing/mosaic.py'))
-      load_file(os.path.join(path + '/glitch3d/bpy/post-processing/palette.py'))
   print('FINISHED ¯\_(ツ)_/¯ with seed: ' + str(random.seed))
   sys.exit(0)
 

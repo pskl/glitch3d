@@ -34,8 +34,7 @@ module Glitch3d
     'height' => 1000.to_s,
     'debug' => 'false',
     'canvas' => 'empty',
-    'animate' => 'false',
-    'post-process' => 'false'
+    'animate' => 'false'
   }
 
   ASCII_TITLE = "
@@ -243,8 +242,6 @@ module Glitch3d
       initial_args['canvas'] || nil.to_s,
       '-assets',
       initial_args['assets'] || nil.to_s,
-      '--post-process',
-      initial_args['post-process'].to_s.capitalize,
       '--webhook',
       initial_args['webhook'] || nil.to_s,
       '--seed',

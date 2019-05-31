@@ -74,7 +74,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 - [x] extract fixtures management from gem
 - [x] allow fixtures to be scraped from online resources such as [Thingiverse](https://www.thingiverse.com/)
-- [ ] use Blender Compositor feature to streamline post-processing
 - [ ] use realtime Eevee engine to visualize intermediate renders
 - [ ] support more 3D file formats (fbx, etc)
 
