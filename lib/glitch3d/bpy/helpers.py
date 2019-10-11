@@ -1,8 +1,8 @@
 import sys, code, random, os, math, bpy, numpy, uuid, mathutils, subprocess
 
 def pry(globs=globals(), locs=locals()):
-    code.interact(local=dict(globs, **locs))
-    sys.exit("Aborting execution")
+  code.interact(local=dict(globs, **locs))
+  sys.exit("Aborting execution")
 
 def chunk_it(seq, num):
     avg = len(seq) / float(num)
@@ -27,15 +27,15 @@ def rand_proba(hashmap):
     )[0]
 
 def apply_displacement(obj, height_map_folder, strength = 0.2, subdivisions = 2):
-    subdivide(obj, subdivisions)
-    subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
-    subsurf.levels = 2
-    subsurf.render_levels = 2
-    displace = obj.modifiers.new(name='displace', type='DISPLACE')
-    new_texture = bpy.data.textures.new(name='texture', type='IMAGE')
-    new_texture.image = random_height_map(height_map_folder, low = True)
-    displace.texture = new_texture
-    displace.strength = strength
+  subdivide(obj, subdivisions)
+  subsurf = obj.modifiers.new(name='subsurf', type='SUBSURF')
+  subsurf.levels = 2
+  subsurf.render_levels = 2
+  displace = obj.modifiers.new(name='displace', type='DISPLACE')
+  new_texture = bpy.data.textures.new(name='texture', type='IMAGE')
+  new_texture.image = random_height_map(height_map_folder, low = True)
+  displace.texture = new_texture
+  displace.strength = strength
 
 def decimate(obj):
   modifier = obj.modifiers.new(name='decimate', type='DECIMATE')
@@ -44,43 +44,43 @@ def decimate(obj):
   bpy.ops.object.modifier_apply(modifier="decimate")
 
 def look_at(obj):
-    location_camera = CAMERA.matrix_world.to_translation()
-    location_object = obj.matrix_world.to_translation()
-    direction = location_object - location_camera
-    rot_quat = direction.to_track_quat('-Z', 'Y')
-    CAMERA.rotation_euler = rot_quat.to_euler()
+  location_camera = CAMERA.matrix_world.to_translation()
+  location_object = obj.matrix_world.to_translation()
+  direction = location_object - location_camera
+  rot_quat = direction.to_track_quat('-Z', 'Y')
+  CAMERA.rotation_euler = rot_quat.to_euler()
 
 def shoot(filepath):
-    print('Camera now at location: ' + str(CAMERA.location) + ' / rotation: ' + str(CAMERA.rotation_euler))
-    bpy.context.scene.render.filepath = filepath
-    if animate:
-        bpy.ops.render.render(animation=animate, write_still=True)
-    else:
-        RENDER_OUTPUT_PATHS.append(filepath)
-        bpy.ops.render.render(write_still=True)
+  print('Camera now at location: ' + str(CAMERA.location) + ' / rotation: ' + str(CAMERA.rotation_euler))
+  bpy.context.scene.render.filepath = filepath
+  if animate:
+      bpy.ops.render.render(animation=animate, write_still=True)
+  else:
+      RENDER_OUTPUT_PATHS.append(filepath)
+      bpy.ops.render.render(write_still=True)
 
 def output_name(model_path, index = 0):
-    return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + ('.avi' if animate else '.png')
+  return './renders/' + os.path.splitext(model_path)[0].split('/')[-1] + '_' + str(index) + '_' + str(datetime.date.today()) + '_' + str(mode) + ('.avi' if animate else '.png')
 
 # RGB 0 -> 1
 def rand_color_value():
-    return random.uniform(0, 255) / 255
+  return random.uniform(0, 255) / 255
 
 def rand_location(boundary, positive = False):
-    if positive:
-      return (random.uniform(0, boundary), random.uniform(0, boundary), random.uniform(0, boundary))
-    return (random.uniform(-boundary, boundary), random.uniform(-boundary, boundary), random.uniform(-boundary, boundary))
+  if positive:
+    return (random.uniform(0, boundary), random.uniform(0, boundary), random.uniform(0, boundary))
+  return (random.uniform(-boundary, boundary), random.uniform(-boundary, boundary), random.uniform(-boundary, boundary))
 
 def rand_rotation():
-    return (math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)))
+  return (math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)), math.radians(random.uniform(0, 360)))
 
 def unwrap_model(obj):
-    if obj.name.startswith('Camera') or obj.name.startswith('Text') or obj.name.startswith('Cube'):
-        return False
-    bpy.context.scene.objects.active = obj
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.uv.unwrap()
-    bpy.ops.object.mode_set(mode='OBJECT')
+  if obj.name.startswith('Camera') or obj.name.startswith('Text') or obj.name.startswith('Cube'):
+      return False
+  bpy.context.scene.objects.active = obj
+  bpy.ops.object.mode_set(mode='EDIT')
+  bpy.ops.uv.unwrap()
+  bpy.ops.object.mode_set(mode='OBJECT')
 
 #############
 # <materials>
@@ -127,12 +127,12 @@ def random_texture(texture_folder_path):
     return bpy.data.images.load(texture_path)
 
 def random_height_map(height_map_folder, low = False):
-    if low:
-        path = height_map_folder + 'low.png'
-    else:
-        path = height_map_folder + random.choice(os.listdir(height_map_folder))
-    print("LOADING HEIGHT MAP -> " + path)
-    return bpy.data.images.load(path)
+  if low:
+      path = height_map_folder + 'low.png'
+  else:
+      path = height_map_folder + random.choice(os.listdir(height_map_folder))
+  print("LOADING HEIGHT MAP -> " + path)
+  return bpy.data.images.load(path)
 
 def assign_texture_to_material(material, texture):
     assert material.use_nodes == True

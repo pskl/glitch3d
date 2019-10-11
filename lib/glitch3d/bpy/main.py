@@ -80,19 +80,19 @@ try:
   RENDER_OUTPUT_PATHS = []
   FIXED_CAMERA = False
   FUNCTIONS = {
-      (lambda x: math.sin(x) * math.cos(20*x)): 4,
-      (lambda x: math.sin(x) * math.sin(20*x)): 3,
-      (lambda x: INITIAL_CAMERA_LOCATION[2]): 2,
-      (lambda x: x) : 2,
-      math.sin : 1,
-      math.cos : 1,
-      (lambda x: 0.5 * math.sin(0.5*x) * math.cos(x)) : 1,
-      (lambda x: random.uniform(1, 10) * math.cos(x) ** 3) : 1,
-      (lambda x: random.uniform(1, 10)) : 1,
-      (lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x)) : 1,
-      (lambda x: math.sin(math.pi*x) + x + 3 * math.pi) : 1,
-      (lambda x: x**3 + math.cos(x/2)) : 2,
-      (lambda x: random.uniform(1, 10) * math.sin(x)): 3
+    (lambda x: math.sin(x) * math.cos(20*x)): 4,
+    (lambda x: math.sin(x) * math.sin(20*x)): 3,
+    (lambda x: INITIAL_CAMERA_LOCATION[2]): 2,
+    (lambda x: x) : 2,
+    math.sin : 1,
+    math.cos : 1,
+    (lambda x: 0.5 * math.sin(0.5*x) * math.cos(x)) : 1,
+    (lambda x: random.uniform(1, 10) * math.cos(x) ** 3) : 1,
+    (lambda x: random.uniform(1, 10)) : 1,
+    (lambda x: random.uniform(1, 2) + random.uniform(0.75, 3) * math.sin(random.uniform(0.1, 1)*x) + math.cos(random.uniform(0.75, 5)*x)) : 1,
+    (lambda x: math.sin(math.pi*x) + x + 3 * math.pi) : 1,
+    (lambda x: x**3 + math.cos(x/2)) : 2,
+    (lambda x: random.uniform(1, 10) * math.sin(x)): 3
   }
 
   import importlib.util, os, ntpath, bpy, datetime, math, random, mathutils, random, sys, logging, string, colorsys, code, numpy
@@ -119,9 +119,9 @@ try:
 
   # Create groups
   for s in ['texts', 'lines', 'displays', 'reflectors', 'neons']:
-      bpy.data.groups.new(s)
+    bpy.data.groups.new(s)
   for primitive in PRIMITIVES:
-      bpy.data.groups.new(primitive.lower().title())
+    bpy.data.groups.new(primitive.lower().title())
 
   FISHEYE = random.sample([True, False], 1)
   COLORS = rand_color_palette(5)
@@ -133,8 +133,8 @@ try:
   MATERIALS_NAMES = []
   load_osl_materials(FIXTURES_FOLDER_PATH + 'osl_shaders/')
   for mat in bpy.data.materials: # merge base scene materials + osl shaders
-      if mat.name != 'emission':
-        MATERIALS_NAMES.append(mat.name)
+    if mat.name != 'emission':
+      MATERIALS_NAMES.append(mat.name)
   print("Detected " + str(len(MATERIALS_NAMES)) + " materials in base scene: " + str(MATERIALS_NAMES))
 
   # Scene
@@ -155,12 +155,12 @@ try:
   SCENE.frame_end = NUMBER_OF_FRAMES
 
   if FISHEYE:
-      CAMERA.data.type = 'PANO'
-      CAMERA.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
-      CAMERA.data.cycles.fisheye_lens = 12
-      CAMERA.data.cycles.fisheye_fov = 2.5
-      CAMERA.data.sensor_width = 20
-      CAMERA.data.sensor_height = 20
+    CAMERA.data.type = 'PANO'
+    CAMERA.data.cycles.panorama_type = 'FISHEYE_EQUISOLID'
+    CAMERA.data.cycles.fisheye_lens = 12
+    CAMERA.data.cycles.fisheye_fov = 2.5
+    CAMERA.data.sensor_width = 20
+    CAMERA.data.sensor_height = 20
 
   #####################################
   #####################################
@@ -178,10 +178,10 @@ try:
   random.shuffle(list(MODULES_ENABLED))
 
   for module in MODULES_ENABLED:
-      load_module_path(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
-      mod = __import__(module)
-      new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
-      new_canvas.render()
+    load_module_path(os.path.join(path + '/glitch3d/bpy/canvas', module + '.py'))
+    mod = __import__(module)
+    new_canvas = eval("mod." + module[:1].upper() + module[1:] + "(locals())")
+    new_canvas.render()
 
   render_settings(animate, mode, NORMALS_RENDERING, width, height, debug)
   print('Rendering images with resolution: ' + str(SCENE.render.resolution_x) + ' x ' + str(SCENE.render.resolution_y))
@@ -192,28 +192,28 @@ try:
   CAMERA_PATH = camera_path(NUMBER_OF_FRAMES)
 
   for frame in range(0, NUMBER_OF_FRAMES):
-      bpy.context.scene.frame_set(frame)
-      bpy.context.scene.camera.location = CAMERA_PATH[frame]
-      SUBJECT.rotation_euler.z += math.radians(1)
-      look_at(SUBJECT)
-      add_frame([bpy.context.scene.camera], ["location", "rotation_euler"])
+    bpy.context.scene.frame_set(frame)
+    bpy.context.scene.camera.location = CAMERA_PATH[frame]
+    SUBJECT.rotation_euler.z += math.radians(1)
+    look_at(SUBJECT)
+    add_frame([bpy.context.scene.camera], ["location", "rotation_euler"])
 
   if animate:
-      print('ANIMATION RENDERING BEGIN')
-      output_path = output_name(model_path)
-      print('AVI file -> ' + output_path)
-      shoot(output_path)
+    print('ANIMATION RENDERING BEGIN')
+    output_path = output_name(model_path)
+    print('AVI file -> ' + output_path)
+    shoot(output_path)
   else:
-      print('STILL RENDERING BEGIN')
-      for index in range(0, shots_number):
-          frame_cursor = int(index * (bpy.context.scene.frame_end / shots_number))
-          print('>> FRAME #' + str(frame_cursor))
-          bpy.context.scene.frame_set(int(bpy.context.scene.frame_end/(index+1)))
-          SUBJECT.rotation_euler.z = math.radians(index * (360.0 / shots_number))
-          output_path = output_name(model_path, index)
-          print("-------------------------- " + str(index) + " --------------------------")
-          print("PNG file -> " + output_path)
-          shoot(output_path)
+    print('STILL RENDERING BEGIN')
+    for index in range(0, shots_number):
+        frame_cursor = int(index * (bpy.context.scene.frame_end / shots_number))
+        print('>> FRAME #' + str(frame_cursor))
+        bpy.context.scene.frame_set(int(bpy.context.scene.frame_end/(index+1)))
+        SUBJECT.rotation_euler.z = math.radians(index * (360.0 / shots_number))
+        output_path = output_name(model_path, index)
+        print("-------------------------- " + str(index) + " --------------------------")
+        print("PNG file -> " + output_path)
+        shoot(output_path)
 
   # Save scene as .blend file
   bpy.ops.wm.save_as_mainfile(filepath=output_name(model_path) + '.blend')
