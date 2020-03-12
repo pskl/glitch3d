@@ -16,6 +16,7 @@
 !/fixtures/textures/height_maps
 !/fixtures/skull.obj
 /fixtures/blendcache_base
+debug_b3d.py
 .DS_Store
 *.png
 lib/glitch3d/bpy/canvas/__pycache__/
